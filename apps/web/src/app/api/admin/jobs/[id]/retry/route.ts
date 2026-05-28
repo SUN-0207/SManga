@@ -7,7 +7,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   const db = getDb();
   const result = await db.execute(sql`
     UPDATE pgboss.job
-    SET state = 'created', retrycount = 0, startedon = NULL, completedon = NULL
+    SET state = 'created', retry_count = 0, started_on = NULL, completed_on = NULL
     WHERE id = ${id} AND state IN ('failed', 'cancelled')
     RETURNING id;
   `);

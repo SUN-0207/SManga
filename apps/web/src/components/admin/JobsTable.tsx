@@ -9,8 +9,8 @@ export interface JobRow {
   id: string;
   name: string;
   state: string;
-  retrycount: number;
-  createdon: string;
+  retryCount: number;
+  createdOn: string;
   output: unknown;
 }
 
@@ -46,8 +46,8 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
           <Tr key={j.id}>
             <Td className="font-mono text-xs">{j.name}</Td>
             <Td><Badge variant={variant[j.state] ?? 'secondary'}>{j.state}</Badge></Td>
-            <Td>{j.retrycount}</Td>
-            <Td className="text-xs">{new Date(j.createdon).toLocaleString('vi-VN')}</Td>
+            <Td>{j.retryCount}</Td>
+            <Td className="text-xs">{new Date(j.createdOn).toLocaleString('vi-VN')}</Td>
             <Td className="text-xs max-w-md truncate">{j.output ? JSON.stringify(j.output) : ''}</Td>
             <Td>
               {(j.state === 'failed' || j.state === 'cancelled') && (

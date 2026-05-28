@@ -14,14 +14,23 @@ export default async function AdminJobsPage() {
     ?? (stateResult as unknown as { state: string; count: number }[]);
 
   const jobsResult = await db.execute<{
-    id: string; name: string; state: string; retrycount: number; createdon: string; output: unknown;
+    id: string; name: string; state: string; retry_count: number; created_on: string; output: unknown;
   }>(sql`
-    SELECT id::text AS id, name, state, retrycount, createdon, output
+    SELECT id::text AS id, name, state, retry_count, created_on, output
     FROM pgboss.job
-    ORDER BY createdon DESC
+    ORDER BY created_on DESC
     LIMIT 100;
   `);
-  const jobs = ((jobsResult as { rows?: JobRow[] }).rows ?? (jobsResult as unknown as JobRow[])) as JobRow[];
+  const rawJobs = ((jobsResult as { rows?: typeof jobsResult }).rows
+    ?? (jobsResult as unknown as Array<{ id: string; name: string; state: string; retry_count: number; created_on: string; output: unknown }>));
+  const jobs: JobRow[] = (rawJobs as Array<{ id: string; name: string; state: string; retry_count: number; created_on: string; output: unknown }>).map((r) => ({
+    id: r.id,
+    name: r.name,
+    state: r.state,
+    retryCount: r.retry_count,
+    createdOn: r.created_on,
+    output: r.output,
+  }));
 
   return (
     <div className="space-y-6">
