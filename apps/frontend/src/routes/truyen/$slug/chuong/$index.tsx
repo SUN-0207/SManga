@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getChapterContent } from '@/api/chapters';
 import { ChapterNav } from '@/components/reader/ChapterNav';
 
-export const Route = createFileRoute('/truyen/$slug/chuong-$index')({
+export const Route = createFileRoute('/truyen/$slug/chuong/$index')({
   component: ChapterReader,
 });
 

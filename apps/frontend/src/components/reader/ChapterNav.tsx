@@ -13,7 +13,7 @@ export function ChapterNav({ slug, prev, next, current }: ChapterNavProps) {
       <div className="flex-1">
         {prev && (
           <Link
-            to="/truyen/$slug/chuong-$index"
+            to="/truyen/$slug/chuong/$index"
             params={{ slug, index: String(prev.index) }}
             className="inline-flex items-center gap-1 text-sm hover:underline transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary rounded"
           >
@@ -32,7 +32,7 @@ export function ChapterNav({ slug, prev, next, current }: ChapterNavProps) {
       <div className="flex-1 text-right">
         {next && (
           <Link
-            to="/truyen/$slug/chuong-$index"
+            to="/truyen/$slug/chuong/$index"
             params={{ slug, index: String(next.index) }}
             className="inline-flex items-center gap-1 text-sm hover:underline transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary rounded"
           >

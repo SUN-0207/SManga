@@ -73,7 +73,7 @@ function StoryDetail() {
           )}
           <div className="pt-2">
             <Link
-              to="/truyen/$slug/chuong-$index"
+              to="/truyen/$slug/chuong/$index"
               params={{ slug: s.slug, index: '1' }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary"
             >

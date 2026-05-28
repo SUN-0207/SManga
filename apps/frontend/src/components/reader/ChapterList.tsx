@@ -21,7 +21,7 @@ export function ChapterList({ slug, chapters, currentPage, totalPages }: Chapter
           <li key={c.index} className="text-sm">
             {c.isCrawled ? (
               <Link
-                to="/truyen/$slug/chuong-$index"
+                to="/truyen/$slug/chuong/$index"
                 params={{ slug, index: String(c.index) }}
                 className="hover:underline text-foreground transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary rounded"
               >
