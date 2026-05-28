@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseStoryHtml, parseChapterListHtml } from '../src/sources/truyenfull/parsers.js';
+import { parseStoryHtml, parseChapterListHtml, parseChapterContentHtml } from '../src/sources/truyenfull/parsers.js';
 
 const fixturesDir = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -15,6 +15,7 @@ const fixturesDir = join(
 
 const storyHtml = readFileSync(join(fixturesDir, 'story.html'), 'utf-8');
 const chapterListHtml = readFileSync(join(fixturesDir, 'chapter-list.html'), 'utf-8');
+const chapterHtml = readFileSync(join(fixturesDir, 'chapter.html'), 'utf-8');
 
 describe('truyenfull parseStoryHtml', () => {
   it('extracts non-empty title', () => {
@@ -56,5 +57,22 @@ describe('truyenfull parseChapterListHtml', () => {
   it('returns hasNextPage as a boolean', () => {
     const { hasNextPage } = parseChapterListHtml(chapterListHtml, 'https://truyenfull.today/xuyen-thu-chi-ba-ai-doc-the/');
     expect(typeof hasNextPage).toBe('boolean');
+  });
+});
+
+describe('truyenfull parseChapterContentHtml', () => {
+  it('extracts non-empty text', () => {
+    const c = parseChapterContentHtml(chapterHtml);
+    expect(c.text.length).toBeGreaterThan(100);
+  });
+
+  it('does not include script tags in text', () => {
+    const c = parseChapterContentHtml(chapterHtml);
+    expect(c.text).not.toMatch(/<script/i);
+  });
+
+  it('extracts a non-empty title', () => {
+    const c = parseChapterContentHtml(chapterHtml);
+    expect(c.title.length).toBeGreaterThan(0);
   });
 });
