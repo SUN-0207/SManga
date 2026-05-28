@@ -4,6 +4,9 @@ import { LoggerModule } from 'nestjs-pino';
 import { ThrottlerModule } from '@nestjs/throttler';
 import '@smanga/crawler'; // side effect: register adapters
 import { DbModule } from './modules/db/db.module';
+import { QueueModule } from './modules/queue/queue.module';
+import { CrawlerJobsModule } from './modules/crawler-jobs/crawler-jobs.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { DbModule } from './modules/db/db.module';
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     DbModule,
+    QueueModule,
+    CrawlerJobsModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
