@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smanga-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: smanga
+      POSTGRES_PASSWORD: smanga_dev
+      POSTGRES_DB: smanga
+    ports:
+      - "5432:5432"
+    volumes:
+      - smanga_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smanga -d smanga"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  smanga_pg_data:
