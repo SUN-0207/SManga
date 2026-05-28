@@ -10,6 +10,57 @@
 
 ---
 
+## UI/UX guidance — read before touching any frontend code
+
+The project installs the **ui-ux-pro-max** Claude skill at `.claude/skills/ui-ux-pro-max/`. A SManga-specific design system is persisted at `design-system/smanga/`:
+
+- `design-system/smanga/MASTER.md` — Global tokens (colors, typography, spacing, shadows, buttons, cards, inputs, modals, anti-patterns, pre-delivery checklist). **Read it before Task 9.**
+- `design-system/smanga/pages/reader-landing.md` — Landing-specific overrides
+- `design-system/smanga/pages/reader-chapter.md` — Chapter-reading-specific overrides (literary typography, generous line-height, distraction-free)
+- `design-system/smanga/pages/admin.md` — Admin-pages overrides (dashboard density, table-first layouts)
+
+**Hierarchical lookup logic when implementing a page:**
+1. First check `design-system/smanga/pages/<page-name>.md`. If present, its tokens **override** MASTER.
+2. Otherwise apply MASTER tokens.
+3. For any new page not covered, generate an override on the fly:
+   ```bash
+   py .claude/skills/ui-ux-pro-max/scripts/search.py "<page description keywords>" --design-system --persist -p "SManga" --page "<page-slug>"
+   ```
+
+**Headline tokens from MASTER (apply to Task 9 Tailwind config + Task 11/12 components):**
+
+| Token | Value |
+|---|---|
+| `--color-primary` | `#18181B` (zinc-900) |
+| `--color-secondary` | `#3F3F46` (zinc-700) |
+| `--color-cta` | `#EC4899` (pink-500) |
+| `--color-background` | `#FAFAFA` (zinc-50) |
+| `--color-text` | `#09090B` (zinc-950) |
+| Heading font | `Newsreader` (Google Font) — literary serif, great for long reading |
+| Body font | `Roboto` (Google Font) — clean UI sans |
+| Spacing scale | 4 / 8 / 16 / 24 / 32 / 48 / 64 px |
+| Shadows | `sm 0 1px 2px rgba(0,0,0,.05)` → `xl 0 20px 25px rgba(0,0,0,.15)` |
+| Transition | `150-300ms ease` for all hovers |
+| Border radius | 8px buttons, 12px cards, 16px modals |
+
+**Tailwind 4 wiring** (Task 9 `tailwind.config.ts` / `styles.css`): map these to CSS variables in `:root` and the dark variant, then declare them in `tailwind.config.ts` `theme.extend.colors` so utilities like `bg-primary`, `text-cta` etc. resolve. Pattern matches Plan 2 Task 1 — keep that as reference.
+
+**Pre-delivery checklist for every FE task touching UI (Tasks 9-12):** Run through MASTER's bottom checklist before commit:
+- No emoji icons → use Lucide icons (already in deps)
+- All interactive elements have `cursor-pointer` Tailwind class
+- Hover transitions 150-300ms
+- Light + dark mode contrast ≥ 4.5:1
+- Focus rings visible (Tailwind `focus-visible:ring-2`)
+- Respect `prefers-reduced-motion`
+- Responsive breakpoints 375 / 768 / 1024 / 1440
+- No horizontal scroll on mobile, no fixed-nav content occlusion
+
+**Two style overrides worth special attention:**
+- **Chapter reader page** (override file): `prose` styling with `line-height: 1.7-1.85`, max-width ~65ch, generous vertical padding, `font-family: Newsreader` for content. This is the page users spend 95% of session time on — invest the polish here.
+- **Admin pages** (override file): density-first dashboard layout, sticky table headers, compact spacing scale (use `--space-sm`/`md` instead of `lg`+).
+
+---
+
 ## Heads-up: workarounds inherited from prior plans
 
 - Internal imports inside `packages/db`, `packages/shared`, `packages/crawler` use `.ts` extensions. Both NestJS (uses tsc/ts-node) and Vite handle these natively.
