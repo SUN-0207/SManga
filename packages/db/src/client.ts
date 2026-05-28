@@ -9,4 +9,3 @@ export function createDb(connectionString: string) {
   return drizzle(queryClient, { schema });
 }
 
-export { schema };
