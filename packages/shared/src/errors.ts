@@ -1,7 +1,9 @@
 export class CrawlerError extends Error {
-  constructor(message: string, override readonly cause?: unknown) {
+  override readonly cause?: unknown;
+  constructor(message: string, cause?: unknown) {
     super(message);
     this.name = this.constructor.name;
+    this.cause = cause;
   }
 }
 

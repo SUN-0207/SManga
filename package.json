@@ -16,8 +16,9 @@
     "db:generate": "pnpm --filter @smanga/db generate",
     "db:seed": "pnpm --filter @smanga/db seed",
     "crawl": "pnpm --filter @smanga/cli crawl",
-    "dev:db": "docker compose -f docker-compose.dev.yml up -d postgres",
-    "dev:worker": "pnpm --filter @smanga/crawler-worker dev"
+    "dev:db": "docker compose -f docker-compose.dev.yml up -d postgres redis",
+    "dev:api": "pnpm --filter @smanga/api start:dev",
+    "dev:frontend": "pnpm --filter @smanga/frontend dev"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

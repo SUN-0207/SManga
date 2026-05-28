@@ -5,7 +5,7 @@ Vietnamese novel reader. Crawls from `truyenfull.today` (multi-source-capable vi
 ## State of play (last updated 2026-05-28)
 
 - **Plans 1-3 complete** on `main`. Working end-to-end with Next.js full-stack `apps/web` + pg-boss `services/crawler-worker`.
-- **Plan 4 (NestJS rework) in progress** — Tasks 1-2 done. The rest (12 tasks) will replace `apps/web` + the worker with `apps/api` (NestJS) and `apps/frontend` (Vite+React). `apps/web` and `services/crawler-worker` STAY in repo as reference until Plan 4 Task 13.
+- **Plan 4 (NestJS rework) complete.** `apps/api` (NestJS 11) + `apps/frontend` (Vite+React) replace the legacy `apps/web` + `services/crawler-worker` (both deleted in Task 13).
 - All plans live in `docs/superpowers/plans/`. Read the relevant plan file in full before touching code in its scope.
 - Test count: 23 unit tests pass (5 db + 16 crawler + 2 shared). E2E specs written but last verified manually by user.
 
@@ -16,10 +16,9 @@ packages/db          Drizzle ORM schema + migrations + client (Postgres)
 packages/shared      Zod schemas, SourceAdapter contract, error classes, JobPayload types
 packages/crawler     Crawler engine + truyenfull adapter (cheerio-based)
 apps/cli             pnpm crawl <url> — standalone CLI (kept after Plan 4)
-apps/web             Next.js 15 — LEGACY, deleted in Plan 4 Task 13
-apps/api             NestJS 11 — new, partially built (Plan 4 Tasks 1-2)
-apps/frontend        Vite+React — new, not yet started (Plan 4 Tasks 9+)
-services/crawler-worker   pg-boss worker — LEGACY, deleted in Plan 4 Task 13
+apps/api             NestJS 11 — BUILT (Plan 4 complete). Auth, sources, stories, chapters, covers, jobs, Bull queue + crawler processors.
+apps/frontend        Vite+React — BUILT (Plan 4 complete). Reader + admin pages.
+                     (Legacy apps/web + services/crawler-worker deleted in Plan 4 Task 13)
 design-system/smanga/     UI tokens (MASTER + page overrides), persisted via ui-ux-pro-max skill
 docs/superpowers/specs/   Design spec (single source of truth for product)
 docs/superpowers/plans/   Implementation plans
@@ -31,13 +30,13 @@ docs/superpowers/plans/   Implementation plans
 1. **Internal imports inside `packages/db/src/schema/*.ts` use `.ts` extensions, not `.js`.** drizzle-kit's CJS bundler cannot resolve `.js` ESM imports back to TS source files. The `schema/index.ts` barrel and consumer packages still use `.js` extensions; only cross-schema imports inside `packages/db/src/schema/` use `.ts`.
 2. **`packages/db/drizzle.config.ts` `schema:` field is an explicit array** — `['./src/schema/enums.ts', './src/schema/source.ts', ...]` — NOT a glob and NOT the index barrel. When adding a new schema file, append it to that array.
 3. **Postgres `unaccent()` is STABLE, not IMMUTABLE.** GIN trigram index can't use it directly. Migration `0001` creates `immutable_unaccent(text)` wrapper. The story search index uses the wrapper.
-4. **`@auth/drizzle-adapter` snake_case mismatch with Drizzle camelCase schema** — `account as any` cast required in `auth.ts`. (Legacy, only matters until Plan 4 Task 13.)
+4. ~~**`@auth/drizzle-adapter` snake_case mismatch**~~ — OBSOLETE. Legacy Next.js Auth.js adapter deleted with `apps/web`.
 5. **NestJS app (`apps/api`) needs a custom `webpack.config.js`** to bundle `@smanga/*` workspace packages with `.ts` imports. The default tsc builder fails. See `apps/api/webpack.config.js` for the explicit aliases + ts-loader patches. When adding a new workspace package, update the alias list.
-6. **Next.js `transpilePackages` resolution** — `apps/web` needed all `@smanga/*` cross-package imports to be `.ts` extensions, not `.js`. Inside individual packages it stayed `.ts` — see (1). Plan 4 Task 13 deletes this app.
+6. ~~**Next.js `transpilePackages` resolution**~~ — OBSOLETE. `apps/web` deleted.
 7. **Consumer tsconfigs need `"allowImportingTsExtensions": true, "noEmit": true`** to typecheck through the db package's `.ts` schema imports.
-8. **bcrypt is a native module** — in Next.js needs `serverExternalPackages: ['bcrypt']` in `next.config.mjs`. In NestJS (webpack-bundled) handled by `apps/api/webpack.config.js`.
-9. **Auth.js v5 middleware split** — `auth.config.ts` (Edge-safe, no bcrypt) vs `auth.ts` (full Credentials). Edge runtime cannot bundle bcrypt. Legacy until Plan 4 Task 13.
-10. **pg-boss v10 columns are snake_case** — `retry_count`, `created_on`, `started_on`, `completed_on`. NOT v9 lowercase concat (`retrycount`, `createdon`). After Plan 4, pg-boss is replaced by Bull/Redis and these queries vanish.
+8. **bcrypt** — `apps/api` uses `bcryptjs` (pure JS, no native module issues). No `serverExternalPackages` needed. webpack alias not required for bcryptjs.
+9. ~~**Auth.js v5 middleware split**~~ — OBSOLETE. `apps/web` deleted. NestJS uses passport-jwt (no Edge runtime constraints).
+10. ~~**pg-boss v10 column naming**~~ — OBSOLETE. pg-boss replaced by Bull/Redis in Plan 4. `services/crawler-worker` deleted.
 11. **`chapter.contentText` is gzipped bytea.** Always `gunzipSync` on read. Crawler `engine.fetchChapterById` gzips on write. `contentByteSize` stores the UNCOMPRESSED length for stats.
 12. **TanStack Router `routeTree.gen.ts`** (when Plan 4 Task 9 lands) is auto-generated. Add to `.gitignore`.
 13. **Vietnamese-friendly search** — use the existing GIN index over `immutable_unaccent(lower(title || ' ' || author))` with `pg_trgm`. Query with `ILIKE '%' || immutable_unaccent(lower(:q)) || '%'`.
@@ -73,31 +72,33 @@ When implementing a new page, generate an override first:
 py .claude/skills/ui-ux-pro-max/scripts/search.py "<page description>" --design-system --persist -p "SManga" --page "<slug>"
 ```
 
-## Local dev (current legacy stack — until Plan 4 finishes)
+## Local dev
 
 ```powershell
-# Terminal 1
+# Terminal 1: postgres + redis
 pnpm dev:db
 
-# Terminal 2
+# Terminal 2: migrations + seed (one-time per fresh DB)
 $env:DATABASE_URL = "postgres://smanga:smanga_dev@localhost:5432/smanga"
 pnpm db:migrate
 pnpm db:seed
-pnpm --filter @smanga/web dev   # http://localhost:3000
 
-# Terminal 3
+# Terminal 3: NestJS API (http://localhost:3001, Swagger at /api/docs)
 $env:DATABASE_URL = "postgres://smanga:smanga_dev@localhost:5432/smanga"
-$env:WEB_BASE_URL = "http://localhost:3000"
-$env:REVALIDATE_SECRET = "<from .env>"
-pnpm dev:worker
+$env:REDIS_URL = "redis://localhost:6379"
+$env:JWT_SECRET = "<value from .env>"
+pnpm dev:api
+
+# Terminal 4: Vite frontend (http://localhost:3000)
+pnpm dev:frontend
 ```
 
-After Plan 4 Task 13, the runbook becomes 4 terminals (postgres+redis / migrations / NestJS api / Vite frontend). `docs/operations.md` will be updated.
+See `docs/operations.md` for full runbook including admin bootstrap, common queries, and smoke checklist.
 
 ## Bootstrap admin user
 
 ```powershell
-curl.exe -X POST http://localhost:3000/api/register -H "Content-Type: application/json" -d '{\"email\":\"admin@test.com\",\"password\":\"adminpassword\",\"name\":\"Admin\"}'
+curl.exe -X POST http://localhost:3001/api/v1/auth/register -H "Content-Type: application/json" -d '{\"email\":\"admin@test.com\",\"password\":\"adminpassword\",\"name\":\"Admin\"}'
 docker exec smanga-postgres psql -U smanga -d smanga -c "UPDATE \"user\" SET role='admin' WHERE email='admin@test.com';"
 ```
 
