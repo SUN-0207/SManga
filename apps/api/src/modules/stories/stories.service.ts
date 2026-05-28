@@ -48,6 +48,7 @@ export class StoriesService {
         description: story.description,
         status: story.status,
         totalChapters: story.totalChapters,
+        hasCover: sql<boolean>`${story.cover} IS NOT NULL`,
       })
       .from(story)
       .where(eq(story.slug, slug))
