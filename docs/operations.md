@@ -52,3 +52,20 @@ docker compose -f docker-compose.dev.yml down -v
 - [ ] `pnpm --filter @smanga/crawler-worker typecheck` passes
 - [ ] `pnpm --filter @smanga/web e2e` passes (requires running web + admin user seeded)
 - [ ] Manual: sign in to /admin, import a story, click "Crawl missing", refresh page, see chapters crawl in real time
+
+## Reader sanity check
+
+After web is up and DB has at least one story with crawled chapters:
+
+```powershell
+curl http://localhost:3000/
+curl http://localhost:3000/sitemap.xml | Select-String "<url>" | Measure-Object | Select-Object Count
+curl http://localhost:3000/robots.txt
+```
+
+Manual:
+
+- Open `http://localhost:3000` — see story grid with cover images
+- Click a story — see info + chapter list with pagination if > 50 chapters
+- Click a chapter — see content rendered; click "Cài đặt" → switch dark mode + font size; refresh — preferences persist
+- Visit a not-yet-crawled chapter — see "chưa được crawl" placeholder, no crash
