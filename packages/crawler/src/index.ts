@@ -5,4 +5,5 @@ registerAdapter(truyenfullAdapter);
 
 export * from './registry.js';
 export * from './fetcher.js';
+export * from './engine.js';
 export { truyenfullAdapter };
