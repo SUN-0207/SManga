@@ -13,3 +13,6 @@ coverage/
 apps/web/playwright-report/
 apps/web/test-results/
 .claude/skills/ui-ux-pro-max/scripts/__pycache__/
+apps/frontend/src/routeTree.gen.ts
+apps/frontend/dist/
+apps/frontend/.vite/
