@@ -1,9 +1,10 @@
 import NextAuth from 'next-auth';
+import type { NextMiddleware } from 'next/server';
 import { authConfig } from '@/server/auth.config';
 
 const { auth } = NextAuth(authConfig);
 
-export default auth((req) => {
+const middleware: NextMiddleware = auth((req) => {
   const isAdminRoute = req.nextUrl.pathname.startsWith('/admin');
   const isAdminApi = req.nextUrl.pathname.startsWith('/api/admin');
   if (!isAdminRoute && !isAdminApi) return;
@@ -22,7 +23,9 @@ export default auth((req) => {
     }
     return Response.redirect(new URL('/', req.nextUrl));
   }
-});
+}) as unknown as NextMiddleware;
+
+export default middleware;
 
 export const config = {
   matcher: ['/admin/:path*', '/api/admin/:path*'],
