@@ -95,23 +95,19 @@ export function parseChapterListHtml(
     });
   });
 
-  // hasNextPage: pagination has a "next" link (right arrow glyph or trang-N link beyond current page)
+  // hasNextPage: pagination has a "next" link (right arrow glyph or Vietnamese "tiếp"/"sau").
+  // NOTE: do NOT use href.includes('/trang-') — previous-page links also contain '/trang-'
+  // and would cause false positives on the last page, resulting in infinite pagination.
   let hasNextPage = false;
   $('.pagination a, ul.pagination a').each((_, el) => {
     const t = $(el).text().trim().toLowerCase();
-    const href = $(el).attr('href') ?? '';
-    // Detect next-page indicators: Vietnamese "sau", "tiếp", right arrow text, or glyphicon-menu-right
+    // Detect next-page indicators: Vietnamese "sau", "tiếp", or glyphicon-menu-right arrow
     if (
       t.includes('sau') ||
       t.includes('tiếp') ||
       t.includes('next') ||
-      t === '»' ||
       $(el).find('.glyphicon-menu-right').length > 0
     ) {
-      hasNextPage = true;
-    }
-    // Also detect via href: if there's a trang-N link in pagination it means there are more pages
-    if (href.includes('/trang-')) {
       hasNextPage = true;
     }
   });
