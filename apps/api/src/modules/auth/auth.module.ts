@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
+import { OptionalJwtGuard } from '@/common/guards/jwt.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { loadEnv } from '@/config/env';
 
@@ -20,6 +21,10 @@ import { loadEnv } from '@/config/env';
   providers: [
     AuthService,
     JwtStrategy,
+    // OptionalJwtGuard runs first — populates req.user from cookie/header when a
+    // valid JWT is present, but does NOT reject unauthenticated requests.
+    { provide: APP_GUARD, useClass: OptionalJwtGuard },
+    // RolesGuard runs second — enforces @Roles() metadata when present.
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
   exports: [AuthService, JwtModule],
