@@ -194,6 +194,40 @@ importers:
         specifier: 2.1.4
         version: 2.1.4(@types/node@20.17.6)
 
+  services/crawler-worker:
+    dependencies:
+      '@smanga/crawler':
+        specifier: workspace:*
+        version: link:../../packages/crawler
+      '@smanga/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@smanga/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      drizzle-orm:
+        specifier: 0.36.0
+        version: 0.36.0(@types/react@18.3.12)(pg@8.21.0)(postgres@3.4.5)(react@19.0.0-rc-66855b96-20241106)
+      pg-boss:
+        specifier: 10.1.5
+        version: 10.1.5
+      pino:
+        specifier: 9.5.0
+        version: 9.5.0
+      undici:
+        specifier: 6.21.0
+        version: 6.21.0
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
+    devDependencies:
+      tsx:
+        specifier: 4.19.2
+        version: 4.19.2
+      typescript:
+        specifier: 5.6.3
+        version: 5.6.3
+
 packages:
 
   '@alloc/quick-lru@5.2.0':
