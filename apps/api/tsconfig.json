@@ -1,0 +1,37 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES2022",
+    "outDir": "dist",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
+    "verbatimModuleSyntax": false,
+    "isolatedModules": false,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "incremental": true,
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["./*"],
+      "@smanga/db": ["../../../packages/db/src/index.ts"],
+      "@smanga/db/schema": ["../../../packages/db/src/schema/index.ts"],
+      "@smanga/db/client": ["../../../packages/db/src/client.ts"],
+      "@smanga/shared": ["../../../packages/shared/src/index.ts"],
+      "@smanga/crawler": ["../../../packages/crawler/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true,
+    "compilerOptions": {
+      "module": "CommonJS",
+      "moduleResolution": "Node",
+      "allowImportingTsExtensions": false,
+      "noEmit": false
+    }
+  }
+}
