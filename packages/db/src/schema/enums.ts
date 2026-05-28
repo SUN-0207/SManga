@@ -1,0 +1,21 @@
+import { pgEnum } from 'drizzle-orm/pg-core';
+
+export const storyStatusEnum = pgEnum('story_status', [
+  'ongoing',
+  'completed',
+  'dropped',
+  'unknown',
+]);
+
+export const storySourceStatusEnum = pgEnum('story_source_status', [
+  'active',
+  'unavailable',
+]);
+
+export const chapterStatusEnum = pgEnum('chapter_status', [
+  'pending',
+  'crawled',
+  'failed',
+]);
+
+export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
