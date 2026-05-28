@@ -83,7 +83,7 @@ export function parseChapterListHtml(
     const slug = urlPath.split('/').filter(Boolean).pop() ?? '';
 
     const m = slug.match(slugRe);
-    if (!m) return;
+    if (!m || !m[1]) return;
     const idx = Number(m[1].replace('-', '.'));
     if (Number.isNaN(idx)) return;
 
