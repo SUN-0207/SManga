@@ -1,4 +1,4 @@
-import NextAuth, { type NextAuthConfig, type NextAuthResult } from 'next-auth';
+import NextAuth, { type NextAuthResult } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
@@ -8,13 +8,15 @@ import { z } from 'zod';
 import { account, session, user, verificationToken } from '@smanga/db/schema';
 import { getDb } from './db';
 import { env } from '@/lib/env';
+import { authConfig } from './auth.config';
 
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 });
 
-export const authConfig: NextAuthConfig = {
+const nextAuth: NextAuthResult = NextAuth({
+  ...authConfig,
   secret: env.AUTH_SECRET,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   adapter: DrizzleAdapter(getDb(), {
@@ -27,8 +29,6 @@ export const authConfig: NextAuthConfig = {
     sessionsTable: session,
     verificationTokensTable: verificationToken,
   }),
-  session: { strategy: 'jwt' },
-  pages: { signIn: '/dang-nhap' },
   providers: [
     Credentials({
       name: 'Credentials',
@@ -48,25 +48,8 @@ export const authConfig: NextAuthConfig = {
       ? [Google({ clientId: env.AUTH_GOOGLE_ID, clientSecret: env.AUTH_GOOGLE_SECRET })]
       : []),
   ],
-  callbacks: {
-    async jwt({ token, user: u }) {
-      if (u) {
-        token.role = (u as { role?: string }).role ?? 'user';
-        token.uid = (u as { id?: string }).id ?? token.sub;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        (session.user as { id?: string }).id = (token.uid as string | undefined) ?? token.sub;
-        (session.user as { role?: string }).role = (token.role as string | undefined) ?? 'user';
-      }
-      return session;
-    },
-  },
-};
+});
 
-const nextAuth: NextAuthResult = NextAuth(authConfig);
 export const handlers: NextAuthResult['handlers'] = nextAuth.handlers;
 export const auth: NextAuthResult['auth'] = nextAuth.auth;
 export const signIn: NextAuthResult['signIn'] = nextAuth.signIn;

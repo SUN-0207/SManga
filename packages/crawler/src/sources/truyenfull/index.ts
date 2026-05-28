@@ -3,7 +3,7 @@ import {
   parseChapterContentHtml,
   parseChapterListHtml,
   parseStoryHtml,
-} from './parsers.js';
+} from './parsers.ts';
 
 export const truyenfullAdapter: SourceAdapter = {
   id: 'truyenfull',

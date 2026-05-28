@@ -1,5 +1,5 @@
-import { fetchBytes } from './fetcher.js';
-import { logger } from './logger.js';
+import { fetchBytes } from './fetcher.ts';
+import { logger } from './logger.ts';
 
 const MAX_COVER_BYTES = 2 * 1024 * 1024; // 2 MB
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);

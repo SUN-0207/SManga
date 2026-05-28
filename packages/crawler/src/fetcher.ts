@@ -1,6 +1,6 @@
 import { request } from 'undici';
 import { FetchError, RateLimitError } from '@smanga/shared';
-import { logger } from './logger.js';
+import { logger } from './logger.ts';
 
 export interface FetchOptions {
   userAgent?: string;

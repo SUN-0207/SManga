@@ -10,11 +10,11 @@ import {
   storySource,
 } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
-import { downloadCover } from './cover.js';
-import { fetchHtml } from './fetcher.js';
-import { logger } from './logger.js';
-import { getAdapter, resolveAdapterForUrl } from './registry.js';
-import { TokenBucket } from './rate-limit.js';
+import { downloadCover } from './cover.ts';
+import { fetchHtml } from './fetcher.ts';
+import { logger } from './logger.ts';
+import { getAdapter, resolveAdapterForUrl } from './registry.ts';
+import { TokenBucket } from './rate-limit.ts';
 
 const buckets = new Map<string, TokenBucket>();
 function bucketFor(sourceId: string, rps: number): TokenBucket {

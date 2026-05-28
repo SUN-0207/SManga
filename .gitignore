@@ -10,3 +10,5 @@ build/
 coverage/
 .vitest/
 *.tsbuildinfo
+apps/web/playwright-report/
+apps/web/test-results/

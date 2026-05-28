@@ -1,9 +1,9 @@
-import { registerAdapter } from './registry.js';
-import { truyenfullAdapter } from './sources/truyenfull/index.js';
+import { registerAdapter } from './registry.ts';
+import { truyenfullAdapter } from './sources/truyenfull/index.ts';
 
 registerAdapter(truyenfullAdapter);
 
-export * from './registry.js';
-export * from './fetcher.js';
-export * from './engine.js';
+export * from './registry.ts';
+export * from './fetcher.ts';
+export * from './engine.ts';
 export { truyenfullAdapter };

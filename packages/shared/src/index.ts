@@ -1,3 +1,3 @@
-export * from './adapter.js';
-export * from './errors.js';
-export * from './jobs.js';
+export * from './adapter.ts';
+export * from './errors.ts';
+export * from './jobs.ts';
