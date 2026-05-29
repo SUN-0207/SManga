@@ -1,4 +1,5 @@
 const path = require('node:path');
+const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin');
 
 const PACKAGES_ROOT = path.join(__dirname, '../../packages');
 
@@ -17,6 +18,11 @@ const PACKAGES_ROOT = path.join(__dirname, '../../packages');
  *
  * 3. The ts-loader rule gets happyPackMode so per-file diagnostics are
  *    suppressed (no TS5097 / TS2307 from workspace internals).
+ *
+ * 4. In watch mode, RunScriptWebpackPlugin spawns dist/main.js and restarts
+ *    the child process whenever the bundle is rebuilt. Without it,
+ *    `nest start --watch` rebuilds the bundle but never reloads the Node
+ *    process, so source changes don't take effect until manual restart.
  */
 module.exports = function webpackConfig(options) {
   // Drop ForkTsCheckerWebpackPlugin — it type-checks with tsconfig.build.json
@@ -24,6 +30,25 @@ module.exports = function webpackConfig(options) {
   const cleanPlugins = (options.plugins || []).filter(
     (p) => p.constructor && p.constructor.name !== 'ForkTsCheckerWebpackPlugin',
   );
+
+  // Watch mode: add RunScriptWebpackPlugin to spawn + restart dist/main.js
+  // on every successful rebuild. Without this, `nest start --watch` rebuilds
+  // the bundle but never reloads the Node process, so source edits don't
+  // take effect until manual restart.
+  //
+  // Nest CLI doesn't expose `watch` on `options`, so we sniff argv + the
+  // npm lifecycle script (both populated when `pnpm dev:api` -> nest start --watch).
+  const isWatchMode =
+    process.argv.includes('--watch') ||
+    (process.env.npm_lifecycle_script?.includes('--watch') ?? false);
+  if (isWatchMode) {
+    cleanPlugins.push(
+      new RunScriptWebpackPlugin({
+        name: 'main.js',
+        autoRestart: true,
+      }),
+    );
+  }
 
   // Patch the ts-loader rule: enable happyPackMode to bypass per-file
   // diagnostics, and widen the exclude so @smanga/* packages are bundled.

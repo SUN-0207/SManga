@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { bookmark, story } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
@@ -20,7 +20,7 @@ export class BookmarksService {
         totalChapters: story.totalChapters,
       })
       .from(bookmark)
-      .innerJoin(story, sql`${story.id} = ${bookmark.storyId}::uuid`)
+      .innerJoin(story, eq(story.id, bookmark.storyId))
       .where(eq(bookmark.userId, userId))
       .orderBy(desc(bookmark.createdAt));
   }
