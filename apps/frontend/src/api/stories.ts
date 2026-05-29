@@ -1,4 +1,5 @@
 import { api } from '@/lib/api-client';
+import type { DiscoveryStatus } from './discover';
 
 export interface StorySummary {
   id: string;
@@ -9,6 +10,10 @@ export interface StorySummary {
   totalChapters: number;
   hasCover: boolean;
   updatedAt: string;
+  /** Plan 7: 'pending' (stub) → 'running' → 'complete' → 'failed'. */
+  discoveryStatus: DiscoveryStatus;
+  discoveryError: string | null;
+  discoveredAt: string | null;
 }
 
 export async function listStories(page = 1, limit = 48): Promise<StorySummary[]> {

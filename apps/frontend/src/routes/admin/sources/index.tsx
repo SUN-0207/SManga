@@ -5,7 +5,7 @@ import { Compass, Trash2, ExternalLink } from 'lucide-react';
 import { sourcesApi } from '@/api/sources';
 import { SourceForm } from '@/components/admin/SourceForm';
 
-export const Route = createFileRoute('/admin/sources')({
+export const Route = createFileRoute('/admin/sources/')({
   component: AdminSourcesPage,
 });
 
