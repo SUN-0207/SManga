@@ -40,6 +40,7 @@ docs/superpowers/plans/   Implementation plans
 11. **`chapter.contentText` is gzipped bytea.** Always `gunzipSync` on read. Crawler `engine.fetchChapterById` gzips on write. `contentByteSize` stores the UNCOMPRESSED length for stats.
 12. **TanStack Router `routeTree.gen.ts`** (when Plan 4 Task 9 lands) is auto-generated. Add to `.gitignore`.
 13. **Vietnamese-friendly search** — use the existing GIN index over `immutable_unaccent(lower(title || ' ' || author))` with `pg_trgm`. Query with `ILIKE '%' || immutable_unaccent(lower(:q)) || '%'`.
+14. **NestJS dev watch needs `RunScriptWebpackPlugin`** — `nest start --watch` rebuilds the bundle on source change but does NOT restart the Node process under our custom webpack config. The plugin is wired in `apps/api/webpack.config.js` when `--watch` is detected. If you ever switch off webpack mode in nest-cli.json, this block can go away.
 
 ## Crawler conventions
 
