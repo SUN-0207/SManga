@@ -1,5 +1,12 @@
 import * as cheerio from 'cheerio';
-import { ParserError, type ChapterContent, type ChapterRef, type StoryMetadata } from '@smanga/shared';
+import {
+  ParserError,
+  type CatalogPage,
+  type ChapterContent,
+  type ChapterRef,
+  type StoryListItem,
+  type StoryMetadata,
+} from '@smanga/shared';
 
 function extractSlug(url: string): string {
   const u = new URL(url);
@@ -139,6 +146,87 @@ export function parseChapterListHtml(
   });
 
   return { chapters, hasNextPage };
+}
+
+/**
+ * Parse a catalog listing page (truyen-moi / truyen-hot / truyen-full /
+ * the-loai/<slug>). All four pages share the same DOM shape — a sequence of
+ * `<div class="row" itemtype="schema.org/Book">` rows under
+ * `.list-truyen` / `#list-page`.
+ */
+export function parseCatalogListingHtml(
+  html: string,
+  baseUrl: string,
+  page: number,
+): CatalogPage {
+  const $ = cheerio.load(html);
+  const items: StoryListItem[] = [];
+
+  $('div[itemtype$="/Book"]').each((_, el) => {
+    const row = $(el);
+    const titleAnchor = row.find('h3.truyen-title a[itemprop="url"]').first();
+    const title = titleAnchor.text().trim();
+    const href = titleAnchor.attr('href');
+    if (!title || !href) return;
+
+    const externalUrl = new URL(href, baseUrl).toString();
+    const externalId = extractStorySlugFromUrl(externalUrl);
+    if (!externalId) return;
+
+    // Author: "<glyphicon> Author Name" — strip the icon's empty text
+    const authorEl = row.find('span.author[itemprop="author"]').first();
+    const author = authorEl.text().replace(/\s+/g, ' ').trim() || null;
+
+    // Cover: lazyimg div carries thumb in data-image (small) + data-desk-image (larger)
+    const lazy = row.find('div.lazyimg').first();
+    const rawCover =
+      lazy.attr('data-desk-image') ?? lazy.attr('data-image') ?? null;
+    const coverThumbUrl = rawCover ? new URL(rawCover, baseUrl).toString() : null;
+
+    // Status badge: <span class="label-title label-new"> etc.
+    // Class suffix tells us the badge ("new", "full", "hot"). Map to Vietnamese label.
+    const labelClass = row.find('span.label-title').first().attr('class') ?? '';
+    const statusLabel = mapStatusLabel(labelClass);
+
+    // Total chapters HINT: the latest chapter number in the col-xs-2 link
+    const chapterMatch = row.find('div.col-xs-2 a').first().text().match(/(\d+)/);
+    const totalChaptersHint = chapterMatch?.[1] ? Number(chapterMatch[1]) : null;
+
+    items.push({
+      externalUrl,
+      externalId,
+      title,
+      author,
+      coverThumbUrl,
+      statusLabel,
+      totalChaptersHint,
+    });
+  });
+
+  // hasNextPage: a `glyphicon-menu-right` inside the pagination links
+  // (same heuristic as the chapter list — avoids `/trang-N/` false positives)
+  let hasNextPage = false;
+  $('.pagination a').each((_, el) => {
+    if ($(el).find('.glyphicon-menu-right').length > 0) hasNextPage = true;
+  });
+
+  return { items, page, hasNextPage };
+}
+
+function extractStorySlugFromUrl(url: string): string | null {
+  try {
+    const parts = new URL(url).pathname.split('/').filter(Boolean);
+    return parts[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function mapStatusLabel(labelClass: string): string | null {
+  if (/label-full/.test(labelClass)) return 'Full';
+  if (/label-hot/.test(labelClass)) return 'Hot';
+  if (/label-new/.test(labelClass)) return 'Mới';
+  return null;
 }
 
 export function parseChapterContentHtml(html: string): ChapterContent {

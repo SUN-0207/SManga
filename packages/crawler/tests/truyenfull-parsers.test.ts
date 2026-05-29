@@ -2,7 +2,12 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseStoryHtml, parseChapterListHtml, parseChapterContentHtml } from '../src/sources/truyenfull/parsers.js';
+import {
+  parseCatalogListingHtml,
+  parseStoryHtml,
+  parseChapterListHtml,
+  parseChapterContentHtml,
+} from '../src/sources/truyenfull/parsers.js';
 
 const fixturesDir = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -16,6 +21,7 @@ const fixturesDir = join(
 const storyHtml = readFileSync(join(fixturesDir, 'story.html'), 'utf-8');
 const chapterListHtml = readFileSync(join(fixturesDir, 'chapter-list.html'), 'utf-8');
 const chapterHtml = readFileSync(join(fixturesDir, 'chapter.html'), 'utf-8');
+const catalogNewestHtml = readFileSync(join(fixturesDir, 'catalog-newest-page1.html'), 'utf-8');
 
 describe('truyenfull parseStoryHtml', () => {
   it('extracts non-empty title', () => {
@@ -57,6 +63,48 @@ describe('truyenfull parseChapterListHtml', () => {
   it('returns hasNextPage as a boolean', () => {
     const { hasNextPage } = parseChapterListHtml(chapterListHtml, 'https://truyenfull.today/xuyen-thu-chi-ba-ai-doc-the/');
     expect(typeof hasNextPage).toBe('boolean');
+  });
+});
+
+describe('truyenfull parseCatalogListingHtml', () => {
+  const result = parseCatalogListingHtml(catalogNewestHtml, 'https://truyenfull.today', 1);
+
+  it('extracts multiple story stubs from a listing page', () => {
+    expect(result.items.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('each stub has a non-empty title + absolute story URL', () => {
+    for (const it of result.items) {
+      expect(it.title.length).toBeGreaterThan(0);
+      expect(it.externalUrl).toMatch(/^https:\/\/truyenfull\.today\//);
+    }
+  });
+
+  it('each stub has a slug as externalId', () => {
+    for (const it of result.items) {
+      expect(it.externalId).toMatch(/^[a-z0-9-]+$/i);
+      expect(it.externalUrl).toContain(it.externalId);
+    }
+  });
+
+  it('extracts cover thumb URL when present', () => {
+    const withCover = result.items.filter((it) => it.coverThumbUrl);
+    expect(withCover.length).toBeGreaterThan(0);
+    expect(withCover[0]?.coverThumbUrl).toMatch(/^https?:\/\//);
+  });
+
+  it('extracts author for most stubs', () => {
+    const withAuthor = result.items.filter((it) => it.author && it.author.length > 0);
+    expect(withAuthor.length).toBeGreaterThan(result.items.length / 2);
+  });
+
+  it('reports page number back unchanged', () => {
+    expect(result.page).toBe(1);
+  });
+
+  it('detects hasNextPage when pagination has glyphicon-menu-right', () => {
+    // Page 1 of newest always has many pages following — must report true
+    expect(result.hasNextPage).toBe(true);
   });
 });
 

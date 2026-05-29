@@ -16,6 +16,9 @@ const stub: SourceAdapter = {
   listChapters: async () => ({ chapters: [], hasNextPage: false }),
   fetchChapterContent: async () => ({ title: '', text: 'x' }),
   buildListChaptersUrl: (u) => u,
+  catalogFeeds: [],
+  buildCatalogUrl: () => 'https://stub.test/catalog',
+  parseCatalogPage: async () => ({ items: [], page: 1, hasNextPage: false }),
 };
 
 describe('registry', () => {
