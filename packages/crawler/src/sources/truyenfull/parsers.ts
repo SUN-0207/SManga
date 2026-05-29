@@ -9,6 +9,35 @@ function extractSlug(url: string): string {
   return slug;
 }
 
+/**
+ * Extract synopsis with paragraph breaks preserved.
+ *
+ * cheerio's `.text()` concatenates block-level children without any whitespace,
+ * which fuses sentences across <p> and <br> boundaries (e.g. "côngThẩm",
+ * "bảo.Để"). We walk the children of the desc container and insert newlines
+ * between blocks ourselves before extracting text.
+ */
+function extractDescription($: cheerio.CheerioAPI): string {
+  const container = $('.desc-text').first().length
+    ? $('.desc-text').first()
+    : $('div[itemprop="description"]').first();
+  if (container.length === 0) return '';
+
+  // Replace <br> with explicit newline markers so they survive .text()
+  container.find('br').replaceWith('\n');
+  // Append newlines to block children that produce paragraph breaks
+  container.find('p, div, h1, h2, h3, h4, h5, h6, li').each((_, el) => {
+    $(el).append('\n\n');
+  });
+
+  return container
+    .text()
+    .replace(/ /g, ' ') // nbsp → space
+    .replace(/[\t ]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function normaliseStatus(raw: string): StoryMetadata['status'] {
   const s = raw.toLowerCase();
   if (s.includes('full') || s.includes('hoàn') || s.includes('hoan')) return 'completed';
@@ -31,10 +60,7 @@ export function parseStoryHtml(html: string, url: string): StoryMetadata {
     $('.info a[href*="/tac-gia/"]').first().text().trim() ||
     null;
 
-  const description =
-    $('.desc-text').first().text().trim() ||
-    $('div[itemprop="description"]').first().text().trim() ||
-    '';
+  const description = extractDescription($);
 
   let coverUrl: string | null = null;
   const imgEl = $('.book img, .books img, .info img').first();

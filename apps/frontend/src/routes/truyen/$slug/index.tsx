@@ -122,7 +122,7 @@ function StoryDetail() {
                   {s.genres.map((g) => (
                     <span
                       key={g.slug}
-                      className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] border border-border bg-background/60 text-foreground/70 hover:border-foreground/40 transition-colors duration-200"
+                      className="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] border border-border bg-background/60 text-foreground/70"
                     >
                       {g.name}
                     </span>

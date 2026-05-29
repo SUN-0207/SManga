@@ -30,6 +30,7 @@ export class ChaptersService {
         storyId: story.id,
         storySlug: story.slug,
         storyTitle: story.title,
+        storyTotalChapters: story.totalChapters,
       })
       .from(chapter)
       .innerJoin(story, eq(chapter.storyId, story.id))
@@ -61,7 +62,12 @@ export class ChaptersService {
       .limit(1);
 
     return {
-      story: { id: row.storyId, slug: row.storySlug, title: row.storyTitle },
+      story: {
+        id: row.storyId,
+        slug: row.storySlug,
+        title: row.storyTitle,
+        totalChapters: row.storyTotalChapters,
+      },
       chapter: {
         index: Number(row.index),
         title: row.title,

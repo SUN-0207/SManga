@@ -4,21 +4,32 @@ import { ArrowRight, BookOpen, Database, FileText, Loader2, AlertTriangle, Check
 import { sourcesApi } from '@/api/sources';
 import { jobsApi } from '@/api/jobs';
 import { listStories } from '@/api/stories';
+import { useAuthStore } from '@/stores/auth-store';
 
 export const Route = createFileRoute('/admin/')({
   component: AdminDashboard,
 });
 
 function AdminDashboard() {
-  const sourcesQ = useQuery({ queryKey: ['sources'], queryFn: sourcesApi.list });
+  const isLoggedIn = useAuthStore((s) => s.user !== null);
+  const sourcesQ = useQuery({
+    queryKey: ['sources'],
+    queryFn: sourcesApi.list,
+    enabled: isLoggedIn,
+    retry: false,
+  });
   const storiesQ = useQuery({
     queryKey: ['stories', { page: 1, limit: 1000 }],
     queryFn: () => listStories(1, 1000),
+    enabled: isLoggedIn,
+    retry: false,
   });
   const jobsStatsQ = useQuery({
     queryKey: ['jobs', 'stats'],
     queryFn: jobsApi.stats,
-    refetchInterval: 10_000,
+    enabled: isLoggedIn,
+    refetchInterval: isLoggedIn ? 10_000 : false,
+    retry: false,
   });
 
   const stats = jobsStatsQ.data;
@@ -55,7 +66,7 @@ function AdminDashboard() {
           icon={FileText}
           label="Chapter (tổng)"
           value={chapterCount}
-          mono
+          href="/admin/stories"
         />
       </Section>
 
@@ -65,7 +76,7 @@ function AdminDashboard() {
           label="Hoàn thành"
           value={stats?.completed}
           tone="positive"
-          mono
+          href="/admin/jobs"
         />
         <StatCard
           icon={Loader2}
@@ -75,14 +86,13 @@ function AdminDashboard() {
               ? (stats?.waiting ?? 0) + (stats?.active ?? 0)
               : undefined
           }
-          mono
+          href="/admin/jobs"
         />
         <StatCard
           icon={AlertTriangle}
           label="Thất bại"
           value={stats?.failed}
           tone={stats?.failed && stats.failed > 0 ? 'warning' : 'neutral'}
-          mono
           href="/admin/jobs"
         />
       </Section>
@@ -117,51 +127,41 @@ function StatCard({
   label,
   value,
   tone = 'neutral',
-  mono,
   href,
 }: {
   icon: typeof Database;
   label: string;
   value: number | null | undefined;
   tone?: 'neutral' | 'positive' | 'warning';
-  mono?: boolean;
-  href?: string;
+  href: string;
 }) {
   const display = value === undefined || value === null ? '—' : value.toLocaleString('vi-VN');
   const valueTone =
     tone === 'warning' && value && value > 0
       ? 'text-[hsl(var(--color-cta))]'
-      : tone === 'positive'
-        ? 'text-foreground'
-        : 'text-foreground';
+      : 'text-foreground';
 
-  const card = (
-    <div className="group h-full rounded-xl border border-border bg-background p-5 transition-all duration-200 hover:border-foreground/40 hover:shadow-sm">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Icon className="h-4 w-4" />
-          <p className="text-xs uppercase tracking-[0.18em] font-medium">{label}</p>
-        </div>
-        {href && (
-          <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-foreground" />
-        )}
-      </div>
-      <div
-        className={`mt-3 font-heading font-bold text-4xl tabular-nums tracking-tight ${valueTone} ${mono ? 'tabular-nums' : ''}`}
-      >
-        {display}
-      </div>
-    </div>
-  );
-
-  return href ? (
+  return (
     <Link
       to={href}
+      aria-label={`${label}: ${display}`}
       className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
     >
-      {card}
+      <div className="group h-full rounded-xl border border-border bg-background p-5 transition-all duration-200 hover:border-foreground/40 hover:shadow-sm">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Icon className="h-4 w-4" aria-hidden />
+            <p className="text-xs uppercase tracking-[0.18em] font-medium">{label}</p>
+          </div>
+          <ArrowRight
+            className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-foreground"
+            aria-hidden
+          />
+        </div>
+        <div className={`mt-3 font-heading font-bold text-4xl tabular-nums tracking-tight ${valueTone}`}>
+          {display}
+        </div>
+      </div>
     </Link>
-  ) : (
-    card
   );
 }

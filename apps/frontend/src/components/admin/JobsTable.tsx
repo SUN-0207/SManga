@@ -14,6 +14,32 @@ const STATE_TONE: Record<string, string> = {
   paused: 'bg-muted text-muted-foreground border-border',
 };
 
+const STATE_LABEL: Record<string, string> = {
+  completed: 'Hoàn thành',
+  active: 'Đang chạy',
+  waiting: 'Chờ',
+  failed: 'Thất bại',
+  delayed: 'Delay',
+  paused: 'Dừng',
+};
+
+function formatPayload(data: unknown): string {
+  if (!data || typeof data !== 'object') return '—';
+  const d = data as Record<string, unknown>;
+  const parts: string[] = [];
+  if (typeof d.chapterId === 'string') parts.push(`chapter ${d.chapterId.slice(0, 8)}`);
+  if (typeof d.storyId === 'string') parts.push(`story ${d.storyId.slice(0, 8)}`);
+  if (typeof d.url === 'string') parts.push(d.url);
+  if (parts.length === 0) {
+    try {
+      return JSON.stringify(d).slice(0, 60);
+    } catch {
+      return '—';
+    }
+  }
+  return parts.join(' · ');
+}
+
 export function JobsTable({ jobs }: { jobs: JobRow[] }) {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
@@ -47,14 +73,17 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left">
-              <th className="px-5 py-2.5 w-44 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
-                Job
+              <th className="px-5 py-2.5 w-36 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                Loại job
+              </th>
+              <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                Payload
               </th>
               <th className="px-5 py-2.5 w-28 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
-                State
+                Trạng thái
               </th>
               <th className="px-5 py-2.5 w-20 text-[11px] uppercase tracking-wider font-medium text-muted-foreground tabular-nums">
-                Retry
+                Lần thử
               </th>
               <th className="px-5 py-2.5 w-36 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
                 Tạo
@@ -69,20 +98,23 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
             {slice.map((j) => (
               <tr key={j.id} className="border-b border-border/60 last:border-0">
                 <td className="px-5 py-2 font-mono text-xs">{j.name}</td>
+                <td className="px-5 py-2 font-mono text-[11px] text-muted-foreground truncate max-w-xs" title={formatPayload(j.data)}>
+                  {formatPayload(j.data)}
+                </td>
                 <td className="px-5 py-2">
                   <span
                     className={`inline-flex items-center h-5 px-2 rounded-full text-[11px] border ${
                       STATE_TONE[j.state] ?? STATE_TONE.waiting
                     }`}
                   >
-                    {j.state}
+                    {STATE_LABEL[j.state] ?? j.state}
                   </span>
                 </td>
                 <td className="px-5 py-2 tabular-nums text-sm">{j.attemptsMade}</td>
                 <td className="px-5 py-2 text-xs text-muted-foreground tabular-nums">
                   {j.timestamp ? new Date(j.timestamp).toLocaleString('vi-VN') : '—'}
                 </td>
-                <td className="px-5 py-2 text-xs text-destructive truncate max-w-md">
+                <td className="px-5 py-2 text-xs text-destructive truncate max-w-md" title={j.failedReason ?? ''}>
                   {j.failedReason ?? ''}
                 </td>
                 <td className="px-5 py-2 text-right">
@@ -93,7 +125,7 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
                       disabled={busy === j.id}
                       className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md text-xs border border-border hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <RotateCcw className="h-3 w-3" />
+                      <RotateCcw className="h-3 w-3" aria-hidden />
                       Retry
                     </button>
                   )}

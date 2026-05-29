@@ -60,19 +60,29 @@ function ChapterReader() {
   }
 
   const cleanTitle = data.chapter.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '');
-  const navProps = { slug, current: data.chapter.index, prev: data.prev, next: data.next };
+  const navProps = {
+    slug,
+    current: data.chapter.index,
+    prev: data.prev,
+    next: data.next,
+    totalChapters: data.story.totalChapters,
+  };
 
   return (
     <article className="relative pb-24">
       <ReadingProgressTracker storyId={data.story.id} chapterIndex={data.chapter.index} />
-      {/* Reading progress bar */}
+      {/* Reading progress bar — min-scale so it's visible at scroll=0 */}
       <div
         className="fixed top-16 inset-x-0 h-[2px] z-20 pointer-events-none"
-        aria-hidden
+        role="progressbar"
+        aria-label="Tiến độ đọc chương"
+        aria-valuenow={Math.round(progress * 100)}
+        aria-valuemin={0}
+        aria-valuemax={100}
       >
         <div
           className="h-full bg-[hsl(var(--color-cta))] origin-left transition-transform duration-150"
-          style={{ transform: `scaleX(${progress})` }}
+          style={{ transform: `scaleX(${Math.max(progress, 0.02)})` }}
         />
       </div>
 
@@ -87,8 +97,9 @@ function ChapterReader() {
           >
             ← {data.story.title}
           </Link>
-          <p className="font-heading text-base text-muted-foreground">
+          <p className="font-heading text-base text-muted-foreground tabular-nums">
             Chương {data.chapter.index}
+            <span className="text-muted-foreground/60"> / {data.story.totalChapters}</span>
           </p>
           <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight leading-[1.15]">
             {cleanTitle}

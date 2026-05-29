@@ -1,87 +1,115 @@
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { useReaderPrefs } from '@/stores/reader-prefs-store';
+import { RotateCcw } from 'lucide-react';
+import { useReaderPrefs, type ReaderTheme, type ReaderFontSize, type ReaderFontFamily } from '@/stores/reader-prefs-store';
 
-const FONT_SIZES = [
+const THEMES: { label: string; value: ReaderTheme }[] = [
+  { label: 'Sáng', value: 'light' },
+  { label: 'Tối', value: 'dark' },
+  { label: 'Hệ thống', value: 'system' },
+];
+
+const FONT_SIZES: { label: string; value: ReaderFontSize }[] = [
   { label: 'Nhỏ', value: '15' },
   { label: 'Vừa', value: '18' },
   { label: 'To', value: '20' },
   { label: 'Rất to', value: '24' },
-] as const;
+];
 
-const FONT_FAMILIES = [
+const FONT_FAMILIES: { label: string; value: ReaderFontFamily }[] = [
   { label: 'Serif', value: 'serif' },
   { label: 'Sans', value: 'sans' },
   { label: 'Mono', value: 'mono' },
-] as const;
+];
 
 export function ReaderSettings() {
   const { theme, fontSize, fontFamily, setTheme, setFontSize, setFontFamily } = useReaderPrefs();
 
+  function resetDefaults() {
+    setTheme('system');
+    setFontSize('18');
+    setFontFamily('serif');
+  }
+
+  const isDefault = theme === 'system' && fontSize === '18' && fontFamily === 'serif';
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-      <div>
-        <Label className="mb-2 block">Giao diện</Label>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant={theme === 'light' ? 'default' : 'outline'}
-            onClick={() => setTheme('light')}
-            className="cursor-pointer transition-all duration-200"
-          >
-            Sáng
-          </Button>
-          <Button
-            size="sm"
-            variant={theme === 'dark' ? 'default' : 'outline'}
-            onClick={() => setTheme('dark')}
-            className="cursor-pointer transition-all duration-200"
-          >
-            Tối
-          </Button>
-          <Button
-            size="sm"
-            variant={theme === 'system' ? 'default' : 'outline'}
-            onClick={() => setTheme('system')}
-            className="cursor-pointer transition-all duration-200"
-          >
-            Hệ thống
-          </Button>
-        </div>
+    <div className="space-y-4 text-sm">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <RadioGroup
+          legendId="settings-theme"
+          legend="Giao diện"
+          options={THEMES}
+          value={theme}
+          onChange={setTheme}
+        />
+        <RadioGroup
+          legendId="settings-fontsize"
+          legend="Cỡ chữ (nội dung chương)"
+          options={FONT_SIZES}
+          value={fontSize}
+          onChange={setFontSize}
+        />
+        <RadioGroup
+          legendId="settings-fontfamily"
+          legend="Phông chữ (nội dung chương)"
+          options={FONT_FAMILIES}
+          value={fontFamily}
+          onChange={setFontFamily}
+        />
       </div>
 
-      <div>
-        <Label className="mb-2 block">Cỡ chữ</Label>
-        <div className="flex gap-1 flex-wrap">
-          {FONT_SIZES.map((s) => (
-            <Button
-              key={s.value}
-              size="sm"
-              variant={fontSize === s.value ? 'default' : 'outline'}
-              onClick={() => setFontSize(s.value)}
-              className="cursor-pointer transition-all duration-200"
-            >
-              {s.label}
-            </Button>
-          ))}
-        </div>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={resetDefaults}
+          disabled={isDefault}
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          Khôi phục mặc định
+        </button>
       </div>
+    </div>
+  );
+}
 
-      <div>
-        <Label className="mb-2 block">Phông chữ</Label>
-        <div className="flex gap-1 flex-wrap">
-          {FONT_FAMILIES.map((f) => (
-            <Button
-              key={f.value}
-              size="sm"
-              variant={fontFamily === f.value ? 'default' : 'outline'}
-              onClick={() => setFontFamily(f.value)}
-              className="cursor-pointer transition-all duration-200"
+function RadioGroup<T extends string>({
+  legendId,
+  legend,
+  options,
+  value,
+  onChange,
+}: {
+  legendId: string;
+  legend: string;
+  options: { label: string; value: T }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div role="radiogroup" aria-labelledby={legendId}>
+      <p id={legendId} className="mb-2 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+        {legend}
+      </p>
+      <div className="flex gap-1 flex-wrap">
+        {options.map((o) => {
+          const active = o.value === value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              onClick={() => onChange(o.value)}
+              className={
+                active
+                  ? 'inline-flex items-center h-8 px-3 rounded-md text-sm font-medium bg-foreground text-background transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2'
+                  : 'inline-flex items-center h-8 px-3 rounded-md text-sm border border-border hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
+              }
             >
-              {f.label}
-            </Button>
-          ))}
-        </div>
+              {o.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { jobsApi } from '@/api/jobs';
 import { JobsTable } from '@/components/admin/JobsTable';
+import { useAuthStore } from '@/stores/auth-store';
 
 export const Route = createFileRoute('/admin/jobs')({
   component: AdminJobsPage,
@@ -31,16 +32,23 @@ const STAT_META: Record<
 const STAT_ORDER = ['waiting', 'active', 'completed', 'failed', 'delayed', 'paused'];
 
 function AdminJobsPage() {
+  // Only poll while we have an admin session — prevents stray 403s during logout unmount
+  const isLoggedIn = useAuthStore((s) => s.user !== null);
+
   const statsQ = useQuery({
     queryKey: ['jobs', 'stats'],
     queryFn: jobsApi.stats,
-    refetchInterval: 5000,
+    enabled: isLoggedIn,
+    refetchInterval: isLoggedIn ? 5000 : false,
+    retry: false,
   });
 
   const jobsQ = useQuery({
     queryKey: ['jobs', 'list'],
     queryFn: jobsApi.list,
-    refetchInterval: 5000,
+    enabled: isLoggedIn,
+    refetchInterval: isLoggedIn ? 5000 : false,
+    retry: false,
   });
 
   const stats = (statsQ.data ?? {}) as Record<string, number>;

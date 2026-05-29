@@ -22,6 +22,10 @@ function Shelf() {
     queryFn: readingProgressApi.list,
   });
 
+  // Dedup: a story showing in "Đang đọc" shouldn't repeat in "Truyện đã đánh dấu"
+  const progressStoryIds = new Set((progress.data ?? []).map((p) => p.storyId));
+  const bookmarksOnly = (bookmarks.data ?? []).filter((b) => !progressStoryIds.has(b.storyId));
+
   return (
     <div className="container max-w-6xl py-10 sm:py-16 space-y-16">
       <div>
@@ -59,11 +63,15 @@ function Shelf() {
       <Section
         eyebrow="Đã lưu"
         title="Truyện đã đánh dấu"
-        empty={(bookmarks.data?.length ?? 0) === 0}
+        empty={bookmarksOnly.length === 0}
         emptyIcon={BookmarkX}
-        emptyText='Chưa lưu truyện nào. Bấm "Lưu truyện" ở trang chi tiết để thêm vào đây.'
+        emptyText={
+          (bookmarks.data?.length ?? 0) > 0
+            ? 'Các truyện bạn lưu đã xuất hiện ở phần "Đang đọc" phía trên.'
+            : 'Chưa lưu truyện nào. Bấm "Lưu truyện" ở trang chi tiết để thêm vào đây.'
+        }
       >
-        {(bookmarks.data ?? []).map((b) => (
+        {bookmarksOnly.map((b) => (
           <BookmarkCard
             key={b.storyId}
             slug={b.slug}
@@ -133,6 +141,7 @@ function ContinueCard({
     <Link
       to="/truyen/$slug/chuong/$index"
       params={{ slug, index: String(chapterIndex) }}
+      aria-label={`Tiếp tục đọc "${title}" tại chương ${chapterIndex} trên ${totalChapters}`}
       className="group block rounded-xl border border-border bg-background p-5 hover:border-foreground/40 hover:shadow-md transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground font-medium mb-2">
@@ -182,6 +191,7 @@ function BookmarkCard({
       to="/truyen/$slug"
       params={{ slug }}
       search={{ page: 1 }}
+      aria-label={`Mở trang truyện "${title}"`}
       className="group block rounded-xl border border-border bg-background p-5 hover:border-foreground/40 hover:shadow-md transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <h3 className="font-heading font-semibold text-lg leading-tight tracking-tight line-clamp-2 group-hover:underline underline-offset-4 decoration-foreground/40 transition-all duration-200">

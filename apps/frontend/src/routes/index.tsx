@@ -24,7 +24,7 @@ function Landing() {
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-20">
-      <EditorialHero featured={featured} totalCount={stories.length} />
+      <EditorialHero featured={featured} totalCount={stories.length} hasMore={rest.length > 0} />
 
       {rest.length > 0 && (
         <section className="container">
@@ -42,7 +42,15 @@ function Landing() {
   );
 }
 
-function EditorialHero({ featured, totalCount }: { featured?: StorySummary; totalCount: number }) {
+function EditorialHero({
+  featured,
+  totalCount,
+  hasMore,
+}: {
+  featured?: StorySummary;
+  totalCount: number;
+  hasMore: boolean;
+}) {
   return (
     <section className="relative overflow-hidden">
       {/* Decorative editorial background */}
@@ -86,21 +94,19 @@ function EditorialHero({ featured, totalCount }: { featured?: StorySummary; tota
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </Link>
               )}
-              <a
-                href="#thu-vien"
-                className="inline-flex items-center gap-2 h-11 px-5 rounded-full border border-border hover:border-foreground/40 hover:bg-muted/60 text-sm font-medium transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <BookOpen className="h-4 w-4" />
-                Xem toàn bộ thư viện
-              </a>
+              {hasMore && (
+                <a
+                  href="#thu-vien"
+                  className="inline-flex items-center gap-2 h-11 px-5 rounded-full border border-border hover:border-foreground/40 hover:bg-muted/60 text-sm font-medium transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Xem toàn bộ thư viện
+                </a>
+              )}
             </div>
-            <div className="flex items-center gap-6 pt-4 text-xs text-muted-foreground">
-              <Stat label="Truyện" value={totalCount.toString()} />
-              <Divider />
-              <Stat label="Cập nhật" value="liên tục" />
-              <Divider />
-              <Stat label="Miễn phí" value="hoàn toàn" />
-            </div>
+            <p className="pt-4 text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              {totalCount === 1 ? '1 truyện' : `${totalCount} truyện`} · Cập nhật liên tục · Miễn phí hoàn toàn
+            </p>
           </div>
 
           {/* Featured card */}
@@ -156,9 +162,9 @@ function EmptyFeaturedSlot() {
   return (
     <div className="relative w-full max-w-md mx-auto aspect-[3/4] rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-3 text-center p-8">
       <BookOpen className="h-10 w-10 text-muted-foreground/50" />
-      <p className="font-heading text-lg">Chưa có truyện nào</p>
+      <p className="font-heading text-lg">Thư viện đang trống</p>
       <p className="text-xs text-muted-foreground max-w-xs">
-        Đăng nhập trang quản trị để import truyện đầu tiên từ các nguồn được hỗ trợ.
+        Truyện sẽ sớm xuất hiện ở đây. Quay lại sau nhé.
       </p>
     </div>
   );
@@ -217,7 +223,7 @@ function DiscoveryStrip() {
           {themes.map((t) => (
             <span
               key={t}
-              className="inline-flex items-center h-9 px-4 rounded-full text-sm bg-background border border-border hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-default text-foreground/80"
+              className="inline-flex items-center h-9 px-4 rounded-full text-sm bg-background border border-border text-foreground/70"
             >
               {t}
             </span>
@@ -231,15 +237,3 @@ function DiscoveryStrip() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="font-heading font-semibold text-base text-foreground">{value}</div>
-      <div className="text-[10px] uppercase tracking-[0.2em] mt-0.5">{label}</div>
-    </div>
-  );
-}
-
-function Divider() {
-  return <span aria-hidden className="h-8 w-px bg-border" />;
-}

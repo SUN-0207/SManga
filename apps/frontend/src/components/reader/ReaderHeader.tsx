@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Library, Search as SearchIcon, Settings as SettingsIcon, X } from 'lucide-react';
+import {
+  Library,
+  LogIn,
+  Search as SearchIcon,
+  Settings as SettingsIcon,
+  User,
+  X,
+} from 'lucide-react';
 import { ReaderSettings } from './ReaderSettings';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -39,14 +46,22 @@ export function ReaderHeader() {
             <SearchIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Tìm kiếm</span>
           </Link>
-          {user && (
+          {user ? (
             <Link
               to="/tu-sach"
               className="inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              aria-label="Tủ sách"
+              aria-label="Tủ sách của bạn"
             >
-              <Library className="h-4 w-4" />
+              <Library className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">Tủ sách</span>
+            </Link>
+          ) : (
+            <Link
+              to="/dang-nhap"
+              className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <LogIn className="h-4 w-4" aria-hidden />
+              Đăng nhập
             </Link>
           )}
           <button
@@ -56,9 +71,18 @@ export function ReaderHeader() {
             aria-label={settingsOpen ? 'Đóng cài đặt' : 'Mở cài đặt'}
             className="inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            {settingsOpen ? <X className="h-4 w-4" /> : <SettingsIcon className="h-4 w-4" />}
+            {settingsOpen ? <X className="h-4 w-4" aria-hidden /> : <SettingsIcon className="h-4 w-4" aria-hidden />}
             <span className="hidden sm:inline">Cài đặt</span>
           </button>
+          {user && (
+            <span
+              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 text-xs text-muted-foreground border-l border-border ml-1"
+              title={user.email}
+            >
+              <User className="h-3.5 w-3.5" aria-hidden />
+              {user.email.split('@')[0]}
+            </span>
+          )}
         </nav>
       </div>
       {settingsOpen && (

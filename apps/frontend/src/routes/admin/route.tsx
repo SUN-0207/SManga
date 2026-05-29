@@ -35,6 +35,7 @@ function AdminLayout() {
   async function logout() {
     await api.post('/auth/logout');
     useAuthStore.getState().setUser(null);
+    // Reset to '/' via full reload so all queries (jobs/stats, sources, etc.) tear down cleanly
     window.location.href = '/';
   }
 
