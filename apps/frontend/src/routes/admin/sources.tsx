@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2, ExternalLink } from 'lucide-react';
+import { Compass, Trash2, ExternalLink } from 'lucide-react';
 import { sourcesApi } from '@/api/sources';
 import { SourceForm } from '@/components/admin/SourceForm';
 
@@ -100,15 +100,26 @@ function AdminSourcesPage() {
                       <StatusDot active={r.isActive} />
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(r.id)}
-                        disabled={deleting === r.id}
-                        aria-label="Xóa source"
-                        className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="inline-flex items-center gap-1">
+                        <Link
+                          to="/admin/sources/$id/discover"
+                          params={{ id: r.id }}
+                          search={{ feed: undefined, page: 1, q: '' }}
+                          aria-label={`Khám phá ${r.name}`}
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                          <Compass className="h-4 w-4" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(r.id)}
+                          disabled={deleting === r.id}
+                          aria-label="Xóa source"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
