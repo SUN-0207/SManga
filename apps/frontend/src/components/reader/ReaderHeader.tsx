@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Settings as SettingsIcon, X } from 'lucide-react';
+import { Library, Search as SearchIcon, Settings as SettingsIcon, X } from 'lucide-react';
 import { ReaderSettings } from './ReaderSettings';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function ReaderHeader() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
 
   return (
     <header className="sticky top-0 z-30 backdrop-blur-md bg-background/85 border-b border-border/60">
-      <div className="container flex items-center justify-between h-16">
+      <div className="container flex items-center justify-between h-16 gap-3">
         <Link
           to="/"
-          className="group inline-flex items-baseline gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+          className="group inline-flex items-baseline gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded shrink-0"
         >
           <span className="font-heading font-bold text-2xl tracking-tight leading-none transition-opacity duration-200 group-hover:opacity-80">
             SManga
@@ -21,13 +23,32 @@ export function ReaderHeader() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-0.5 sm:gap-1">
           <Link
             to="/"
-            className="hidden sm:inline-flex items-center h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="hidden md:inline-flex items-center h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Trang chủ
           </Link>
+          <Link
+            to="/tim-kiem"
+            search={{ q: '', page: 1 }}
+            className="inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label="Tìm kiếm"
+          >
+            <SearchIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Tìm kiếm</span>
+          </Link>
+          {user && (
+            <Link
+              to="/tu-sach"
+              className="inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              aria-label="Tủ sách"
+            >
+              <Library className="h-4 w-4" />
+              <span className="hidden sm:inline">Tủ sách</span>
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setSettingsOpen((v) => !v)}

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowUp } from 'lucide-react';
 import { getChapterContent } from '@/api/chapters';
 import { ChapterNav } from '@/components/reader/ChapterNav';
+import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
 
 export const Route = createFileRoute('/truyen/$slug/chuong/$index')({
   component: ChapterReader,
@@ -63,6 +64,7 @@ function ChapterReader() {
 
   return (
     <article className="relative pb-24">
+      <ReadingProgressTracker storyId={data.story.id} chapterIndex={data.chapter.index} />
       {/* Reading progress bar */}
       <div
         className="fixed top-16 inset-x-0 h-[2px] z-20 pointer-events-none"

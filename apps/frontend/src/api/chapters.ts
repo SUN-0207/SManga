@@ -1,7 +1,7 @@
 import { api } from '@/lib/api-client';
 
 export interface ChapterContent {
-  story: { slug: string; title: string };
+  story: { id: string; slug: string; title: string };
   chapter: { index: number; title: string; content: string | null; isCrawled: boolean };
   prev: { index: number; title: string } | null;
   next: { index: number; title: string } | null;

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, BookText, CheckCircle2, Layers } from 'lucide-react';
 import { getStoryBySlug, listChapters } from '@/api/stories';
 import { ChapterList } from '@/components/reader/ChapterList';
+import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
 
 export const Route = createFileRoute('/truyen/$slug/')({
   component: StoryDetail,
@@ -145,6 +146,7 @@ function StoryDetail() {
                   <Layers className="h-4 w-4" />
                   Mục lục
                 </a>
+                <BookmarkToggle storyId={s.id} />
               </div>
             </div>
           </div>

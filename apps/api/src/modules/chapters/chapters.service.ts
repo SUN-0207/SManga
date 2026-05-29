@@ -61,7 +61,7 @@ export class ChaptersService {
       .limit(1);
 
     return {
-      story: { slug: row.storySlug, title: row.storyTitle },
+      story: { id: row.storyId, slug: row.storySlug, title: row.storyTitle },
       chapter: {
         index: Number(row.index),
         title: row.title,

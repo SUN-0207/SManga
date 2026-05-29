@@ -12,6 +12,8 @@ import { StoriesModule } from './modules/stories/stories.module';
 import { ChaptersModule } from './modules/chapters/chapters.module';
 import { CoversModule } from './modules/covers/covers.module';
 import { JobsModule } from './modules/jobs/jobs.module';
+import { SearchModule } from './modules/search/search.module';
+import { UserDataModule } from './modules/user-data/user-data.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { JobsModule } from './modules/jobs/jobs.module';
     ChaptersModule,
     CoversModule,
     JobsModule,
+    SearchModule,
+    UserDataModule,
   ],
 })
 export class AppModule {}
