@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsr generate && tsc && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "routes:generate": "tsr generate",
+    "typecheck": "tsr generate && tsc --noEmit"
   },
   "dependencies": {
     "@radix-ui/react-label": "2.1.0",
@@ -24,6 +25,7 @@
     "zustand": "5.0.1"
   },
   "devDependencies": {
+    "@tanstack/router-cli": "^1.82",
     "@tanstack/router-vite-plugin": "1.82.10",
     "@types/node": "20.17.6",
     "@types/react": "18.3.12",
