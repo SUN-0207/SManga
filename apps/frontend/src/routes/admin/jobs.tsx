@@ -81,7 +81,7 @@ function AdminJobsPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {STAT_ORDER.map((state) => {
-          const meta = STAT_META[state];
+          const meta = STAT_META[state] ?? { label: state, icon: Clock, tone: 'neutral' as const };
           const count = stats[state] ?? 0;
           const Icon = meta.icon;
           const valueClass =

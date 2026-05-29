@@ -58,6 +58,7 @@ export function ReaderHeader() {
           ) : (
             <Link
               to="/dang-nhap"
+              search={{ redirect: '/tu-sach' }}
               className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <LogIn className="h-4 w-4" aria-hidden />

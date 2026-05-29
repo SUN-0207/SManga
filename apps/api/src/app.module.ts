@@ -14,6 +14,7 @@ import { CoversModule } from './modules/covers/covers.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { SearchModule } from './modules/search/search.module';
 import { UserDataModule } from './modules/user-data/user-data.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { UserDataModule } from './modules/user-data/user-data.module';
     JobsModule,
     SearchModule,
     UserDataModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

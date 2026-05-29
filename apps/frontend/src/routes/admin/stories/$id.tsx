@@ -33,6 +33,8 @@ const STATUS_META: Record<string, { tone: string; icon: typeof CheckCircle2 }> =
   failed: { tone: 'text-destructive', icon: AlertCircle },
 };
 
+const STATUS_FALLBACK = { tone: 'text-muted-foreground', icon: Clock };
+
 function AdminStoryDetail() {
   const { id } = Route.useParams();
 
@@ -129,7 +131,7 @@ function AdminStoryDetail() {
               </thead>
               <tbody>
                 {chapters.map((c) => {
-                  const meta = STATUS_META[c.status] ?? STATUS_META.pending;
+                  const meta = STATUS_META[c.status] ?? STATUS_FALLBACK;
                   const Icon = meta.icon;
                   return (
                     <tr key={c.id} className="border-b border-border/60 last:border-0">
