@@ -1,6 +1,6 @@
 import { gzipSync } from 'node:zlib';
-import { eq, sql } from 'drizzle-orm';
-import { storyMetadataSchema, type StoryMetadata } from '@smanga/shared';
+import { eq, inArray, sql } from 'drizzle-orm';
+import { storyMetadataSchema, type CatalogPage, type StoryMetadata } from '@smanga/shared';
 import {
   chapter,
   genre,
@@ -43,15 +43,40 @@ export interface ImportResult {
   totalChapters: number;
 }
 
-export async function importStory(db: Database, url: string): Promise<ImportResult> {
+/**
+ * Phase A — metadata-only import.
+ *
+ * Fetches the story page, persists the story row + cover + genres + the
+ * `story_source` link. Does NOT touch the chapter list (that's Phase B).
+ *
+ * Idempotent against an already-imported URL: if `story_source` already has
+ * the (sourceId, externalId) pair, returns the existing storyId without
+ * re-writing metadata.
+ */
+export async function importStoryMetadata(
+  db: Database,
+  url: string,
+): Promise<{ storyId: string; alreadyExisted: boolean }> {
   const adapter = resolveAdapterForUrl(url);
   const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
-  logger.info({ url, source: adapter.id }, 'importing story');
+  logger.info({ url, source: adapter.id }, 'importing story metadata');
 
   await bucket.acquire();
   const html = await fetchHtml(url);
   const rawMetadata = await adapter.parseStoryFromUrl(url, html);
   const metadata: StoryMetadata = storyMetadataSchema.parse(rawMetadata);
+
+  // Dedup by (sourceId, externalId) before any expensive work (cover download).
+  const existing = await db
+    .select({ storyId: storySource.storyId })
+    .from(storySource)
+    .where(
+      sql`${storySource.sourceId} = ${adapter.id} AND ${storySource.externalId} = ${metadata.externalId}`,
+    )
+    .limit(1);
+  if (existing[0]) {
+    return { storyId: existing[0].storyId, alreadyExisted: true };
+  }
 
   const cover = metadata.coverUrl ? await downloadCover(metadata.coverUrl) : null;
 
@@ -73,6 +98,7 @@ export async function importStory(db: Database, url: string): Promise<ImportResu
       status: metadata.status,
       cover: cover?.bytes,
       coverMimeType: cover?.mimeType,
+      discoveryStatus: 'pending',
     })
     .returning();
   if (!storyRow) throw new Error('story insert returned no row');
@@ -103,41 +129,196 @@ export async function importStory(db: Database, url: string): Promise<ImportResu
       .onConflictDoNothing();
   }
 
-  let total = 0;
-  let page = 1;
-  while (true) {
-    const listUrl = adapter.buildListChaptersUrl(url, page);
-    await bucket.acquire();
-    const listHtml = await fetchHtml(listUrl);
-    const { chapters, hasNextPage } = await adapter.listChapters(listHtml);
-    if (chapters.length === 0) break;
+  logger.info({ storyId: storyRow.id }, 'story metadata persisted');
+  return { storyId: storyRow.id, alreadyExisted: false };
+}
 
-    const rows = chapters.map((c) => ({
-      storyId: storyRow.id,
-      index: String(c.index),
-      title: c.title,
-      sourceId: adapter.id,
-      externalUrl: c.externalUrl,
-      status: 'pending' as const,
-    }));
-    await db.insert(chapter).values(rows).onConflictDoNothing();
-    total += rows.length;
+/**
+ * Phase B — discover chapter list for a metadata-only story.
+ *
+ * Paginates the source's chapter-list pages and inserts pending chapter rows.
+ * Sets discovery_status running → complete (or failed on error).
+ *
+ * Safe to retry on a failed story; safe to no-op on a story that's already
+ * complete (no extra rows inserted thanks to ON CONFLICT DO NOTHING).
+ */
+export async function discoverChapters(
+  db: Database,
+  storyId: string,
+): Promise<{ totalChapters: number }> {
+  const [storyRow] = await db.select().from(story).where(eq(story.id, storyId)).limit(1);
+  if (!storyRow) throw new Error(`story not found: ${storyId}`);
 
-    if (!hasNextPage) break;
-    page += 1;
-    if (page > 200) {
-      logger.warn({ url }, 'chapter list pagination exceeded 200 pages; aborting');
-      break;
-    }
-  }
+  const [link] = await db
+    .select()
+    .from(storySource)
+    .where(sql`${storySource.storyId} = ${storyId} AND ${storySource.isPrimary} = true`)
+    .limit(1);
+  if (!link) throw new Error(`no primary source link for story: ${storyId}`);
+
+  const adapter = getAdapter(link.sourceId);
+  const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
+  logger.info({ storyId, url: link.externalUrl }, 'discovering chapters');
 
   await db
     .update(story)
-    .set({ totalChapters: total, updatedAt: new Date() })
-    .where(eq(story.id, storyRow.id));
+    .set({ discoveryStatus: 'running', discoveryError: null, updatedAt: new Date() })
+    .where(eq(story.id, storyId));
 
-  logger.info({ storyId: storyRow.id, total }, 'story imported');
-  return { storyId: storyRow.id, totalChapters: total };
+  try {
+    let total = 0;
+    let page = 1;
+    while (true) {
+      const listUrl = adapter.buildListChaptersUrl(link.externalUrl, page);
+      await bucket.acquire();
+      const listHtml = await fetchHtml(listUrl);
+      const { chapters, hasNextPage } = await adapter.listChapters(listHtml);
+      if (chapters.length === 0) break;
+
+      const rows = chapters.map((c) => ({
+        storyId,
+        index: String(c.index),
+        title: c.title,
+        sourceId: adapter.id,
+        externalUrl: c.externalUrl,
+        status: 'pending' as const,
+      }));
+      await db.insert(chapter).values(rows).onConflictDoNothing();
+      total += rows.length;
+
+      if (!hasNextPage) break;
+      page += 1;
+      if (page > 200) {
+        logger.warn({ storyId }, 'chapter list pagination exceeded 200 pages; aborting');
+        break;
+      }
+    }
+
+    await db
+      .update(story)
+      .set({
+        totalChapters: total,
+        discoveryStatus: 'complete',
+        discoveryError: null,
+        discoveredAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(story.id, storyId));
+
+    logger.info({ storyId, total }, 'chapter discovery complete');
+    return { totalChapters: total };
+  } catch (err) {
+    const msg = (err as Error).message ?? String(err);
+    await db
+      .update(story)
+      .set({ discoveryStatus: 'failed', discoveryError: msg, updatedAt: new Date() })
+      .where(eq(story.id, storyId));
+    throw err;
+  }
+}
+
+/**
+ * Composite import (back-compat for CLI): metadata + chapter discovery in one
+ * call. New code paths (catalog bulk import) should call the two helpers
+ * separately.
+ */
+export async function importStory(db: Database, url: string): Promise<ImportResult> {
+  const { storyId } = await importStoryMetadata(db, url);
+  const { totalChapters } = await discoverChapters(db, storyId);
+  return { storyId, totalChapters };
+}
+
+/**
+ * Catalog browse — fetch + parse a listing page from a source. Each returned
+ * StoryListItem is annotated with `existingStoryId` / `existingDiscoveryStatus`
+ * so the UI can show "already imported" badges + skip selection.
+ */
+export type DiscoveryStatus = 'pending' | 'running' | 'complete' | 'failed';
+
+export interface BrowseResult extends Omit<CatalogPage, 'items'> {
+  feedId: string;
+  items: (CatalogPage['items'][number] & {
+    existingStoryId: string | null;
+    existingDiscoveryStatus: DiscoveryStatus | null;
+  })[];
+}
+
+export async function browseCatalog(
+  db: Database,
+  sourceId: string,
+  feedId: string,
+  page: number,
+): Promise<BrowseResult> {
+  const adapter = getAdapter(sourceId);
+  if (!adapter.catalogFeeds.some((f) => f.id === feedId)) {
+    throw new Error(`unknown feed for source ${sourceId}: ${feedId}`);
+  }
+  const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
+
+  await bucket.acquire();
+  const url = adapter.buildCatalogUrl(feedId, page);
+  const html = await fetchHtml(url);
+  const parsed = await adapter.parseCatalogPage(html, feedId, page);
+
+  return annotateWithExisting(db, parsed, sourceId, feedId);
+}
+
+export async function searchCatalog(
+  db: Database,
+  sourceId: string,
+  query: string,
+  page: number,
+): Promise<BrowseResult> {
+  const adapter = getAdapter(sourceId);
+  if (!adapter.buildSearchUrl || !adapter.parseSearchPage) {
+    throw new Error(`source ${sourceId} does not support search`);
+  }
+  const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
+
+  await bucket.acquire();
+  const url = adapter.buildSearchUrl(query, page);
+  const html = await fetchHtml(url);
+  const parsed = await adapter.parseSearchPage(html, query, page);
+
+  return annotateWithExisting(db, parsed, sourceId, 'search');
+}
+
+async function annotateWithExisting(
+  db: Database,
+  parsed: CatalogPage,
+  sourceId: string,
+  feedId: string,
+): Promise<BrowseResult> {
+  if (parsed.items.length === 0) {
+    return { page: parsed.page, hasNextPage: parsed.hasNextPage, feedId, items: [] };
+  }
+  const externalIds = parsed.items.map((it) => it.externalId);
+  const existing = await db
+    .select({
+      externalId: storySource.externalId,
+      storyId: storySource.storyId,
+      discoveryStatus: story.discoveryStatus,
+    })
+    .from(storySource)
+    .innerJoin(story, eq(story.id, storySource.storyId))
+    .where(
+      sql`${storySource.sourceId} = ${sourceId} AND ${inArray(storySource.externalId, externalIds)}`,
+    );
+
+  const map = new Map(existing.map((r) => [r.externalId, r]));
+  return {
+    page: parsed.page,
+    hasNextPage: parsed.hasNextPage,
+    feedId,
+    items: parsed.items.map((it) => {
+      const hit = map.get(it.externalId);
+      return {
+        ...it,
+        existingStoryId: hit?.storyId ?? null,
+        existingDiscoveryStatus: hit?.discoveryStatus ?? null,
+      };
+    }),
+  };
 }
 
 async function uniqueSlug(db: Database, base: string): Promise<string> {
@@ -172,7 +353,7 @@ export async function fetchChapterById(db: Database, chapterId: string): Promise
       .update(chapter)
       .set({
         contentText: compressed,
-        contentByteSize: raw.length, // uncompressed size for stats
+        contentByteSize: raw.length,
         status: 'crawled',
         crawledAt: new Date(),
         lastError: null,
@@ -188,7 +369,10 @@ export async function fetchChapterById(db: Database, chapterId: string): Promise
   }
 }
 
-export async function fetchAllPendingChapters(db: Database, storyId: string): Promise<{ done: number; failed: number }> {
+export async function fetchAllPendingChapters(
+  db: Database,
+  storyId: string,
+): Promise<{ done: number; failed: number }> {
   const pending = await db
     .select({ id: chapter.id })
     .from(chapter)

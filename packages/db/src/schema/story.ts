@@ -12,7 +12,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { source } from './source.ts';
-import { storySourceStatusEnum, storyStatusEnum } from './enums.ts';
+import { storyDiscoveryStatusEnum, storySourceStatusEnum, storyStatusEnum } from './enums.ts';
 
 const bytea = customType<{ data: Buffer; default: false }>({
   dataType() {
@@ -33,6 +33,9 @@ export const story = pgTable(
     status: storyStatusEnum('status').notNull().default('unknown'),
     totalChapters: integer('total_chapters').notNull().default(0),
     lastChapterAt: timestamp('last_chapter_at', { withTimezone: true }),
+    discoveryStatus: storyDiscoveryStatusEnum('discovery_status').notNull().default('pending'),
+    discoveryError: text('discovery_error'),
+    discoveredAt: timestamp('discovered_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

@@ -19,3 +19,10 @@ export const chapterStatusEnum = pgEnum('chapter_status', [
 ]);
 
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
+
+export const storyDiscoveryStatusEnum = pgEnum('story_discovery_status', [
+  'pending',
+  'running',
+  'complete',
+  'failed',
+]);
