@@ -1,10 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
+import { AlertCircle, ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { ChapterCrawlPanel } from '@/components/admin/ChapterCrawlPanel';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, Tbody, Td, Th, Thead, Tr } from '@/components/ui/table';
 
 export const Route = createFileRoute('/admin/stories/$id')({
   component: AdminStoryDetail,
@@ -19,12 +17,6 @@ interface StoryRow {
   slug: string;
 }
 
-interface StorySource {
-  sourceId: string;
-  externalUrl: string;
-  isPrimary: boolean;
-}
-
 interface ChapterRow {
   id: string;
   index: string;
@@ -35,10 +27,10 @@ interface ChapterRow {
   size: number | null;
 }
 
-const STATUS_VARIANT: Record<string, 'default' | 'success' | 'destructive' | 'secondary'> = {
-  pending: 'secondary',
-  crawled: 'success',
-  failed: 'destructive',
+const STATUS_META: Record<string, { tone: string; icon: typeof CheckCircle2 }> = {
+  crawled: { tone: 'text-emerald-600', icon: CheckCircle2 },
+  pending: { tone: 'text-muted-foreground', icon: Clock },
+  failed: { tone: 'text-destructive', icon: AlertCircle },
 };
 
 function AdminStoryDetail() {
@@ -57,91 +49,141 @@ function AdminStoryDetail() {
   const story = storyQ.data;
   const chapters = chaptersQ.data ?? [];
 
-  // Derive sources from story detail or fetch separately if needed
-  // The admin story detail endpoint returns the basic story row; sources need a separate call
-  // but since the plan doesn't expose sources on GET /stories/:id for admin,
-  // we show what we have from storySource via the story slug endpoint if needed.
-  // For now, render whatever comes back.
-
-  if (storyQ.isLoading) return <p className="text-muted-foreground">Đang tải...</p>;
-  if (!story) return <p className="text-destructive">Không tìm thấy truyện.</p>;
+  if (storyQ.isLoading)
+    return <p className="text-sm text-muted-foreground">Đang tải...</p>;
+  if (!story)
+    return <p className="text-sm text-destructive">Không tìm thấy truyện.</p>;
 
   const crawledCount = chapters.filter((c) => c.status === 'crawled').length;
   const pendingCount = chapters.filter((c) => c.status === 'pending').length;
   const failedCount = chapters.filter((c) => c.status === 'failed').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <Link
           to="/admin/stories"
-          className="text-sm underline text-muted-foreground hover:no-underline cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer mb-3"
         >
-          ← Truyện
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Truyện
         </Link>
-        <h1 className="text-2xl font-bold mt-2">{story.title}</h1>
-        <p className="text-muted-foreground">
-          {story.author ?? '—'} · {story.totalChapters} chapter
+        <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">
+          {story.title}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          {story.author ?? 'Khuyết danh'} · {story.totalChapters} chapter ·{' '}
+          <a
+            href={`/truyen/${story.slug}`}
+            className="hover:text-foreground transition-colors duration-200 underline-offset-4 hover:underline cursor-pointer"
+          >
+            /truyen/{story.slug}
+          </a>
         </p>
       </div>
 
-      {/* Chapter stats */}
-      <div className="flex gap-4 text-sm">
-        <span className="text-emerald-600 font-medium">{crawledCount} đã crawl</span>
-        <span className="text-muted-foreground">{pendingCount} chờ</span>
-        {failedCount > 0 && <span className="text-destructive">{failedCount} lỗi</span>}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Stat icon={CheckCircle2} label="Đã crawl" value={crawledCount} tone="positive" />
+        <Stat icon={Clock} label="Chờ" value={pendingCount} />
+        <Stat icon={AlertCircle} label="Lỗi" value={failedCount} tone={failedCount > 0 ? 'warning' : 'neutral'} />
       </div>
 
-      {/* Crawl controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Crawl chapter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChapterCrawlPanel storyId={id} />
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-border bg-background p-5">
+        <h2 className="font-heading font-semibold text-base mb-1">Crawl chapter</h2>
+        <p className="text-xs text-muted-foreground mb-4">
+          Enqueue job để fetch nội dung chapter từ source gốc.
+        </p>
+        <ChapterCrawlPanel storyId={id} />
+      </div>
 
-      {/* Chapter list */}
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Danh sách chapter</h2>
+      <div className="rounded-xl border border-border bg-background overflow-hidden">
+        <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+          <h2 className="font-heading font-semibold text-base">Danh sách chapter</h2>
+          <span className="text-xs text-muted-foreground tabular-nums">{chapters.length}</span>
+        </div>
         {chaptersQ.isLoading ? (
-          <p className="text-muted-foreground">Đang tải...</p>
+          <p className="text-sm text-muted-foreground p-8 text-center">Đang tải...</p>
+        ) : chapters.length === 0 ? (
+          <p className="text-sm text-muted-foreground p-8 text-center">Chưa có chapter.</p>
         ) : (
-          <Table>
-            <Thead>
-              <Tr>
-                <Th className="w-16">#</Th>
-                <Th>Tiêu đề</Th>
-                <Th className="w-32">Trạng thái</Th>
-                <Th className="w-24">Bytes</Th>
-                <Th>Lỗi</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {chapters.map((c) => (
-                <Tr key={c.id}>
-                  <Td className="font-mono text-xs">{c.index}</Td>
-                  <Td className="text-sm">{c.title}</Td>
-                  <Td>
-                    <Badge variant={STATUS_VARIANT[c.status] ?? 'secondary'}>{c.status}</Badge>
-                  </Td>
-                  <Td className="text-xs text-muted-foreground">{c.size ?? '—'}</Td>
-                  <Td className="text-xs text-destructive truncate max-w-xs">
-                    {c.lastError ?? ''}
-                  </Td>
-                </Tr>
-              ))}
-              {chapters.length === 0 && (
-                <Tr>
-                  <Td colSpan={5} className="text-center text-muted-foreground py-8">
-                    Không có chapter nào
-                  </Td>
-                </Tr>
-              )}
-            </Tbody>
-          </Table>
+          <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-background z-10">
+                <tr className="border-b border-border text-left">
+                  <th className="px-5 py-2.5 w-16 text-[11px] uppercase tracking-wider font-medium text-muted-foreground tabular-nums">
+                    #
+                  </th>
+                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                    Tiêu đề
+                  </th>
+                  <th className="px-5 py-2.5 w-28 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                    Trạng thái
+                  </th>
+                  <th className="px-5 py-2.5 w-24 text-[11px] uppercase tracking-wider font-medium text-muted-foreground tabular-nums">
+                    Bytes
+                  </th>
+                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                    Lỗi
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {chapters.map((c) => {
+                  const meta = STATUS_META[c.status] ?? STATUS_META.pending;
+                  const Icon = meta.icon;
+                  return (
+                    <tr key={c.id} className="border-b border-border/60 last:border-0">
+                      <td className="px-5 py-2 font-mono text-xs text-muted-foreground tabular-nums">
+                        {c.index}
+                      </td>
+                      <td className="px-5 py-2 text-sm">{c.title}</td>
+                      <td className="px-5 py-2">
+                        <span className={`inline-flex items-center gap-1 text-xs ${meta.tone}`}>
+                          <Icon className="h-3 w-3" />
+                          {c.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-2 text-xs text-muted-foreground tabular-nums">
+                        {c.size ?? '—'}
+                      </td>
+                      <td className="px-5 py-2 text-xs text-destructive truncate max-w-xs">
+                        {c.lastError ?? ''}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function Stat({
+  icon: Icon,
+  label,
+  value,
+  tone = 'neutral',
+}: {
+  icon: typeof CheckCircle2;
+  label: string;
+  value: number;
+  tone?: 'neutral' | 'positive' | 'warning';
+}) {
+  const valueClass =
+    tone === 'warning' && value > 0
+      ? 'text-[hsl(var(--color-cta))]'
+      : 'text-foreground';
+  return (
+    <div className="rounded-xl border border-border bg-background p-4">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Icon className="h-4 w-4" />
+        <p className="text-xs uppercase tracking-[0.18em] font-medium">{label}</p>
+      </div>
+      <div className={`mt-2 font-heading font-bold text-2xl tabular-nums ${valueClass}`}>
+        {value.toLocaleString('vi-VN')}
       </div>
     </div>
   );

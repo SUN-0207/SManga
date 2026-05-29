@@ -1,22 +1,34 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  PauseCircle,
+  RefreshCw,
+  Timer,
+} from 'lucide-react';
 import { jobsApi } from '@/api/jobs';
 import { JobsTable } from '@/components/admin/JobsTable';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 export const Route = createFileRoute('/admin/jobs')({
   component: AdminJobsPage,
 });
 
-const STAT_LABELS: Record<string, string> = {
-  waiting: 'Chờ',
-  active: 'Đang chạy',
-  completed: 'Hoàn thành',
-  failed: 'Thất bại',
-  delayed: 'Delay',
-  paused: 'Dừng',
+const STAT_META: Record<
+  string,
+  { label: string; icon: typeof CheckCircle2; tone: 'neutral' | 'positive' | 'warning' }
+> = {
+  waiting: { label: 'Chờ', icon: Clock, tone: 'neutral' },
+  active: { label: 'Đang chạy', icon: Loader2, tone: 'neutral' },
+  completed: { label: 'Hoàn thành', icon: CheckCircle2, tone: 'positive' },
+  failed: { label: 'Thất bại', icon: AlertTriangle, tone: 'warning' },
+  delayed: { label: 'Delay', icon: Timer, tone: 'neutral' },
+  paused: { label: 'Dừng', icon: PauseCircle, tone: 'neutral' },
 };
+
+const STAT_ORDER = ['waiting', 'active', 'completed', 'failed', 'delayed', 'paused'];
 
 function AdminJobsPage() {
   const statsQ = useQuery({
@@ -31,47 +43,69 @@ function AdminJobsPage() {
     refetchInterval: 5000,
   });
 
-  const stats = statsQ.data ?? {};
+  const stats = (statsQ.data ?? {}) as Record<string, number>;
   const jobs = jobsQ.data ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Jobs</h1>
-        <Button
-          variant="outline"
-          size="sm"
+    <div className="space-y-8">
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
+            Hàng đợi
+          </p>
+          <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">Jobs</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Theo dõi và retry job crawl. Tự động cập nhật mỗi 5 giây.
+          </p>
+        </div>
+        <button
+          type="button"
           onClick={() => {
             void statsQ.refetch();
             void jobsQ.refetch();
           }}
-          className="cursor-pointer"
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-border hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
+          <RefreshCw className="h-4 w-4" />
           Làm mới
-        </Button>
+        </button>
       </div>
 
-      {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {Object.entries(stats).map(([state, count]) => (
-          <Card key={state}>
-            <CardHeader className="pb-1 pt-3 px-3">
-              <CardTitle className="text-xs text-muted-foreground">
-                {STAT_LABELS[state] ?? state}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3">
-              <div className="text-2xl font-bold">{count}</div>
-            </CardContent>
-          </Card>
-        ))}
+        {STAT_ORDER.map((state) => {
+          const meta = STAT_META[state];
+          const count = stats[state] ?? 0;
+          const Icon = meta.icon;
+          const valueClass =
+            meta.tone === 'warning' && count > 0
+              ? 'text-[hsl(var(--color-cta))]'
+              : 'text-foreground';
+          return (
+            <div
+              key={state}
+              className="rounded-xl border border-border bg-background p-4"
+            >
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Icon className="h-3.5 w-3.5" />
+                <p className="text-[10px] uppercase tracking-[0.18em] font-medium">
+                  {meta.label}
+                </p>
+              </div>
+              <div className={`mt-2 font-heading font-bold text-2xl tabular-nums ${valueClass}`}>
+                {count.toLocaleString('vi-VN')}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Jobs table */}
-      <div>
-        <h2 className="text-lg font-semibold mb-3">Recent jobs</h2>
+      <div className="rounded-xl border border-border bg-background overflow-hidden">
+        <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+          <h2 className="font-heading font-semibold text-base">Job gần đây</h2>
+          <span className="text-xs text-muted-foreground tabular-nums">{jobs.length}</span>
+        </div>
         {jobsQ.isLoading ? (
-          <p className="text-muted-foreground">Đang tải...</p>
+          <p className="text-sm text-muted-foreground p-8 text-center">Đang tải...</p>
         ) : (
           <JobsTable jobs={jobs} />
         )}

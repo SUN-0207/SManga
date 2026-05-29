@@ -1,9 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { AlertCircle, CheckCircle2, Download } from 'lucide-react';
 import { api } from '@/lib/api-client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 export function ImportStoryForm() {
   const queryClient = useQueryClient();
@@ -35,26 +33,43 @@ export function ImportStoryForm() {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="flex flex-col md:flex-row gap-3 items-start md:items-end mb-6"
-    >
-      <div className="flex-1 space-y-1">
-        <Label htmlFor="story-url">URL truyện</Label>
-        <Input
-          id="story-url"
-          type="url"
-          placeholder="https://truyenfull.today/..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          required
-        />
-      </div>
-      <Button type="submit" disabled={busy} className="cursor-pointer">
-        {busy ? 'Đang gửi...' : 'Import truyện'}
-      </Button>
-      {error && <p className="basis-full text-sm text-destructive">{error}</p>}
-      {info && <p className="basis-full text-sm text-emerald-600">{info}</p>}
+    <form onSubmit={onSubmit} className="space-y-3">
+      <label className="block space-y-1">
+        <span className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+          URL truyện
+        </span>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://truyenfull.today/..."
+            required
+            className="flex-1 h-10 px-4 rounded-md border border-border bg-background text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-foreground/40 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+          />
+          <button
+            type="submit"
+            disabled={busy}
+            className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-md bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            <Download className="h-4 w-4" />
+            {busy ? 'Đang gửi...' : 'Import'}
+          </button>
+        </div>
+      </label>
+
+      {error && (
+        <p className="flex items-center gap-1.5 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          {error}
+        </p>
+      )}
+      {info && (
+        <p className="flex items-center gap-1.5 text-sm text-emerald-600">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          {info}
+        </p>
+      )}
     </form>
   );
 }
