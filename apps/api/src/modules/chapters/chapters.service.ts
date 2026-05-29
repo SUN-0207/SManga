@@ -81,6 +81,25 @@ export class ChaptersService {
 
   async crawl(storyId: string, dto: CrawlChaptersDto) {
     const db = this.db;
+
+    // Plan 7 gate: refuse content-crawl until chapter LIST discovery is complete.
+    // Without this we'd happily enqueue 0 fetch-chapter jobs for a metadata-only
+    // story and confuse the operator. Surface the precondition explicitly.
+    const [storyRow] = await db
+      .select({ discoveryStatus: story.discoveryStatus })
+      .from(story)
+      .where(eq(story.id, storyId))
+      .limit(1);
+    if (!storyRow) {
+      throw new BadRequestException(`story not found: ${storyId}`);
+    }
+    if (storyRow.discoveryStatus !== 'complete') {
+      throw new BadRequestException(
+        `chapter list not yet discovered for this story (discovery_status=${storyRow.discoveryStatus}). ` +
+          'POST /stories/:id/discover first.',
+      );
+    }
+
     let ids: string[] = [];
     if (dto.mode === 'one') {
       if (!dto.chapterId) throw new BadRequestException('chapterId required for mode=one');

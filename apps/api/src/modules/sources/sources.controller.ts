@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { SourcesService } from './sources.service';
 import { CreateSourceDto, UpdateSourceDto } from './dto/create-source.dto';
@@ -30,5 +30,21 @@ export class SourcesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.sources.remove(id);
+  }
+
+  @Get(':id/feeds')
+  feeds(@Param('id') id: string) {
+    return this.sources.feeds(id);
+  }
+
+  @Get(':id/discover')
+  discover(
+    @Param('id') id: string,
+    @Query('feed') feed?: string,
+    @Query('page') page?: string,
+    @Query('q') q?: string,
+  ) {
+    const pageNum = Math.max(1, Number(page) || 1);
+    return this.sources.discover(id, feed, pageNum, q);
   }
 }

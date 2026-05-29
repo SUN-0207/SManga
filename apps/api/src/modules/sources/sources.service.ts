@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { asc, eq } from 'drizzle-orm';
-import { listAdapters } from '@smanga/crawler';
+import { browseCatalog, getAdapter, listAdapters, searchCatalog } from '@smanga/crawler';
 import { source } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
@@ -49,5 +49,40 @@ export class SourcesService {
     } catch (err) {
       throw new ConflictException(`cannot delete: ${(err as Error).message}`);
     }
+  }
+
+  /**
+   * Plan 7 catalog browse — return adapter's declared catalog feeds + whether
+   * search is supported. Used by the discover UI to render feed tabs.
+   */
+  feeds(sourceId: string) {
+    let adapter;
+    try {
+      adapter = getAdapter(sourceId);
+    } catch {
+      throw new NotFoundException(`no adapter for source ${sourceId}`);
+    }
+    return {
+      sourceId: adapter.id,
+      sourceName: adapter.name,
+      baseUrl: adapter.baseUrl,
+      feeds: adapter.catalogFeeds,
+      supportsSearch: Boolean(adapter.buildSearchUrl && adapter.parseSearchPage),
+    };
+  }
+
+  async discover(sourceId: string, feedId: string | undefined, page: number, query: string | undefined) {
+    try {
+      getAdapter(sourceId);
+    } catch {
+      throw new NotFoundException(`no adapter for source ${sourceId}`);
+    }
+    if (query && query.trim().length > 0) {
+      return searchCatalog(this.db, sourceId, query.trim(), page);
+    }
+    if (!feedId) {
+      throw new BadRequestException('either feed or q is required');
+    }
+    return browseCatalog(this.db, sourceId, feedId, page);
   }
 }
