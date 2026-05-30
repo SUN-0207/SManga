@@ -9,6 +9,9 @@ import {
   type AdminUserRow,
 } from '@/api/users';
 import { useAuthStore } from '@/stores/auth-store';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
+import { EmptyFolder } from '@/components/ui/illustrations/EmptyFolder';
 
 export const Route = createFileRoute('/admin/users')({
   component: AdminUsersPage,
@@ -115,9 +118,19 @@ function AdminUsersPage() {
         {usersQ.isLoading ? (
           <p className="text-body-sm text-fg-muted p-8 text-center">Đang tải...</p>
         ) : !data || data.items.length === 0 ? (
-          <p className="text-body-sm text-fg-muted p-8 text-center">
-            {q ? `Không tìm thấy tài khoản nào khớp với "${q}".` : 'Chưa có tài khoản nào.'}
-          </p>
+          q ? (
+            <EmptyState
+              illustration={<EmptySearch />}
+              title="Không tìm thấy tài khoản"
+              description={`Không có tài khoản nào khớp với "${q}".`}
+            />
+          ) : (
+            <EmptyState
+              illustration={<EmptyFolder />}
+              title="Chưa có tài khoản nào"
+              description="Hệ thống chưa có người dùng nào đăng ký."
+            />
+          )
         ) : (
           <table className="w-full text-left text-body-sm">
             <thead className="sticky top-0 z-10 bg-bg/95 backdrop-blur">

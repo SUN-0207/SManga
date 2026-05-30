@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
-import { BookmarkX, Clock, CheckCircle2 } from 'lucide-react';
 import { me } from '@/api/auth';
 import { useAuthStore } from '@/stores/auth-store';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptyBookshelf } from '@/components/ui/illustrations/EmptyBookshelf';
+import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
 
 export const Route = createFileRoute('/tu-sach')({
   beforeLoad: async () => {
@@ -30,7 +32,7 @@ function LibraryPage() {
         <p className="mt-2 text-body text-fg-muted">Theo dõi truyện đang đọc và những truyện bạn đã đánh dấu để xem sau.</p>
       </header>
 
-      {/* Plan C: ReadingStatsCard slot here */}
+      <ReadingStatsCard />
 
       <div className="flex gap-1 border-b border-border">
         <TabButton active={tab === 'reading'} onClick={() => setTab('reading')}>
@@ -101,28 +103,35 @@ function LibraryCard({ item }: { item: any }) {
   );
 }
 
-function EmptyShelf({ tab }: { tab: ShelfTab }) {
-  // Plan C: replace with <EmptyState /> primitive + illustration
-  const config = {
-    reading: { icon: Clock, title: 'Chưa có truyện đang đọc', desc: 'Mở 1 chương bất kỳ và đọc 5 giây — chúng tôi sẽ tự ghi nhớ.' },
-    saved: { icon: BookmarkX, title: 'Tủ sách còn trống', desc: 'Đánh dấu truyện anh thích để dễ tìm lại. Bắt đầu khám phá nào.' },
-    completed: { icon: CheckCircle2, title: 'Chưa truyện nào hoàn tất', desc: 'Đọc đến chương cuối là tự động xuất hiện ở đây.' },
-  }[tab];
-  const Icon = config.icon;
+const EMPTY_SHELF_CONFIG: Record<
+  ShelfTab,
+  { title: string; description: string; ctaLabel: string }
+> = {
+  reading: {
+    title: 'Chưa có truyện đang đọc',
+    description: 'Mở 1 chương bất kỳ và đọc 5 giây — chúng tôi sẽ tự ghi nhớ.',
+    ctaLabel: 'Khám phá truyện',
+  },
+  saved: {
+    title: 'Tủ sách còn trống',
+    description: 'Đánh dấu truyện bạn thích để dễ tìm lại. Bắt đầu khám phá nào.',
+    ctaLabel: 'Khám phá truyện',
+  },
+  completed: {
+    title: 'Chưa truyện nào hoàn tất',
+    description: 'Đọc đến chương cuối là tự động xuất hiện ở đây.',
+    ctaLabel: 'Khám phá truyện',
+  },
+};
+
+function EmptyShelf({ tab }: Readonly<{ tab: ShelfTab }>) {
+  const config = EMPTY_SHELF_CONFIG[tab];
   return (
-    <div className="flex flex-col items-center text-center py-16 px-4">
-      <div className="h-16 w-16 rounded-full bg-bg-subtle flex items-center justify-center mb-4">
-        <Icon className="h-8 w-8 text-fg-subtle" aria-hidden />
-      </div>
-      <h3 className="text-heading-md">{config.title}</h3>
-      <p className="mt-2 max-w-sm text-body-sm text-fg-muted">{config.desc}</p>
-      <Link
-        to="/tim-kiem"
-        search={{ q: '', page: 1 }}
-        className="mt-6 inline-flex items-center gap-2 h-10 px-4 rounded-md bg-accent-gradient text-white text-body-sm font-semibold shadow-glow-pink-soft hover:shadow-glow-pink transition-shadow duration-200"
-      >
-        Khám phá truyện →
-      </Link>
-    </div>
+    <EmptyState
+      illustration={<EmptyBookshelf />}
+      title={config.title}
+      description={config.description}
+      cta={{ label: config.ctaLabel, to: '/kham-pha', search: { q: '', page: 1 } }}
+    />
   );
 }

@@ -6,6 +6,9 @@ import { listStories } from '@/api/stories';
 import { discoverApi, type BulkAction } from '@/api/discover';
 import { ImportStoryForm } from '@/components/admin/ImportStoryForm';
 import { StubBadge } from '@/components/admin/StubBadge';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptyFolder } from '@/components/ui/illustrations/EmptyFolder';
+import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
 
 export const Route = createFileRoute('/admin/stories/')({
   component: AdminStoriesPage,
@@ -129,7 +132,7 @@ function AdminStoriesPage() {
         {isLoading ? (
           <p className="text-body-sm text-fg-muted p-8 text-center">Đang tải...</p>
         ) : filtered.length === 0 ? (
-          <EmptyState filter={filter} />
+          <StoriesEmptyState filter={filter} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-body-sm">
@@ -235,11 +238,33 @@ function AdminStoriesPage() {
   );
 }
 
-function EmptyState({ filter }: { filter: Filter }) {
-  let msg = 'Chưa có truyện nào.';
-  if (filter === 'stub') msg = 'Không có truyện chỉ metadata.';
-  else if (filter === 'full') msg = 'Không có truyện đã đủ chapter.';
-  return <p className="text-body-sm text-fg-muted p-8 text-center">{msg}</p>;
+function StoriesEmptyState({ filter }: Readonly<{ filter: Filter }>) {
+  if (filter === 'stub') {
+    return (
+      <EmptyState
+        illustration={<EmptySearch />}
+        title="Không có truyện chỉ metadata"
+        description="Tất cả truyện đã được crawl đầy đủ chapter."
+      />
+    );
+  }
+  if (filter === 'full') {
+    return (
+      <EmptyState
+        illustration={<EmptySearch />}
+        title="Không có truyện đã đủ chapter"
+        description="Chưa có truyện nào hoàn thành crawl. Hãy quét + crawl từ catalog."
+      />
+    );
+  }
+  return (
+    <EmptyState
+      illustration={<EmptyFolder />}
+      title="Chưa có truyện nào"
+      description="Bắt đầu bằng cách khám phá catalog từ nguồn hoặc dán URL trực tiếp."
+      cta={{ label: 'Chọn nguồn', to: '/admin/sources' }}
+    />
+  );
 }
 
 function BulkActionBar({

@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { listStories, type StorySummary } from '@/api/stories';
 import { StoryCard } from '@/components/reader/StoryCard';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
 
 export const Route = createFileRoute('/kham-pha')({
   component: DiscoverPage,
@@ -121,26 +123,19 @@ function DiscoverPage() {
           ))}
         </div>
       ) : (
-        <EmptyState />
+        <DiscoverEmptyState />
       )}
     </div>
   );
 }
 
-function EmptyState() {
+function DiscoverEmptyState() {
   return (
-    <div className="flex flex-col items-center text-center gap-3 py-16">
-      <Search className="h-10 w-10 text-fg-subtle" aria-hidden />
-      <h3 className="text-heading-md">Không tìm thấy truyện</h3>
-      <p className="text-body-sm text-fg-muted max-w-md">
-        Thử từ khoá khác hoặc xem mới cập nhật.
-      </p>
-      <Link
-        to="/"
-        className="mt-2 inline-flex items-center gap-1.5 text-body-sm hover:underline underline-offset-4 cursor-pointer"
-      >
-        ← Quay về trang chủ
-      </Link>
-    </div>
+    <EmptyState
+      illustration={<EmptySearch />}
+      title="Không tìm thấy truyện"
+      description="Thử từ khoá khác hoặc xem mới cập nhật."
+      cta={{ label: 'Quay về trang chủ', to: '/' }}
+    />
   );
 }

@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { jobsApi, type JobRow } from '@/api/jobs';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptyQueue } from '@/components/ui/illustrations/EmptyQueue';
 
 const PAGE_SIZE = 25;
 
@@ -64,7 +66,14 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
   }
 
   if (jobs.length === 0) {
-    return <p className="text-body-sm text-fg-muted p-8 text-center">Không có job nào.</p>;
+    return (
+      <EmptyState
+        illustration={<EmptyQueue />}
+        title="Hàng đợi đang trống"
+        description="Chưa có job nào. Bắt đầu crawl từ trang Truyện để tạo job."
+        cta={{ label: 'Đến trang Truyện', to: '/admin/stories' }}
+      />
+    );
   }
 
   return (
