@@ -11,7 +11,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootLayout() {
   useMeQuery();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const isApp = path.startsWith('/admin') || path === '/dang-nhap';
+  const isApp = path.startsWith('/admin') || path === '/dang-nhap' || path === '/dang-ky';
   return (
     <ThemeProvider>
       {isApp ? (

@@ -30,11 +30,24 @@ export class JobsService {
 
   async retry(id: string) {
     const job = await this.queue.getJob(id);
-    if (!job) return { ok: false };
-    if (await job.isFailed()) {
+    if (!job) return { ok: false, reason: 'job not found' };
+    try {
       await job.retry();
       return { ok: true };
+    } catch {
+      // Bull refuses retry() on non-failed jobs (e.g., jobs that exhausted attempts
+      // are sometimes moved to 'completed' with failedReason populated). Clone
+      // with the same name + data so the user-visible "Retry" always re-enqueues.
+      const cloned = await this.queue.add(job.name, job.data, {
+        attempts: job.opts.attempts ?? 3,
+        backoff: job.opts.backoff,
+      });
+      try {
+        await job.remove();
+      } catch {
+        /* keep going even if cleanup fails */
+      }
+      return { ok: true, requeued: true, newId: String(cloned.id) };
     }
-    return { ok: false, reason: 'not failed' };
   }
 }

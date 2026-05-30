@@ -1,13 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Module, type Provider } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { GoogleStrategy, isGoogleEnabled } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { OptionalJwtGuard } from '@/common/guards/jwt.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { loadEnv } from '@/config/env';
+
+const oauthProviders: Provider[] = isGoogleEnabled() ? [GoogleStrategy] : [];
 
 @Module({
   imports: [
@@ -21,6 +24,7 @@ import { loadEnv } from '@/config/env';
   providers: [
     AuthService,
     JwtStrategy,
+    ...oauthProviders,
     // OptionalJwtGuard runs first — populates req.user from cookie/header when a
     // valid JWT is present, but does NOT reject unauthenticated requests.
     { provide: APP_GUARD, useClass: OptionalJwtGuard },

@@ -19,5 +19,5 @@ packages/*/src/**/*.d.ts
 packages/*/src/**/*.d.ts.map
 # Playwright MCP transient artifacts (snapshots + screenshots from interactive testing)
 .playwright-mcp/
-/test-*.png
+/*.png
 tests-e2e/

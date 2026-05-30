@@ -8,6 +8,7 @@ import {
   LogOut,
   ExternalLink,
   Menu,
+  Users,
   X,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
@@ -29,6 +30,7 @@ const NAV = [
   { href: '/admin/sources' as const, label: 'Sources', icon: Database, exact: false },
   { href: '/admin/stories' as const, label: 'Truyện', icon: BookOpen, exact: false },
   { href: '/admin/jobs' as const, label: 'Jobs', icon: Activity, exact: false },
+  { href: '/admin/users' as const, label: 'Người dùng', icon: Users, exact: false },
 ];
 
 function AdminLayout() {
@@ -120,7 +122,7 @@ function AdminLayout() {
             Đăng xuất
           </button>
         </div>
-        <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full min-w-0">
           <Outlet />
         </div>
       </main>

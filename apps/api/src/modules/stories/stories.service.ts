@@ -23,6 +23,34 @@ export class StoriesService {
     @InjectQueue(QUEUE_CRAWLER) private readonly queue: Queue,
   ) {}
 
+  async storageStats() {
+    const result = await this.db.execute(sql`
+      SELECT
+        COALESCE(SUM(octet_length(content_text)), 0)::bigint AS content_bytes,
+        COUNT(*) FILTER (WHERE content_text IS NOT NULL)::bigint AS chapters_with_content
+      FROM chapter
+    `);
+    const coverResult = await this.db.execute(sql`
+      SELECT
+        COALESCE(SUM(octet_length(cover)), 0)::bigint AS cover_bytes,
+        COUNT(*) FILTER (WHERE cover IS NOT NULL)::bigint AS stories_with_cover
+      FROM story
+    `);
+    const chapterRow = (result as unknown as { rows: Array<Record<string, string | number>> })
+      .rows?.[0] ?? (result as unknown as Array<Record<string, string | number>>)[0];
+    const coverRow = (coverResult as unknown as { rows: Array<Record<string, string | number>> })
+      .rows?.[0] ?? (coverResult as unknown as Array<Record<string, string | number>>)[0];
+    const contentBytes = Number(chapterRow?.content_bytes ?? 0);
+    const coverBytes = Number(coverRow?.cover_bytes ?? 0);
+    return {
+      contentBytes,
+      coverBytes,
+      totalBytes: contentBytes + coverBytes,
+      chaptersWithContent: Number(chapterRow?.chapters_with_content ?? 0),
+      storiesWithCover: Number(coverRow?.stories_with_cover ?? 0),
+    };
+  }
+
   async list(page = 1, limit = 48) {
     const rows = await this.db
       .select({

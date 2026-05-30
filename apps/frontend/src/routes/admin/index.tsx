@@ -1,10 +1,17 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, BookOpen, Database, FileText, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, Database, FileText, HardDrive, Loader2 } from 'lucide-react';
 import { sourcesApi } from '@/api/sources';
 import { jobsApi } from '@/api/jobs';
-import { listStories } from '@/api/stories';
+import { getStorageStats, listStories } from '@/api/stories';
 import { useAuthStore } from '@/stores/auth-store';
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
 
 export const Route = createFileRoute('/admin/')({
   component: AdminDashboard,
@@ -29,6 +36,13 @@ function AdminDashboard() {
     queryFn: jobsApi.stats,
     enabled: isLoggedIn,
     refetchInterval: isLoggedIn ? 10_000 : false,
+    retry: false,
+  });
+  const storageQ = useQuery({
+    queryKey: ['stories', 'storage-stats'],
+    queryFn: getStorageStats,
+    enabled: isLoggedIn,
+    refetchInterval: isLoggedIn ? 30_000 : false,
     retry: false,
   });
 
@@ -66,6 +80,17 @@ function AdminDashboard() {
           icon={FileText}
           label="Chapter (tổng)"
           value={chapterCount}
+          href="/admin/stories"
+        />
+        <StatCard
+          icon={HardDrive}
+          label="Dung lượng"
+          textValue={storageQ.data ? formatBytes(storageQ.data.totalBytes) : undefined}
+          subValue={
+            storageQ.data
+              ? `Nội dung ${formatBytes(storageQ.data.contentBytes)} · Bìa ${formatBytes(storageQ.data.coverBytes)}`
+              : undefined
+          }
           href="/admin/stories"
         />
       </Section>
@@ -126,20 +151,31 @@ function StatCard({
   icon: Icon,
   label,
   value,
+  textValue,
+  subValue,
   tone = 'neutral',
   href,
 }: {
   icon: typeof Database;
   label: string;
-  value: number | null | undefined;
+  value?: number | null;
+  textValue?: string;
+  subValue?: string;
   tone?: 'neutral' | 'positive' | 'warning';
   href: string;
 }) {
-  const display = value === undefined || value === null ? '—' : value.toLocaleString('vi-VN');
+  const display =
+    textValue !== undefined
+      ? textValue
+      : value === undefined || value === null
+        ? '—'
+        : value.toLocaleString('vi-VN');
   const valueTone =
     tone === 'warning' && value && value > 0
       ? 'text-[hsl(var(--color-cta))]'
       : 'text-foreground';
+  const valueSizeClass =
+    textValue !== undefined && textValue.length > 8 ? 'text-3xl' : 'text-4xl';
 
   return (
     <Link
@@ -158,9 +194,12 @@ function StatCard({
             aria-hidden
           />
         </div>
-        <div className={`mt-3 font-heading font-bold text-4xl tabular-nums tracking-tight ${valueTone}`}>
+        <div className={`mt-3 font-heading font-bold tabular-nums tracking-tight ${valueSizeClass} ${valueTone}`}>
           {display}
         </div>
+        {subValue && (
+          <p className="mt-2 text-xs text-muted-foreground leading-snug">{subValue}</p>
+        )}
       </div>
     </Link>
   );

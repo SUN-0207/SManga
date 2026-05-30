@@ -14,11 +14,18 @@ import { CoversModule } from './modules/covers/covers.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { SearchModule } from './modules/search/search.module';
 import { UserDataModule } from './modules/user-data/user-data.module';
+import { UsersModule } from './modules/users/users.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      // Repo root .env (monorepo single source of truth). On Railway env vars are
+      // injected directly, so a missing file is fine — `ignoreEnvFile` not needed
+      // because dotenv silently skips when the file isn't present.
+      envFilePath: ['../../.env'],
+    }),
     LoggerModule.forRoot({
       pinoHttp: {
         transport:
@@ -39,6 +46,7 @@ import { HealthModule } from './modules/health/health.module';
     JobsModule,
     SearchModule,
     UserDataModule,
+    UsersModule,
     HealthModule,
   ],
 })

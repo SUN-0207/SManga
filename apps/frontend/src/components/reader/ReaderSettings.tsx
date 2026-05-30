@@ -32,32 +32,30 @@ export function ReaderSettings() {
   const isDefault = theme === 'system' && fontSize === '18' && fontFamily === 'serif';
 
   return (
-    <div className="space-y-4 text-sm">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <RadioGroup
-          legendId="settings-theme"
-          legend="Giao diện"
-          options={THEMES}
-          value={theme}
-          onChange={setTheme}
-        />
-        <RadioGroup
-          legendId="settings-fontsize"
-          legend="Cỡ chữ (nội dung chương)"
-          options={FONT_SIZES}
-          value={fontSize}
-          onChange={setFontSize}
-        />
-        <RadioGroup
-          legendId="settings-fontfamily"
-          legend="Phông chữ (nội dung chương)"
-          options={FONT_FAMILIES}
-          value={fontFamily}
-          onChange={setFontFamily}
-        />
-      </div>
+    <div className="space-y-6 text-sm">
+      <RadioGroup
+        legendId="settings-theme"
+        legend="Giao diện"
+        options={THEMES}
+        value={theme}
+        onChange={setTheme}
+      />
+      <RadioGroup
+        legendId="settings-fontsize"
+        legend="Cỡ chữ (nội dung chương)"
+        options={FONT_SIZES}
+        value={fontSize}
+        onChange={setFontSize}
+      />
+      <RadioGroup
+        legendId="settings-fontfamily"
+        legend="Phông chữ (nội dung chương)"
+        options={FONT_FAMILIES}
+        value={fontFamily}
+        onChange={setFontFamily}
+      />
 
-      <div className="flex justify-end">
+      <div className="pt-2 border-t border-border/60 flex justify-end">
         <button
           type="button"
           onClick={resetDefaults}

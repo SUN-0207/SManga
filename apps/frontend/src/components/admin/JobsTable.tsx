@@ -79,7 +79,7 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
               <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
                 Payload
               </th>
-              <th className="px-5 py-2.5 w-28 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+              <th className="px-5 py-2.5 w-32 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
                 Trạng thái
               </th>
               <th className="px-5 py-2.5 w-20 text-[11px] uppercase tracking-wider font-medium text-muted-foreground tabular-nums">
@@ -103,7 +103,7 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
                 </td>
                 <td className="px-5 py-2">
                   <span
-                    className={`inline-flex items-center h-5 px-2 rounded-full text-[11px] border ${
+                    className={`inline-flex items-center h-5 px-2 rounded-full text-[11px] border whitespace-nowrap ${
                       STATE_TONE[j.state] ?? STATE_TONE.waiting
                     }`}
                   >

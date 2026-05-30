@@ -45,3 +45,16 @@ export async function listChapters(slug: string, page = 1, pageSize = 50): Promi
   });
   return res.data;
 }
+
+export interface StorageStats {
+  contentBytes: number;
+  coverBytes: number;
+  totalBytes: number;
+  chaptersWithContent: number;
+  storiesWithCover: number;
+}
+
+export async function getStorageStats(): Promise<StorageStats> {
+  const res = await api.get<StorageStats>('/stories/storage-stats');
+  return res.data;
+}

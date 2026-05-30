@@ -1,43 +1,50 @@
 import { useState, type FormEvent } from 'react';
 import { createFileRoute, useNavigate, useRouter, Link } from '@tanstack/react-router';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { login as apiLogin } from '@/api/auth';
+import { login as apiLogin, register as apiRegister } from '@/api/auth';
 import { useAuthStore } from '@/stores/auth-store';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 
-export const Route = createFileRoute('/dang-nhap')({
-  component: SignInPage,
+export const Route = createFileRoute('/dang-ky')({
+  component: SignUpPage,
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === 'string' ? search.redirect : '/tu-sach',
   }),
 });
 
-function SignInPage() {
+function SignUpPage() {
   const { redirect } = Route.useSearch();
   const navigate = useNavigate();
   const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const pwdTooShort = password.length > 0 && password.length < 8;
+  const canSubmit = email.length > 0 && password.length >= 8 && !busy;
+
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (!canSubmit) return;
     setError(null);
     setBusy(true);
     try {
+      await apiRegister(email, password, name.trim() || undefined);
       const { user } = await apiLogin(email, password);
       setUser(user);
       await router.invalidate();
       void navigate({ to: redirect });
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 401) setError('Sai email hoặc mật khẩu.');
-      else if (status === 429) setError('Đăng nhập quá nhiều lần. Thử lại sau ít phút.');
-      else setError('Không kết nối được máy chủ. Thử lại sau.');
+      if (status === 409) setError('Email đã có tài khoản. Vui lòng đăng nhập.');
+      else if (status === 400 || status === 422)
+        setError('Thông tin không hợp lệ. Kiểm tra email và mật khẩu.');
+      else setError('Đăng ký không thành công. Thử lại sau.');
       setBusy(false);
     }
   }
@@ -49,14 +56,35 @@ function SignInPage() {
           Tài khoản
         </p>
         <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">
-          Đăng nhập
+          Tạo tài khoản
         </h1>
-        <p className="text-sm text-muted-foreground">Tiếp tục hành trình đọc của bạn.</p>
+        <p className="text-sm text-muted-foreground">Bắt đầu hành trình đọc của bạn.</p>
       </header>
 
-      <GoogleButton redirect={redirect} label="Tiếp tục với Google" />
+      <GoogleButton redirect={redirect} label="Đăng ký với Google" />
 
       <form onSubmit={submit} className="space-y-4" noValidate>
+        <div className="space-y-1.5">
+          <label
+            htmlFor="name"
+            className="text-[11px] font-medium text-foreground/80 uppercase tracking-[0.18em]"
+          >
+            Tên hiển thị{' '}
+            <span className="normal-case text-muted-foreground font-normal tracking-normal">
+              (tuỳ chọn)
+            </span>
+          </label>
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete="name"
+            placeholder="Bạn"
+            className="w-full h-11 px-3.5 rounded-md border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:border-foreground/40 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+          />
+        </div>
+
         <div className="space-y-1.5">
           <label
             htmlFor="email"
@@ -90,7 +118,8 @@ function SignInPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              autoComplete="current-password"
+              autoComplete="new-password"
+              minLength={8}
               className="w-full h-11 pl-3.5 pr-11 rounded-md border border-border bg-background text-sm focus:outline-none focus:border-foreground/40 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
             />
             <button
@@ -102,6 +131,13 @@ function SignInPage() {
               {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+          <p
+            className={`text-xs transition-colors duration-200 ${
+              pwdTooShort ? 'text-destructive' : 'text-muted-foreground'
+            }`}
+          >
+            Tối thiểu 8 ký tự
+          </p>
         </div>
 
         {error && (
@@ -112,22 +148,22 @@ function SignInPage() {
 
         <button
           type="submit"
-          disabled={busy}
+          disabled={!canSubmit}
           className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-md bg-[hsl(var(--color-cta))] text-white text-sm font-medium hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--color-cta))] focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-          {busy ? 'Đang đăng nhập...' : 'Đăng nhập'}
+          {busy ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
         </button>
       </form>
 
       <p className="mt-8 pt-6 border-t border-border/60 text-sm text-muted-foreground text-center">
-        Chưa có tài khoản?{' '}
+        Đã có tài khoản?{' '}
         <Link
-          to="/dang-ky"
+          to="/dang-nhap"
           search={{ redirect }}
           className="font-medium text-foreground hover:text-[hsl(var(--color-cta))] transition-colors duration-200"
         >
-          Tạo tài khoản mới
+          Đăng nhập
         </Link>
       </p>
     </AuthShell>

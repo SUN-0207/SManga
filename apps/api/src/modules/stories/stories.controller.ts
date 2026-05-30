@@ -17,6 +17,11 @@ export class StoriesController {
     return this.stories.list(q.page, q.limit);
   }
 
+  @Get('storage-stats')
+  storageStats() {
+    return this.stories.storageStats();
+  }
+
   @Get('by-slug/:slug')
   getBySlug(@Param('slug') slug: string) {
     return this.stories.getBySlug(slug);
