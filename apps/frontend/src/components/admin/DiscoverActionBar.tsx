@@ -1,25 +1,24 @@
 import { useState } from 'react';
-import { Download, Loader2, Zap, X } from 'lucide-react';
+import { Loader2, X, Zap, Download } from 'lucide-react';
 import { discoverApi } from '@/api/discover';
 import { useDiscoverImportStore } from '@/stores/discover-import-store';
 
 export function DiscoverActionBar({ onImported }: { onImported: () => void }) {
   const selected = useDiscoverImportStore((s) => s.selected);
-  const clear = useDiscoverImportStore((s) => s.clearSelection);
+  const clearSelection = useDiscoverImportStore((s) => s.clearSelection);
   const markImporting = useDiscoverImportStore((s) => s.markImporting);
   const markDone = useDiscoverImportStore((s) => s.markDone);
 
-  const [submitting, setSubmitting] = useState(false);
+  // Local UI state (NOT in store):
   const [autoCrawl, setAutoCrawl] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
   if (selected.size === 0 && !info) return null;
 
-  function submitIcon() {
-    if (submitting) return <Loader2 className="h-4 w-4 animate-spin" aria-hidden />;
-    return autoCrawl ? <Zap className="h-4 w-4" aria-hidden /> : <Download className="h-4 w-4" aria-hidden />;
-  }
+  const count = selected.size;
+  const overLimit = count > 50;
 
   async function submit() {
     setError(null);
@@ -52,52 +51,72 @@ export function DiscoverActionBar({ onImported }: { onImported: () => void }) {
   }
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[min(680px,calc(100%-3rem))] rounded-2xl border border-border bg-background shadow-[0_30px_60px_-20px_rgba(0,0,0,0.35)] p-4 space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-foreground text-background text-xs font-bold tabular-nums">
-            {selected.size}
-          </span>
-          <span className="text-muted-foreground">
-            đã chọn{selected.size > 50 ? ' (vượt giới hạn 50)' : ''}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={clear}
+    <div className="pointer-events-none fixed bottom-6 left-1/2 z-40 w-[min(95vw,720px)] -translate-x-1/2">
+      <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border-strong bg-bg-elevated px-4 py-3 shadow-elev">
+        <span className="inline-flex h-7 items-center rounded-full bg-accent-gradient px-3 text-[12px] font-semibold text-white">
+          {count}
+        </span>
+        <span className="text-body-sm text-fg-muted">
+          đã chọn
+          {overLimit ? <span className="ml-2 text-destructive">(tối đa 50)</span> : null}
+        </span>
+
+        <label className="ml-auto inline-flex items-center gap-2 text-body-sm text-fg-muted cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={autoCrawl}
+            onChange={(e) => setAutoCrawl(e.target.checked)}
             disabled={submitting}
-            aria-label="Bỏ chọn tất cả"
-            className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={submit}
-            disabled={submitting || selected.size === 0 || selected.size > 50}
-            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-[hsl(var(--color-cta))] text-white text-sm font-medium hover:opacity-95 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--color-cta))] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitIcon()}
-            {autoCrawl ? 'Import + crawl' : 'Chỉ import metadata'}
-          </button>
-        </div>
-      </div>
-      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={autoCrawl}
-          onChange={(e) => setAutoCrawl(e.target.checked)}
+            className="h-4 w-4 rounded border-border-strong bg-bg-elevated text-accent focus:ring-2 focus:ring-accent cursor-pointer"
+          />
+          Crawl ngay
+        </label>
+
+        <button
+          type="button"
+          onClick={() => {
+            clearSelection();
+            setInfo(null);
+            setError(null);
+          }}
           disabled={submitting}
-          className="h-3.5 w-3.5 rounded border-border accent-[hsl(var(--color-cta))] cursor-pointer"
-        />
-        <span>Tự động quét danh sách chương + crawl nội dung ngay sau khi import metadata</span>
-      </label>
+          aria-label="Bỏ chọn tất cả"
+          className="inline-flex h-9 items-center gap-1 rounded-md border border-border-strong bg-bg-subtle px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle/80 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <X className="h-4 w-4" />
+          Bỏ chọn
+        </button>
+
+        <button
+          type="button"
+          onClick={submit}
+          disabled={submitting || selected.size === 0 || overLimit}
+          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent-gradient px-4 text-body-sm font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Đang import…
+            </>
+          ) : autoCrawl ? (
+            <>
+              <Zap className="h-4 w-4" aria-hidden />
+              Import + crawl
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" aria-hidden />
+              Chỉ import metadata
+            </>
+          )}
+        </button>
+      </div>
+
       {error && (
-        <p className="text-xs text-destructive">{error}</p>
+        <p className="mt-2 text-[11px] text-destructive text-center">{error}</p>
       )}
       {info && !error && (
-        <p className="text-xs text-emerald-600">{info}</p>
+        <p className="mt-2 text-[11px] text-positive text-center">{info}</p>
       )}
     </div>
   );
