@@ -28,12 +28,11 @@ export function BookmarkToggle({ storyId }: { storyId: string }) {
 
   if (!user) return null;
 
-  const baseClass =
-    'group inline-flex items-center gap-2 h-11 px-5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed';
   const activeClass =
-    'bg-[hsl(var(--color-cta))] text-white border border-transparent hover:opacity-95 focus-visible:ring-[hsl(var(--color-cta))]';
+    "inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-body-sm font-medium text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
+
   const inactiveClass =
-    'border border-border hover:border-foreground/40 hover:bg-muted/60 focus-visible:ring-primary';
+    "inline-flex items-center gap-1.5 rounded-full border border-border bg-bg px-4 py-1.5 text-body-sm font-medium text-fg transition-colors duration-fast hover:border-border-strong hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
 
   return (
     <button
@@ -41,7 +40,7 @@ export function BookmarkToggle({ storyId }: { storyId: string }) {
       onClick={() => toggle.mutate()}
       disabled={isLoading || toggle.isPending}
       aria-pressed={active}
-      className={`${baseClass} ${active ? activeClass : inactiveClass}`}
+      className={active ? activeClass : inactiveClass}
     >
       <Heart
         className="h-4 w-4 transition-transform duration-200 group-hover:scale-110"
