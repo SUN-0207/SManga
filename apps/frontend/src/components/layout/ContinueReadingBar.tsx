@@ -1,41 +1,74 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useRouterState } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react';
+import { meApi } from '@/api/me';
 import { useAuthStore } from '@/stores/auth-store';
 
 /**
- * Plan A: visible shell with placeholder. Plan C will replace the
- * placeholder data with `GET /me/continue-reading` query.
- *
- * Renders only when user is authenticated. Hidden by AppShell when on
- * chapter reader route.
+ * Plan C: wired to GET /me/reading-progress/continue-reading.
+ * Visibility rules:
+ *   1. anonymous → hidden (query disabled)
+ *   2. no progress → BE returns 204 → hidden
+ *   3. current route is the chapter reader for THIS exact story → hidden
  */
 export function ContinueReadingBar() {
   const user = useAuthStore((s) => s.user);
+  const path = useRouterState({ select: (s) => s.location.pathname });
+
+  const q = useQuery({
+    queryKey: ['me', 'continue-reading'],
+    queryFn: () => meApi.continueReading(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
   if (!user) return null;
+  const cr = q.data;
+  if (!cr) return null;
 
-  // Plan C: replace with useQuery(['me','continue-reading']). For now
-  // return null so we don't render fake data in front of users. The
-  // visual shell below is committed but unreachable until Plan C wires data.
-  return null;
+  // Hide when already reading the same story's chapter.
+  // Note: AppShell already hides the bar on ALL chapter routes via its `isChapter` regex,
+  // so in practice this branch never fires today. We keep it as intentional double-defense:
+  // if AppShell's regex ever changes, the bar still won't appear "on top of itself" while
+  // the reader is on the matching chapter.
+  const onThisChapter = path.startsWith(`/truyen/${cr.storySlug}/chuong/`);
+  if (onThisChapter) return null;
 
-  // eslint-disable-next-line @typescript-eslint/no-unreachable -- shell preserved for Plan C
-  // biome-ignore lint/correctness/noUnreachableCode: <explanation>
+  const chapter = Math.floor(Number(cr.chapterIndex));
+
+  // Sticky offset must match the responsive height of DesktopTopNav.
+  // Plan B Task 10 sets the admin top bar to `h-14 sm:h-16` and the reader nav follows
+  // the same pattern. If the reader nav uses a different height, update both values here.
   return (
     <Link
-      to="/"
-      className="sticky top-14 z-20 block bg-accent-gradient-soft border-b border-accent/20 hover:bg-accent/12 transition-colors duration-fast"
+      to="/truyen/$slug/chuong/$index"
+      params={{ slug: cr.storySlug, index: String(chapter) }}
+      className="sticky top-14 sm:top-16 z-20 block border-b border-accent/20 transition-colors duration-fast hover:bg-accent/12"
+      style={{
+        background:
+          'linear-gradient(90deg, rgba(236,72,153,0.12), rgba(244,114,182,0.04))',
+      }}
     >
       <div className="container flex items-center h-10 sm:h-12 gap-3">
-        <div
-          aria-hidden
-          className="h-7 w-5 sm:h-9 sm:w-7 bg-accent-gradient rounded-sm flex-shrink-0"
-        />
+        {cr.hasCover ? (
+          <img
+            src={`/api/v1/cover/${cr.storyId}`}
+            alt=""
+            loading="lazy"
+            className="h-7 w-5 sm:h-9 sm:w-7 rounded-sm object-cover flex-shrink-0"
+          />
+        ) : (
+          <div
+            aria-hidden
+            className="h-7 w-5 sm:h-9 sm:w-7 bg-accent-gradient rounded-sm flex-shrink-0"
+          />
+        )}
         <div className="flex-1 min-w-0">
           <p className="text-[10px] sm:text-label text-fg-muted truncate">
-            ĐỌC TIẾP · CHƯƠNG 47 / 671
+            ĐỌC TIẾP · CHƯƠNG {chapter} / {cr.totalChapters}
           </p>
           <p className="text-body-sm sm:text-body font-semibold truncate">
-            Xuyên Thư Chi Bá Ái Độc Thê
+            {cr.storyTitle}
           </p>
         </div>
         <span className="hidden sm:inline-flex items-center h-7 px-3 rounded-md bg-fg text-bg text-body-sm font-semibold">

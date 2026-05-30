@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { readingProgressApi } from '@/api/reading-progress';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -10,6 +11,7 @@ export function ReadingProgressTracker({
   chapterIndex: number;
 }) {
   const user = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
   const fired = useRef(false);
 
   useEffect(() => {
@@ -19,13 +21,20 @@ export function ReadingProgressTracker({
   useEffect(() => {
     if (!user || fired.current) return;
     const timer = window.setTimeout(() => {
-      readingProgressApi.upsert(storyId, chapterIndex).catch(() => {
-        /* swallow — non-critical */
-      });
+      readingProgressApi
+        .upsert(storyId, chapterIndex)
+        .then(() => {
+          void qc.invalidateQueries({ queryKey: ['me', 'continue-reading'] });
+          void qc.invalidateQueries({ queryKey: ['me', 'stats'] });
+          void qc.invalidateQueries({ queryKey: ['me', 'reading-progress'] });
+        })
+        .catch(() => {
+          /* swallow — non-critical */
+        });
       fired.current = true;
     }, 5_000);
     return () => window.clearTimeout(timer);
-  }, [storyId, chapterIndex, user]);
+  }, [storyId, chapterIndex, user, qc]);
 
   return null;
 }
