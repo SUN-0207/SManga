@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, Database, FileText, HardDrive, Loader2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, Database, FileCheck2, FileText, HardDrive, Loader2 } from 'lucide-react';
 import { sourcesApi } from '@/api/sources';
 import { jobsApi } from '@/api/jobs';
 import { getStorageStats, listStories } from '@/api/stories';
@@ -97,10 +97,18 @@ function AdminDashboard() {
 
       <Section eyebrow="Hàng đợi" title="Crawler">
         <StatCard
-          icon={CheckCircle2}
-          label="Hoàn thành"
-          value={stats?.completed}
+          icon={FileCheck2}
+          label="Chapter đã crawl"
+          value={storageQ.data?.chaptersWithContent}
+          subValue="Đếm thẳng từ DB · không bị Bull queue trim"
           tone="positive"
+          href="/admin/stories"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label="Job hoàn thành"
+          value={stats?.completed}
+          subValue="20k gần nhất trong queue"
           href="/admin/jobs"
         />
         <StatCard
