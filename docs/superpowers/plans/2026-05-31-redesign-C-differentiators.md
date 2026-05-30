@@ -1162,12 +1162,11 @@ Drop-cap, Newsreader 600 title, reading-time eyebrow, and scene-break ship witho
   With the drop-cap + scene-break aware renderer. Above the `return` (after `estMinutes` declaration ~line 102) add:
   ```tsx
     // Drop-cap eligibility — suppress on smallest font size or when no letter in first 20 chars.
-    // Plan B Task 5 changed FONT_SIZES to numeric values [16, 18, 20, 22] (smallest = 16, not 15).
-    // The store therefore returns `fontSize` as a number. Use numeric comparison.
-    // Spec C calls for suppression at the "Nhỏ" size — that is value `16` after Plan B.
+    // The store ships fontSize as the string union '15' | '18' | '20' | '24' (per Plan B Task 5,
+    // which preserves the existing reader-prefs contract). Suppress at '15' per Spec C.
     const wordCount = (chapter.content?.match(/\S+/g) ?? []).length;
     const readingMinutes = Math.max(1, Math.ceil(wordCount / 250));
-    const dropCapAllowed = Number(fontSize) > 16;
+    const dropCapAllowed = fontSize !== '15';
 
     function renderParagraph(para: string, i: number) {
       // Scene break detector
@@ -1225,7 +1224,7 @@ Drop-cap, Newsreader 600 title, reading-time eyebrow, and scene-break ship witho
   - First paragraph: pink-gradient drop-cap on the first letter, body text flowing around it.
   - "N PHÚT ĐỌC" eyebrow under the title (word-based now).
   - If a paragraph contains `* * *`, it renders as centered `· · ·` decoration.
-  - In reader settings, switching to font size "Nhỏ" (16 after Plan B Task 5) → drop-cap disappears, paragraph renders normally. Switching back to "Vừa" (18) or larger → drop-cap returns.
+  - In reader settings, switching to font size "Nhỏ" (15) → drop-cap disappears, paragraph renders normally. Switching back to "Vừa" (18) or larger → drop-cap returns.
   - macOS / DevTools `Emulate CSS prefers-reduced-motion: reduce` → drop-cap renders solid `var(--fg)` color (no gradient).
 
 - [ ] **Step 5: Commit**
@@ -1826,7 +1825,7 @@ After all tasks land, sweep the following in one session:
 - [ ] **Stats update** within ~60s of a chapter read (cache TTL) or instantly on the next route navigation (TanStack Query invalidation in `ReadingProgressTracker`).
 - [ ] **Streak verification** with seeded data: insert 5 consecutive days of progress → `streakDays = 5`. Insert with a 1-day gap → `streakDays = 1` (only today). Insert today only → `streakDays = 1`.
 - [ ] **EmptyState** renders on all 8 surfaces with the correct copy + CTA per Spec C table (3 × tu-sach tabs + kham-pha + tim-kiem-via-redirect + admin/users + admin/jobs + admin/stories).
-- [ ] **Drop-cap** renders pink gradient on the first letter of the first paragraph of every crawled chapter. Suppressed at font size "Nhỏ" (16, after Plan B Task 5) and under `prefers-reduced-motion: reduce`. Falls back to non-gradient when the first 20 chars have no letter.
+- [ ] **Drop-cap** renders pink gradient on the first letter of the first paragraph of every crawled chapter. Suppressed at font size "Nhỏ" ('15') and under `prefers-reduced-motion: reduce`. Falls back to non-gradient when the first 20 chars have no letter.
 - [ ] **Screen reader** test: `VoiceOver` / NVDA reading the first paragraph reads the full word (e.g. "Thẩm"), not "T... Thẩm". (Test by routing through the page with screen reader on.)
 - [ ] **Reading time** correct on a 1000-word chapter (~4 minutes via `ceil(wordCount / 250)`).
 - [ ] **Scene break** `* * *` renders as centered `· · ·` decoration. Plain text paragraphs render normally.
