@@ -121,8 +121,9 @@ function AdminUsersPage() {
           q ? (
             <EmptyState
               illustration={<EmptySearch />}
-              title="Không tìm thấy tài khoản"
-              description={`Không có tài khoản nào khớp với "${q}".`}
+              title="Không tìm thấy tài khoản nào"
+              description="Thử từ khoá khác."
+              cta={{ label: 'Xoá tìm kiếm', onClick: clearSearch }}
             />
           ) : (
             <EmptyState

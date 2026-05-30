@@ -123,19 +123,23 @@ function DiscoverPage() {
           ))}
         </div>
       ) : (
-        <DiscoverEmptyState />
+        <DiscoverEmptyState
+          onReset={() =>
+            void navigate({ to: '/kham-pha', search: { q: '', page: 1, genre: undefined } })
+          }
+        />
       )}
     </div>
   );
 }
 
-function DiscoverEmptyState() {
+function DiscoverEmptyState({ onReset }: Readonly<{ onReset: () => void }>) {
   return (
     <EmptyState
       illustration={<EmptySearch />}
-      title="Không tìm thấy truyện"
-      description="Thử từ khoá khác hoặc xem mới cập nhật."
-      cta={{ label: 'Quay về trang chủ', to: '/' }}
+      title="Không tìm thấy truyện nào khớp"
+      description="Thử từ khoá khác, hoặc xoá bộ lọc để xem tất cả."
+      cta={{ label: 'Xoá bộ lọc', onClick: onReset }}
     />
   );
 }

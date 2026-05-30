@@ -12,6 +12,8 @@ import {
 import { jobsApi } from '@/api/jobs';
 import { JobsTable } from '@/components/admin/JobsTable';
 import { useAuthStore } from '@/stores/auth-store';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptyQueue } from '@/components/ui/illustrations/EmptyQueue';
 
 export const Route = createFileRoute('/admin/jobs')({
   component: AdminJobsPage,
@@ -114,6 +116,13 @@ function AdminJobsPage() {
         </div>
         {jobsQ.isLoading ? (
           <p className="text-sm text-muted-foreground p-8 text-center">Đang tải...</p>
+        ) : jobs.length === 0 ? (
+          <EmptyState
+            illustration={<EmptyQueue />}
+            title="Hàng đợi đang trống"
+            description="Crawl một truyện để thấy job xuất hiện ở đây."
+            cta={{ label: 'Đi đến Truyện', to: '/admin/stories' }}
+          />
         ) : (
           <JobsTable jobs={jobs} />
         )}
