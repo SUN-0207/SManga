@@ -33,8 +33,8 @@ export function ChapterList({ slug, chapters, currentPage, totalPages }: Chapter
                 params={{ slug, index: String(c.index) }}
                 className="group flex items-baseline gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
               >
-                <span className="font-heading font-semibold text-sm text-muted-foreground/70 tabular-nums w-8 shrink-0 group-hover:text-foreground transition-colors duration-200">
-                  {c.index}
+                <span className="font-heading font-semibold text-sm text-muted-foreground/70 tabular-nums w-[5.25rem] shrink-0 group-hover:text-foreground transition-colors duration-200">
+                  Chương {c.index}
                 </span>
                 <span className="text-sm leading-snug line-clamp-1 group-hover:underline underline-offset-[3px] decoration-foreground/40 transition-all duration-200">
                   {c.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '')}
@@ -45,12 +45,12 @@ export function ChapterList({ slug, chapters, currentPage, totalPages }: Chapter
                 className="flex items-baseline gap-3 text-muted-foreground/60"
                 title="Chưa crawl"
               >
-                <span className="font-heading font-semibold text-sm tabular-nums w-8 shrink-0">
-                  {c.index}
+                <span className="font-heading font-semibold text-sm tabular-nums w-[5.25rem] shrink-0">
+                  Chương {c.index}
                 </span>
                 <span className="text-sm leading-snug line-clamp-1 flex items-center gap-1.5">
                   <Clock className="h-3 w-3" />
-                  {c.title}
+                  {c.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '')}
                 </span>
               </span>
             )}
