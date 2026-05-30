@@ -21,3 +21,5 @@ packages/*/src/**/*.d.ts.map
 .playwright-mcp/
 /*.png
 tests-e2e/
+# Superpowers brainstorming visual companion (mockup HTML lives in project for re-use)
+.superpowers/
