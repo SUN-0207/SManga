@@ -52,9 +52,9 @@ function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen flex bg-muted/20">
+    <div className="min-h-screen flex bg-bg">
       {/* Desktop sidebar: persistent on md+ */}
-      <aside className="hidden md:flex w-60 border-r border-border bg-background flex-col shrink-0 sticky top-0 h-screen self-start">
+      <aside className="sticky top-0 hidden h-screen w-60 flex-col self-start border-r border-border bg-bg md:flex">
         <SidebarBrand />
         <SidebarNav path={path} />
         <SidebarFooter />
@@ -66,11 +66,11 @@ function AdminLayout() {
           type="button"
           onClick={() => setMobileNavOpen(false)}
           aria-label="Đóng menu"
-          className="md:hidden fixed inset-0 z-40 bg-foreground/40 backdrop-blur-sm"
+          className="md:hidden fixed inset-0 z-40 bg-fg/40 backdrop-blur-sm"
         />
       )}
       <aside
-        className={`md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border flex flex-col transform transition-transform duration-200 ${
+        className={`md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-bg border-r border-border flex flex-col transform transition-transform duration-200 ${
           mobileNavOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-hidden={!mobileNavOpen}
@@ -78,52 +78,52 @@ function AdminLayout() {
         <div className="h-14 px-4 flex items-center justify-between border-b border-border shrink-0">
           <Link
             to="/admin"
-            className="inline-flex items-baseline gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+            className="inline-flex items-center gap-2 font-sans text-base font-semibold tracking-tight text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
           >
-            <span className="font-heading font-bold text-base tracking-tight leading-none">
-              SManga
-            </span>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-medium">
-              Admin
-            </span>
+            SManga
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">ADMIN</span>
           </Link>
           <button
             type="button"
             onClick={() => setMobileNavOpen(false)}
             aria-label="Đóng menu"
-            className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex items-center justify-center h-8 w-8 rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <SidebarNav path={path} />
+        <MobileDrawerNav path={path} onClose={() => setMobileNavOpen(false)} />
         <SidebarFooter />
       </aside>
 
       <main className="flex-1 min-w-0 flex flex-col">
-        <div className="sticky top-0 z-30 h-14 sm:h-16 border-b border-border bg-background/95 backdrop-blur-md flex items-center px-3 sm:px-6 gap-2">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg/95 px-4 backdrop-blur-md sm:h-16 sm:px-6">
+          {/* Mobile hamburger (left) */}
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
             aria-label="Mở menu"
-            className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
           >
-            <Menu className="h-4 w-4" />
+            <Menu className="h-5 w-5" />
           </button>
-          <span className="md:hidden font-heading font-semibold text-sm">SManga Admin</span>
-          <div className="flex-1" />
-          <span className="hidden sm:inline text-sm text-muted-foreground truncate max-w-[12rem]">
-            {user?.email}
-          </span>
-          <button
-            type="button"
-            onClick={logout}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-border hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            <LogOut className="h-4 w-4" aria-hidden />
-            Đăng xuất
-          </button>
-        </div>
+
+          {/* Mobile label */}
+          <p className="font-sans text-body-sm font-semibold text-fg md:hidden">SManga Admin</p>
+
+          {/* Right cluster */}
+          <div className="ml-auto flex items-center gap-3">
+            <p className="hidden text-body-sm text-fg-muted md:block">{user?.email}</p>
+            <button
+              type="button"
+              onClick={logout}
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border-strong bg-bg px-3 text-body-sm font-medium text-fg transition-colors duration-fast hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <LogOut className="h-4 w-4" />
+              Đăng xuất
+            </button>
+          </div>
+        </header>
         <div className="flex-1 p-4 sm:p-6 lg:p-8 w-full min-w-0">
           <Outlet />
         </div>
@@ -134,17 +134,13 @@ function AdminLayout() {
 
 function SidebarBrand() {
   return (
-    <div className="h-16 px-5 flex items-center border-b border-border shrink-0">
+    <div className="flex h-16 items-center border-b border-border/60 px-5">
       <Link
         to="/admin"
-        className="inline-flex items-baseline gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+        className="inline-flex items-center gap-2 font-sans text-lg font-semibold tracking-tight text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
       >
-        <span className="font-heading font-bold text-lg tracking-tight leading-none">
-          SManga
-        </span>
-        <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-medium">
-          Admin
-        </span>
+        SManga
+        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">ADMIN</span>
       </Link>
     </div>
   );
@@ -153,7 +149,7 @@ function SidebarBrand() {
 function SidebarNav({ path }: { path: string }) {
   return (
     <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-      <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-medium">
+      <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-fg-muted">
         Quản trị
       </p>
       {NAV.map((n) => {
@@ -163,11 +159,11 @@ function SidebarNav({ path }: { path: string }) {
           <Link
             key={n.href}
             to={n.href}
-            className={`flex items-center gap-2.5 h-9 px-3 rounded-md text-sm transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+            className={
               active
-                ? 'bg-foreground text-background font-medium'
-                : 'hover:bg-muted text-foreground/80'
-            }`}
+                ? 'group flex h-9 items-center gap-2.5 rounded-md bg-gradient-to-r from-accent to-accent-strong px-3 text-body-sm font-medium text-white shadow-glow-pink-soft transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
+                : 'group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
+            }
           >
             <Icon className="h-4 w-4" />
             {n.label}
@@ -181,13 +177,39 @@ function SidebarNav({ path }: { path: string }) {
 function SidebarFooter() {
   return (
     <div className="px-3 py-4 border-t border-border space-y-0.5 shrink-0">
-      <a
-        href="/"
-        className="flex items-center gap-2.5 h-9 px-3 rounded-md text-sm hover:bg-muted text-foreground/80 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      <Link
+        to="/"
+        className="group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <ExternalLink className="h-4 w-4" />
         Xem trang đọc
-      </a>
+      </Link>
     </div>
+  );
+}
+
+function MobileDrawerNav({ path, onClose }: { path: string; onClose: () => void }) {
+  return (
+    <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+      {NAV.map((n) => {
+        const active = n.exact ? path === n.href : path.startsWith(n.href);
+        const Icon = n.icon;
+        return (
+          <Link
+            key={n.href}
+            to={n.href}
+            onClick={onClose}
+            className={
+              active
+                ? 'group flex h-9 items-center gap-2.5 rounded-md bg-gradient-to-r from-accent to-accent-strong px-3 text-body-sm font-medium text-white shadow-glow-pink-soft'
+                : 'group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted hover:bg-bg-subtle hover:text-fg'
+            }
+          >
+            <Icon className="h-4 w-4" />
+            {n.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
