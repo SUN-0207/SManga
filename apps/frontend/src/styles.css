@@ -4,31 +4,83 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --border: 240 5.9% 90%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --radius: 0.5rem;
-    --color-cta: 322 84% 60%;
-  }
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --border: 240 3.7% 15.9%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-  }
-  * { @apply border-border; }
-  body { @apply bg-background text-foreground; }
+:root,
+:root[data-theme="dark"] {
+  /* Surfaces */
+  --bg:            #0A0A0A;
+  --bg-elevated:   #18181B;
+  --bg-subtle:     rgba(255, 255, 255, 0.04);
+
+  /* Foreground */
+  --fg:            #FAFAFA;
+  --fg-muted:      rgba(255, 255, 255, 0.60);
+  --fg-subtle:     rgba(255, 255, 255, 0.40);
+
+  /* Brand */
+  --accent:        #EC4899;
+  --accent-strong: #F472B6;
+
+  /* Borders */
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Status */
+  --destructive:   #F43F5E;
+  --positive:      #34D399;
+
+  /* Shadows (signature) */
+  --glow-pink:        0 0 24px rgba(236, 72, 153, 0.40), 0 0 64px rgba(236, 72, 153, 0.15);
+  --glow-pink-soft:   0 0 16px rgba(236, 72, 153, 0.20);
+  --shadow-elev:      0 8px 24px rgba(0, 0, 0, 0.40);
+
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg:            #FAFAFA;
+  --bg-elevated:   #FFFFFF;
+  --bg-subtle:     #F4F4F5;
+
+  --fg:            #18181B;
+  --fg-muted:      #52525B;
+  --fg-subtle:     #A1A1AA;
+
+  --accent:        #EC4899;
+  --accent-strong: #F472B6;
+
+  --border:        #E4E4E7;
+  --border-strong: #D4D4D8;
+
+  --destructive:   #E11D48;
+  --positive:      #059669;
+
+  --glow-pink:        0 0 24px rgba(236, 72, 153, 0.30), 0 0 64px rgba(236, 72, 153, 0.10);
+  --glow-pink-soft:   0 0 16px rgba(236, 72, 153, 0.15);
+  --shadow-elev:      0 8px 24px rgba(0, 0, 0, 0.08);
+
+  color-scheme: light;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Shadcn backwards-compatibility aliases */
+:root,
+:root[data-theme="dark"],
+:root[data-theme="light"] {
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --primary: var(--accent);
+  --primary-foreground: #FFFFFF;
+  --muted: var(--bg-subtle);
+  --muted-foreground: var(--fg-muted);
+  --input: var(--border-strong);
+  --ring: var(--accent);
+  --destructive-foreground: #FFFFFF;
+  --radius: 0.625rem;
 }
