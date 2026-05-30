@@ -184,7 +184,7 @@ function StatCard({ href, icon: Icon, label, value, textValue, subValue, tone = 
       className="group flex flex-col gap-3 rounded-lg border border-border bg-bg-elevated p-6 transition-all duration-fast hover:border-border-strong hover:shadow-elev focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
       <div className="flex items-center gap-2 text-fg-muted">
-        <Icon className="h-4 w-4" />
+        <Icon className="h-4 w-4" aria-hidden />
         <span className="text-[11px] font-medium uppercase tracking-[0.18em]">{label}</span>
       </div>
 
