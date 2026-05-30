@@ -18,34 +18,47 @@ export const Route = createFileRoute('/tai-khoan')({
 function AccountPage() {
   const user = useAuthStore((s) => s.user)!;
   return (
-    <div className="container max-w-3xl py-10 sm:py-14 space-y-10">
-      <header className="space-y-2">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium">
-          Tài khoản
+    <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <header className="mb-8 space-y-2">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fg-muted">
+          TÀI KHOẢN
         </p>
-        <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">
-          Hồ sơ của bạn
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Cập nhật thông tin hiển thị, ảnh đại diện và mật khẩu.
+        <h1 className="font-sans text-display-md text-fg">Hồ sơ của bạn</h1>
+        <p className="text-body-sm text-fg-muted">
+          Quản lý ảnh đại diện, tên hiển thị và mật khẩu.
         </p>
       </header>
 
-      <AvatarCard user={user} />
-      <ProfileCard user={user} />
-      <PasswordCard />
-    </div>
+      {/* Plan C inserts <ReadingStatsCard /> here, REPLACING this comment block. */}
+      {/* <ReadingStatsCard /> — added in Plan C (Spec C differentiators) */}
+
+      <div className="space-y-6">
+        <AvatarCard user={user} />
+        <ProfileCard user={user} />
+        <PasswordCard />
+      </div>
+    </main>
   );
 }
 
-function Card({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+function Card({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <section className="rounded-xl border border-border bg-background overflow-hidden">
-      <div className="px-5 sm:px-6 py-4 border-b border-border/60">
-        <h2 className="font-heading font-semibold text-lg">{title}</h2>
-        {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
-      </div>
-      <div className="p-5 sm:p-6">{children}</div>
+    <section className="rounded-lg border border-border bg-bg-elevated p-5 sm:p-6">
+      <header className="space-y-1 border-b border-border/60 pb-4">
+        <h2 className="font-sans text-heading-md text-fg">{title}</h2>
+        {description ? (
+          <p className="text-body-sm text-fg-muted">{description}</p>
+        ) : null}
+      </header>
+      <div className="pt-5">{children}</div>
     </section>
   );
 }
@@ -104,75 +117,70 @@ function AvatarCard({ user }: { user: User }) {
     }
   }
 
-  const initial = (user.name?.[0] ?? user.email[0] ?? 'U').toUpperCase();
+  const avatarUrl = user.image ?? null;
+  const fallbackInitial = (user.name?.[0] ?? user.email[0] ?? 'U').toUpperCase();
 
   return (
     <Card title="Ảnh đại diện" description="Ảnh sẽ được crop vuông và nén còn 256×256.">
-      <div className="flex items-center gap-5">
-        <div className="relative">
-          {user.image ? (
-            <img
-              src={user.image}
-              alt={`Ảnh đại diện ${user.email}`}
-              className="h-20 w-20 rounded-full object-cover border border-border"
-            />
+      <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+        <div className="relative h-20 w-20 overflow-hidden rounded-full border border-border bg-bg-subtle">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="h-20 w-20 rounded-full bg-foreground/10 text-foreground/80 flex items-center justify-center text-2xl font-heading font-semibold">
-              {initial}
-            </div>
+            <span className="flex h-full w-full items-center justify-center text-heading-md text-fg-muted">
+              {fallbackInitial}
+            </span>
           )}
           {okFlash && (
             <span
               aria-hidden
-              className="absolute -bottom-1 -right-1 inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-500 text-white shadow"
+              className="absolute bottom-0 right-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-white shadow"
             >
               <Check className="h-3.5 w-3.5" />
             </span>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={onPick}
-            className="hidden"
-          />
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={busy !== null}
-            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-sm border border-border hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-border-strong bg-bg-elevated px-4 text-body-sm font-medium text-fg transition-colors duration-fast hover:bg-bg-subtle focus-within:ring-2 focus-within:ring-accent">
             {busy === 'upload' ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             ) : (
-              <Camera className="h-4 w-4" aria-hidden />
+              <Camera className="h-4 w-4" />
             )}
-            {user.image ? 'Đổi ảnh' : 'Tải ảnh lên'}
-          </button>
-          {user.image && (
+            Tải ảnh lên
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="sr-only"
+              onChange={onPick}
+              disabled={busy !== null}
+            />
+          </label>
+
+          {avatarUrl ? (
             <button
               type="button"
               onClick={onRemove}
               disabled={busy !== null}
-              className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex h-10 items-center gap-2 rounded-md px-4 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy === 'remove' ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
               ) : (
-                <Trash2 className="h-4 w-4" aria-hidden />
+                <Trash2 className="h-4 w-4" />
               )}
               Xoá ảnh
             </button>
-          )}
+          ) : null}
         </div>
       </div>
-      {error && (
-        <p role="alert" className="mt-3 text-sm text-destructive">
+      {error ? (
+        <p role="alert" className="mt-3 text-body-sm text-destructive">
           {error}
         </p>
-      )}
+      ) : null}
     </Card>
   );
 }
@@ -183,11 +191,11 @@ function ProfileCard({ user }: { user: User }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
-  const dirty = name.trim() !== (user.name ?? '');
+  const isDirty = name.trim() !== (user.name ?? '');
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!dirty || busy) return;
+    if (!isDirty || busy) return;
     setError(null);
     setOk(false);
     setBusy(true);
@@ -208,10 +216,10 @@ function ProfileCard({ user }: { user: User }) {
   return (
     <Card title="Thông tin cá nhân">
       <form onSubmit={submit} className="space-y-4">
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label
             htmlFor="email"
-            className="text-[11px] font-medium text-foreground/80 uppercase tracking-[0.18em]"
+            className="block text-[11px] font-medium uppercase tracking-[0.18em] text-fg-muted"
           >
             Email
           </label>
@@ -220,15 +228,15 @@ function ProfileCard({ user }: { user: User }) {
             type="email"
             value={user.email}
             disabled
-            className="w-full h-11 px-3.5 rounded-md border border-border bg-muted/40 text-sm text-muted-foreground cursor-not-allowed"
+            className="block h-11 w-full rounded-md border border-border bg-bg-elevated px-3.5 text-body text-fg placeholder:text-fg-subtle transition-shadow duration-fast focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:shadow-glow-pink-soft disabled:bg-bg-subtle disabled:text-fg-muted"
           />
-          <p className="text-xs text-muted-foreground">Email không thể thay đổi.</p>
+          <p className="text-body-sm text-fg-muted">Email không thể thay đổi.</p>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label
             htmlFor="name"
-            className="text-[11px] font-medium text-foreground/80 uppercase tracking-[0.18em]"
+            className="block text-[11px] font-medium uppercase tracking-[0.18em] text-fg-muted"
           >
             Tên hiển thị
           </label>
@@ -239,30 +247,31 @@ function ProfileCard({ user }: { user: User }) {
             onChange={(e) => setName(e.target.value)}
             maxLength={60}
             placeholder="Tên hiển thị"
-            className="w-full h-11 px-3.5 rounded-md border border-border bg-background text-sm focus:outline-none focus:border-foreground/40 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+            className="block h-11 w-full rounded-md border border-border bg-bg-elevated px-3.5 text-body text-fg placeholder:text-fg-subtle transition-shadow duration-fast focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:shadow-glow-pink-soft disabled:bg-bg-subtle disabled:text-fg-muted"
           />
         </div>
 
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
+        {error ? (
+          <p role="alert" className="text-body-sm text-destructive">
             {error}
           </p>
-        )}
+        ) : null}
 
         <div className="flex items-center gap-3">
           <button
             type="submit"
-            disabled={!dirty || busy}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!isDirty || busy}
+            className="inline-flex h-10 items-center justify-center rounded-md bg-fg px-5 text-body-sm font-semibold text-bg transition-opacity duration-fast hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-            Lưu thay đổi
+            {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden /> : null}
+            {busy ? 'Đang lưu…' : 'Lưu thay đổi'}
           </button>
-          {ok && (
-            <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
-              <Check className="h-4 w-4" /> Đã lưu
-            </span>
-          )}
+          {ok ? (
+            <p className="inline-flex items-center gap-1.5 text-body-sm text-positive">
+              <Check className="h-4 w-4" />
+              Đã lưu
+            </p>
+          ) : null}
         </div>
       </form>
     </Card>
@@ -272,8 +281,6 @@ function ProfileCard({ user }: { user: User }) {
 function PasswordCard() {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
-  const [showCur, setShowCur] = useState(false);
-  const [showNext, setShowNext] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
@@ -311,77 +318,76 @@ function PasswordCard() {
           label="Mật khẩu hiện tại"
           value={current}
           onChange={setCurrent}
-          show={showCur}
-          onToggleShow={() => setShowCur((v) => !v)}
           autoComplete="current-password"
         />
-        <PwdField
-          id="new-password"
-          label="Mật khẩu mới"
-          value={next}
-          onChange={setNext}
-          show={showNext}
-          onToggleShow={() => setShowNext((v) => !v)}
-          autoComplete="new-password"
-          minLength={8}
-          hint={nextTooShort ? 'Tối thiểu 8 ký tự' : 'Tối thiểu 8 ký tự'}
-          hintError={nextTooShort}
-        />
+        <div>
+          <PwdField
+            id="new-password"
+            label="Mật khẩu mới"
+            value={next}
+            onChange={setNext}
+            autoComplete="new-password"
+          />
+          <div className="mt-2">
+            {next.length >= 8 ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-0.5 text-[11px] font-medium text-accent">
+                <Check className="h-3 w-3" />
+                Đủ điều kiện
+              </span>
+            ) : nextTooShort ? (
+              <p className="text-body-sm text-destructive">
+                Tối thiểu 8 ký tự
+              </p>
+            ) : (
+              <p className="text-body-sm text-fg-muted">
+                Tối thiểu 8 ký tự
+              </p>
+            )}
+          </div>
+        </div>
 
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
+        {error ? (
+          <p role="alert" className="text-body-sm text-destructive">
             {error}
           </p>
-        )}
+        ) : null}
 
         <div className="flex items-center gap-3">
           <button
             type="submit"
             disabled={!canSubmit}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-fg px-5 text-body-sm font-semibold text-bg transition-opacity duration-fast hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-            Đổi mật khẩu
+            {busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden /> : null}
+            {busy ? 'Đang đổi…' : 'Đổi mật khẩu'}
           </button>
-          {ok && (
-            <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
-              <Check className="h-4 w-4" /> Đã đổi mật khẩu
-            </span>
-          )}
+          {ok ? (
+            <p className="inline-flex items-center gap-1.5 text-body-sm text-positive">
+              <Check className="h-4 w-4" />
+              Đã đổi mật khẩu
+            </p>
+          ) : null}
         </div>
       </form>
     </Card>
   );
 }
 
-function PwdField({
-  id,
-  label,
-  value,
-  onChange,
-  show,
-  onToggleShow,
-  autoComplete,
-  minLength,
-  hint,
-  hintError,
-}: {
+type PwdFieldProps = {
   id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
-  show: boolean;
-  onToggleShow: () => void;
   autoComplete: string;
-  minLength?: number;
-  hint?: string;
-  hintError?: boolean;
-}) {
+};
+
+function PwdField({ id, label, value, onChange, autoComplete }: PwdFieldProps) {
+  const [show, setShow] = useState(false);
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <label
         htmlFor={id}
-        className="text-[11px] font-medium text-foreground/80 uppercase tracking-[0.18em]"
+        className="block text-[11px] font-medium uppercase tracking-[0.18em] text-fg-muted"
       >
         {label}
       </label>
@@ -392,27 +398,17 @@ function PwdField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           autoComplete={autoComplete}
-          minLength={minLength}
-          className="w-full h-11 pl-3.5 pr-11 rounded-md border border-border bg-background text-sm focus:outline-none focus:border-foreground/40 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+          className="block h-11 w-full rounded-md border border-border bg-bg-elevated px-3.5 pr-11 text-body text-fg placeholder:text-fg-subtle transition-shadow duration-fast focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:shadow-glow-pink-soft"
         />
         <button
           type="button"
-          onClick={onToggleShow}
+          onClick={() => setShow((v) => !v)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           aria-label={show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-          className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
       </div>
-      {hint && (
-        <p
-          className={`text-xs ${
-            hintError ? 'text-destructive' : 'text-muted-foreground'
-          }`}
-        >
-          {hint}
-        </p>
-      )}
     </div>
   );
 }
