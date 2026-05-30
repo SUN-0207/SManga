@@ -50,6 +50,13 @@
       "when": 1780079923315,
       "tag": "0006_happy_red_wolf",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780148400000,
+      "tag": "0007_scheduled_refresh",
+      "breakpoints": true
     }
   ]
 }

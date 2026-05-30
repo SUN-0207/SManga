@@ -8,6 +8,7 @@ import {
   LogOut,
   ExternalLink,
   Menu,
+  Settings as SettingsIcon,
   Users,
   X,
 } from 'lucide-react';
@@ -31,6 +32,7 @@ const NAV = [
   { href: '/admin/stories' as const, label: 'Truyện', icon: BookOpen, exact: false },
   { href: '/admin/jobs' as const, label: 'Jobs', icon: Activity, exact: false },
   { href: '/admin/users' as const, label: 'Người dùng', icon: Users, exact: false },
+  { href: '/admin/settings' as const, label: 'Cài đặt', icon: SettingsIcon, exact: false },
 ];
 
 function AdminLayout() {

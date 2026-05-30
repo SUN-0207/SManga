@@ -29,6 +29,7 @@
     "class-validator": "0.14.2",
     "compression": "1.8.1",
     "cookie-parser": "1.4.7",
+    "cron-parser": "^5.5.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "0.36.0",
     "helmet": "8.1.0",

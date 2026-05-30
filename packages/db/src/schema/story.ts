@@ -36,6 +36,8 @@ export const story = pgTable(
     discoveryStatus: storyDiscoveryStatusEnum('discovery_status').notNull().default('pending'),
     discoveryError: text('discovery_error'),
     discoveredAt: timestamp('discovered_at', { withTimezone: true }),
+    /** If false, scheduled refresh skips this story (operator opt-out per-row). */
+    autoRefresh: boolean('auto_refresh').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

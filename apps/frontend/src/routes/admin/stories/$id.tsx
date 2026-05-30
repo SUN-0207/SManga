@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertCircle, ArrowLeft, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { ChapterCrawlPanel } from '@/components/admin/ChapterCrawlPanel';
 import { StubBadge } from '@/components/admin/StubBadge';
@@ -20,6 +20,7 @@ interface StoryRow {
   discoveryStatus: DiscoveryStatus;
   discoveryError: string | null;
   discoveredAt: string | null;
+  autoRefresh: boolean;
 }
 
 interface ChapterRow {
@@ -111,6 +112,8 @@ function AdminStoryDetail() {
 
       <ChapterCrawlPanel storyId={id} discoveryStatus={story.discoveryStatus} />
 
+      {!isStub && <AutoRefreshToggle id={id} autoRefresh={story.autoRefresh} />}
+
       {!isStub && (
         <div className="rounded-xl border border-border bg-background overflow-hidden">
           <div className="px-5 py-3 border-b border-border flex items-center justify-between">
@@ -174,6 +177,37 @@ function AdminStoryDetail() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function AutoRefreshToggle({ id, autoRefresh }: { id: string; autoRefresh: boolean }) {
+  const qc = useQueryClient();
+  const mut = useMutation({
+    mutationFn: (next: boolean) =>
+      api.patch(`/stories/${id}/auto-refresh`, { autoRefresh: next }).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'story', id] }),
+  });
+  return (
+    <div className="rounded-xl border border-border bg-background p-4 flex items-start gap-3">
+      <RefreshCw className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" aria-hidden />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">Auto-refresh chương mới</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Khi cron tự động quét chạy, truyện này có nằm trong danh sách quét hay không. Tắt nếu
+          truyện đã dropped / không còn chương mới để tiết kiệm rate-limit cho nguồn.
+        </p>
+      </div>
+      <label className="inline-flex items-center cursor-pointer shrink-0">
+        <input
+          type="checkbox"
+          checked={autoRefresh}
+          onChange={(e) => mut.mutate(e.target.checked)}
+          disabled={mut.isPending}
+          className="sr-only peer"
+        />
+        <span className="w-10 h-5 bg-muted peer-checked:bg-[hsl(var(--color-cta))] rounded-full relative transition-colors duration-200 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-background after:h-4 after:w-4 after:rounded-full after:transition-transform after:duration-200 peer-checked:after:translate-x-5" />
+      </label>
     </div>
   );
 }

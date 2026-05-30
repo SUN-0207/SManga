@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { StoriesService } from './stories.service';
 import { BulkActionDto } from './dto/bulk-action.dto';
 import { ImportStoryBulkDto, ImportStoryDto } from './dto/import-story.dto';
+import { SetAutoRefreshDto } from './dto/set-auto-refresh.dto';
 import { ListStoriesDto } from './dto/list-stories.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -94,5 +95,12 @@ export class StoriesController {
   @Roles(['admin'])
   bulkAction(@Body() dto: BulkActionDto, @CurrentUser() u: { id: string }) {
     return this.stories.enqueueBulkAction(dto.ids, dto.action, u.id);
+  }
+
+  @Patch(':id/auto-refresh')
+  @UseGuards(JwtAuthGuard)
+  @Roles(['admin'])
+  setAutoRefresh(@Param('id') id: string, @Body() dto: SetAutoRefreshDto) {
+    return this.stories.setAutoRefresh(id, dto.autoRefresh);
   }
 }

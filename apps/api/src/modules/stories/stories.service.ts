@@ -111,6 +111,17 @@ export class StoriesService {
     return s;
   }
 
+  /** Per-story opt-out for the scheduled auto-refresh job. */
+  async setAutoRefresh(id: string, autoRefresh: boolean) {
+    const [updated] = await this.db
+      .update(story)
+      .set({ autoRefresh })
+      .where(eq(story.id, id))
+      .returning({ id: story.id, autoRefresh: story.autoRefresh });
+    if (!updated) throw new NotFoundException();
+    return updated;
+  }
+
   async chapterListBySlug(slug: string, page = 1, pageSize = 50) {
     const [s] = await this.db
       .select({ id: story.id })

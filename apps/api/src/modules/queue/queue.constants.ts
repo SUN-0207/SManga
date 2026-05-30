@@ -3,6 +3,7 @@ export const QUEUE_CRAWLER = 'crawler';
 export const JOB_IMPORT_STORY = 'import-story';
 export const JOB_DISCOVER_CHAPTERS = 'discover-chapters';
 export const JOB_FETCH_CHAPTER = 'fetch-chapter';
+export const JOB_REFRESH_ALL_STORIES = 'refresh-all-stories';
 
 export interface ImportStoryJobData {
   url: string;
