@@ -82,7 +82,7 @@ export function ReaderSettings() {
           type="button"
           onClick={resetDefaults}
           disabled={isDefault}
-          className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-body-sm text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-body-sm text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RotateCcw className="h-3.5 w-3.5" />
           Khôi phục mặc định
@@ -177,7 +177,7 @@ function SegmentedControl<V extends string>({
             role="radio"
             aria-checked={active}
             onClick={() => onChange(opt.value)}
-            className={`relative z-10 flex-1 rounded-full px-3 py-1.5 text-body-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`relative z-10 flex-1 cursor-pointer rounded-full px-3 py-1.5 text-body-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               active ? "text-fg" : "text-fg-muted hover:text-fg"
             }`}
           >
