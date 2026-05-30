@@ -1,47 +1,25 @@
 import { useEffect, useState } from 'react';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { ArrowLeft, List, Settings as SettingsIcon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowUp } from 'lucide-react';
+import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { getChapterContent } from '@/api/chapters';
-import { ChapterNav } from '@/components/reader/ChapterNav';
 import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
 
 export const Route = createFileRoute('/truyen/$slug/chuong/$index')({
   component: ChapterReader,
 });
 
-function useScrollProgress() {
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    const update = () => {
-      const doc = document.documentElement;
-      const scrolled = window.scrollY;
-      const max = doc.scrollHeight - window.innerHeight;
-      setProgress(max > 0 ? Math.min(1, scrolled / max) : 0);
-    };
-    update();
-    window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
-    return () => {
-      window.removeEventListener('scroll', update);
-      window.removeEventListener('resize', update);
-    };
-  }, []);
-  return progress;
-}
-
 function ChapterReader() {
   const { slug, index } = Route.useParams();
-  const progress = useScrollProgress();
-  const [showTopBtn, setShowTopBtn] = useState(false);
+  const navigate = useNavigate();
+  const setSettingsOpen = useReaderPrefs((s) => s.setSettingsOpen);
+  const fontSize = useReaderPrefs((s) => s.fontSize);
+  const fontFamily = useReaderPrefs((s) => s.fontFamily);
+  const [chromeVisible, setChromeVisible] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
-  useEffect(() => {
-    const onScroll = () => setShowTopBtn(window.scrollY > 600);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
+  // Scroll to top on chapter change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, [slug, index]);
@@ -51,96 +29,192 @@ function ChapterReader() {
     queryFn: () => getChapterContent(slug, index),
   });
 
+  // Auto-hide chrome on scroll-down, show on scroll-up / mouse-move / touch
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let hideTimer: ReturnType<typeof setTimeout>;
+
+    function onScroll() {
+      const y = window.scrollY;
+      const goingDown = y > lastY;
+      lastY = y;
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - window.innerHeight;
+      setScrollProgress(max > 0 ? Math.min(100, (y / max) * 100) : 0);
+      if (goingDown && y > 200) {
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => setChromeVisible(false), 600);
+      } else if (!goingDown) {
+        clearTimeout(hideTimer);
+        setChromeVisible(true);
+      }
+    }
+
+    function onInteract() {
+      clearTimeout(hideTimer);
+      setChromeVisible(true);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('mousemove', onInteract);
+    window.addEventListener('touchstart', onInteract);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('mousemove', onInteract);
+      window.removeEventListener('touchstart', onInteract);
+      clearTimeout(hideTimer);
+    };
+  }, []);
+
+  const reduceMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   if (isLoading || !data) {
     return (
-      <div className="container py-20 text-center text-muted-foreground">
+      <div className="container py-20 text-center text-fg-muted">
         Đang tải chương...
       </div>
     );
   }
 
-  const cleanTitle = data.chapter.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '');
-  const navProps = {
-    slug,
-    current: data.chapter.index,
-    prev: data.prev,
-    next: data.next,
-    totalChapters: data.story.totalChapters,
-  };
+  const { chapter, story, prev, next } = data;
+
+  // Strip redundant "Chương N:" prefix from title for clean display
+  const cleanTitle = chapter.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '');
+
+  const fontSizeClass =
+    ({
+      '15': 'text-[15px] leading-[1.7]',
+      '18': 'text-[17px] sm:text-[18px] leading-[1.75]',
+      '20': 'text-[18px] sm:text-[20px] leading-[1.75]',
+      '24': 'text-[20px] sm:text-[24px] leading-[1.7]',
+    } as Record<string, string>)[fontSize] ?? 'text-[18px] leading-[1.75]';
+
+  const fontFamilyClass =
+    fontFamily === 'sans'
+      ? 'font-sans'
+      : fontFamily === 'mono'
+        ? 'font-mono'
+        : 'font-prose';
+
+  // Estimated reading time: ~1250 chars/min Vietnamese
+  const estMinutes = Math.max(1, Math.ceil((chapter.content?.length ?? 0) / 1250));
 
   return (
-    <article className="relative pb-24">
-      <ReadingProgressTracker storyId={data.story.id} chapterIndex={data.chapter.index} />
-      {/* Reading progress bar — min-scale so it's visible at scroll=0 */}
-      <div
-        className="fixed top-16 inset-x-0 h-[2px] z-20 pointer-events-none"
-        role="progressbar"
-        aria-label="Tiến độ đọc chương"
-        aria-valuenow={Math.round(progress * 100)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-      >
+    <div className="min-h-screen bg-bg text-fg">
+      {/* Auto-save reading progress after 5s (non-visual, non-critical) */}
+      <ReadingProgressTracker storyId={story.id} chapterIndex={chapter.index} />
+
+      {/* Scroll progress bar — fixed top, 2px pink gradient */}
+      <div aria-hidden className="fixed top-0 left-0 right-0 h-0.5 bg-bg-subtle z-50">
         <div
-          className="h-full bg-[hsl(var(--color-cta))] origin-left transition-transform duration-150"
-          style={{ transform: `scaleX(${Math.max(progress, 0.02)})` }}
+          className="h-full bg-accent-gradient shadow-glow-pink-soft"
+          style={{
+            width: `${scrollProgress}%`,
+            transition: reduceMotion ? 'none' : 'width 100ms linear',
+          }}
         />
       </div>
 
-      <div className="container max-w-2xl pt-10">
-        {/* Header */}
-        <header className="space-y-2 mb-6">
-          <Link
-            to="/truyen/$slug"
-            params={{ slug }}
-            search={{ page: 1 }}
-            className="inline-flex items-center text-xs uppercase tracking-[0.28em] text-muted-foreground font-medium hover:text-foreground transition-colors duration-200 cursor-pointer"
+      {/* Top chrome — auto-hides on scroll-down */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-40 bg-bg/70 backdrop-blur-md border-b border-border transition-transform duration-200 ${
+          chromeVisible || reduceMotion ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      >
+        <div className="container flex items-center justify-between h-12 sm:h-14 gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              navigate({ to: '/truyen/$slug', params: { slug }, search: { page: 1 } })
+            }
+            aria-label="Quay lại trang truyện"
+            className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-bg-subtle transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            ← {data.story.title}
-          </Link>
-          <p className="font-heading text-base text-muted-foreground tabular-nums">
-            Chương {data.chapter.index}
-            <span className="text-muted-foreground/60"> / {data.story.totalChapters}</span>
-          </p>
-          <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight leading-[1.15]">
-            {cleanTitle}
-          </h1>
-        </header>
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-label text-fg-subtle uppercase tracking-wider truncate">
+              CHƯƠNG {chapter.index} / {story.totalChapters}
+            </p>
+            <p className="text-body-sm text-fg-muted truncate">{story.title}</p>
+          </div>
+          <div className="flex gap-1">
+            <Link
+              to="/truyen/$slug"
+              params={{ slug }}
+              search={{ page: Math.max(1, Math.ceil(Number(chapter.index) / 50)) }}
+              aria-label="Mục lục chương"
+              className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-bg-subtle transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <List className="h-4 w-4" />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              aria-label="Cài đặt đọc"
+              className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-bg-subtle transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <SettingsIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </header>
 
-        <ChapterNav {...navProps} />
+      {/* Prose body */}
+      <article className="container max-w-[65ch] py-16 sm:py-20 lg:py-24">
+        <h1 className="font-prose font-semibold text-display-sm lg:text-display-md mb-2">
+          {cleanTitle || chapter.title}
+        </h1>
+        <p className="text-label text-fg-subtle mb-9">
+          CHƯƠNG {chapter.index} · {estMinutes} PHÚT ĐỌC
+        </p>
 
-        {/* Content */}
-        {data.chapter.isCrawled && data.chapter.content ? (
-          <div
-            className="reader-prose font-prose whitespace-pre-line my-10 text-foreground/90 max-w-prose mx-auto"
-            style={{
-              fontSize: 'var(--reader-font-size, 18px)',
-              fontFamily: 'var(--reader-font-family, Newsreader, ui-serif, Georgia, serif)',
-              lineHeight: 1.85,
-            }}
-          >
-            {data.chapter.content}
+        {chapter.isCrawled && chapter.content ? (
+          <div className={`${fontFamilyClass} ${fontSizeClass} text-fg/95 [&_p]:mb-5`}>
+            {chapter.content.split('\n\n').map((para, i) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <p key={i}>{para}</p>
+            ))}
           </div>
         ) : (
-          <div className="border border-dashed border-border rounded-xl p-10 text-center text-muted-foreground my-10">
-            <p className="font-heading text-lg mb-1">Chương này chưa được crawl</p>
-            <p className="text-sm">Quay lại sau nhé.</p>
+          <div className="border border-dashed border-border rounded-xl p-10 text-center text-fg-muted my-10">
+            <p className="font-prose text-lg mb-1">Chương này chưa được crawl</p>
+            <p className="text-body-sm">Quay lại sau nhé.</p>
           </div>
         )}
+      </article>
 
-        <ChapterNav {...navProps} />
+      {/* Floating prev/next pill — always visible, thumb-zone */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex gap-2 bg-bg/80 backdrop-blur-md p-1.5 rounded-full border border-border shadow-elev">
+        {prev ? (
+          <Link
+            to="/truyen/$slug/chuong/$index"
+            params={{ slug, index: String(prev.index) }}
+            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-bg-subtle text-body-sm text-fg-muted hover:text-fg transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            ← Ch.{prev.index}
+          </Link>
+        ) : (
+          <span className="inline-flex items-center h-9 px-4 rounded-full text-body-sm text-fg-subtle opacity-40 select-none">
+            ← Ch.{Number(chapter.index) - 1}
+          </span>
+        )}
+        {next ? (
+          <Link
+            to="/truyen/$slug/chuong/$index"
+            params={{ slug, index: String(next.index) }}
+            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-accent-gradient text-white text-body-sm font-semibold shadow-glow-pink-soft hover:shadow-glow-pink transition-shadow duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            Ch.{next.index} →
+          </Link>
+        ) : (
+          <span className="inline-flex items-center h-9 px-4 rounded-full text-body-sm text-fg-subtle opacity-40 select-none">
+            Hết truyện
+          </span>
+        )}
       </div>
-
-      {/* Floating back to top */}
-      {showTopBtn && (
-        <button
-          type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          aria-label="Lên đầu trang"
-          className="fixed bottom-6 right-6 z-20 h-11 w-11 rounded-full bg-foreground text-background shadow-lg hover:opacity-90 transition-all duration-200 flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2"
-        >
-          <ArrowUp className="h-5 w-5" />
-        </button>
-      )}
-    </article>
+    </div>
   );
 }
