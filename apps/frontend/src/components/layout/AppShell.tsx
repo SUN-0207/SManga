@@ -1,20 +1,18 @@
 import { useRouterState } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
-// TODO(Task 5): replace stub with real DesktopTopNav import
+// TODO(Task 6): replace stub with real DesktopTopNav import
 // import { DesktopTopNav } from './DesktopTopNav';
-// TODO(Task 6): replace stub with real BottomTabBar import
-// import { BottomTabBar } from './BottomTabBar';
+import { BottomTabBar } from './BottomTabBar';
 // TODO(Task 7): replace stub with real ContinueReadingBar import
 // import { ContinueReadingBar } from './ContinueReadingBar';
 import { ReaderHeader } from '@/components/reader/ReaderHeader';
 
-// Stubs — Tasks 5-7 will replace these with real implementations
+// Stubs — Tasks 6-7 will replace these with real implementations
 const DesktopTopNav = () => (
   <div className="h-14 border-b border-border px-6 flex items-center">
     <span className="font-sans font-extrabold text-heading-lg">SManga</span>
   </div>
 );
-const BottomTabBar = () => <div className="h-16 border-t border-border bg-bg" />;
 const ContinueReadingBar = () => null;
 
 /**
