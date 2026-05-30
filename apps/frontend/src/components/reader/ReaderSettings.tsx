@@ -75,7 +75,7 @@ export function ReaderSettings() {
         />
       </Field>
 
-      {/* Live preview — Task 6 inserts <LivePreview /> here */}
+      <LivePreview />
 
       <div className="flex justify-end pt-2">
         <button
@@ -185,6 +185,32 @@ function SegmentedControl<V extends string>({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function LivePreview() {
+  const { fontSize, fontFamily } = useReaderPrefs();
+  const fontClass =
+    fontFamily === "serif" ? "font-prose" : fontFamily === "sans" ? "font-sans" : "font-mono";
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-fg-muted">
+        Bản xem trước
+      </p>
+      <div className="rounded-lg border border-border bg-bg p-4">
+        <p
+          className={`${fontClass} leading-relaxed text-fg`}
+          style={{ fontSize: `${fontSize}px` }}
+        >
+          Nàng đặt cuốn sách xuống, nhìn ra ngoài cửa sổ.
+          <br />
+          Phố Hà Nội mùa thu, lá vàng rơi trên những con đường cũ.
+          <br />
+          Câu chuyện trong sách dường như vẫn đang tiếp diễn.
+        </p>
+      </div>
     </div>
   );
 }
