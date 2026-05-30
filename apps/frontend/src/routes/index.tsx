@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BookOpen } from 'lucide-react';
+import { meApi } from '@/api/me';
 import { listStories } from '@/api/stories';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -55,10 +56,67 @@ function AnonHero() {
 }
 
 function LoggedInHero() {
-  // Plan C will replace this with a real "Đọc tiếp" hero card driven by
-  // GET /me/continue-reading. For Plan A scope, fall back to AnonHero so
-  // logged-in users still see a valid landing experience.
-  return <AnonHero />;
+  const q = useQuery({
+    queryKey: ['me', 'continue-reading'],
+    queryFn: () => meApi.continueReading(),
+    staleTime: 60_000,
+  });
+  const cr = q.data;
+  if (q.isLoading) {
+    return (
+      <section className="relative overflow-hidden rounded-xl border border-border bg-bg-elevated p-8 lg:p-12">
+        <div className="h-3 w-20 bg-bg-subtle rounded mb-3 animate-pulse" />
+        <div className="h-10 w-3/4 bg-bg-subtle rounded mb-3 animate-pulse" />
+        <div className="h-4 w-1/2 bg-bg-subtle rounded animate-pulse" />
+      </section>
+    );
+  }
+  if (!cr) return <AnonHero />;
+  const chapter = Math.floor(Number(cr.chapterIndex));
+  return (
+    <section className="relative overflow-hidden rounded-xl border border-accent/20 bg-bg-elevated p-8 lg:p-12">
+      <div aria-hidden className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
+      <div className="relative flex flex-col sm:flex-row gap-6 sm:items-center">
+        {cr.hasCover && (
+          <img
+            src={`/api/v1/cover/${cr.storyId}`}
+            alt=""
+            loading="lazy"
+            className="hidden sm:block h-32 w-24 rounded-md object-cover border border-border flex-shrink-0"
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-label text-accent uppercase mb-2 flex items-center gap-1.5">
+            <BookOpen className="h-3.5 w-3.5" aria-hidden />
+            ĐỌC TIẾP · CHƯƠNG {chapter} / {cr.totalChapters}
+          </p>
+          <h1 className="text-display-sm sm:text-display-md font-prose font-semibold truncate">
+            {cr.storyTitle}
+          </h1>
+          <p className="mt-3 text-body text-fg-muted">
+            Bạn đang đọc dở chương {chapter}. Tiếp tục ngay nào.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              to="/truyen/$slug/chuong/$index"
+              params={{ slug: cr.storySlug, index: String(chapter) }}
+              className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-accent-gradient text-white text-body font-semibold shadow-glow-pink-soft hover:shadow-glow-pink transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            >
+              Tiếp tục đọc <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+            <Link
+              to="/truyen/$slug"
+              params={{ slug: cr.storySlug }}
+              search={{ page: 1 }}
+              className="inline-flex items-center h-11 px-5 rounded-md border border-border-strong hover:bg-bg-subtle text-body font-semibold transition-colors duration-fast"
+            >
+              Xem truyện
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function UpdatedSection({ stories, isLoading }: { stories: any[]; isLoading: boolean }) {

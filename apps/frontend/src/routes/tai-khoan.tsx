@@ -5,6 +5,7 @@ import { Camera, Check, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
 import { changePassword, me, updateMe, type User } from '@/api/auth';
 import { useAuthStore } from '@/stores/auth-store';
 import { resizeToDataUrl } from '@/lib/image-resize';
+import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
 
 export const Route = createFileRoute('/tai-khoan')({
   beforeLoad: async () => {
@@ -29,8 +30,7 @@ function AccountPage() {
         </p>
       </header>
 
-      {/* Plan C inserts <ReadingStatsCard /> here, REPLACING this comment block. */}
-      {/* <ReadingStatsCard /> — added in Plan C (Spec C differentiators) */}
+      <ReadingStatsCard />
 
       <div className="space-y-6">
         <AvatarCard user={user} />
