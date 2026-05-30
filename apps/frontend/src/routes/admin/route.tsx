@@ -41,8 +41,8 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-muted/20">
-      <aside className="w-60 border-r border-border bg-background flex flex-col shrink-0">
-        <div className="h-16 px-5 flex items-center border-b border-border">
+      <aside className="w-60 border-r border-border bg-background flex flex-col shrink-0 sticky top-0 h-screen self-start">
+        <div className="h-16 px-5 flex items-center border-b border-border shrink-0">
           <Link
             to="/admin"
             className="inline-flex items-baseline gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
@@ -56,7 +56,7 @@ function AdminLayout() {
           </Link>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
           <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-medium">
             Quản trị
           </p>
@@ -80,7 +80,7 @@ function AdminLayout() {
           })}
         </nav>
 
-        <div className="px-3 py-4 border-t border-border space-y-0.5">
+        <div className="px-3 py-4 border-t border-border space-y-0.5 shrink-0">
           <a
             href="/"
             className="flex items-center gap-2.5 h-9 px-3 rounded-md text-sm hover:bg-muted text-foreground/80 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -92,7 +92,7 @@ function AdminLayout() {
       </aside>
 
       <main className="flex-1 min-w-0 flex flex-col">
-        <div className="h-16 border-b border-border bg-background flex items-center justify-end px-6 gap-3">
+        <div className="sticky top-0 z-20 h-16 border-b border-border bg-background/95 backdrop-blur-md flex items-center justify-end px-6 gap-3">
           <span className="text-sm text-muted-foreground">{user?.email}</span>
           <button
             type="button"
