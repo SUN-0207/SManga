@@ -24,12 +24,12 @@ export function ReaderSettings() {
   const { theme, fontSize, fontFamily, setTheme, setFontSize, setFontFamily } = useReaderPrefs();
 
   function resetDefaults() {
-    setTheme('system');
+    setTheme('light');
     setFontSize('18');
     setFontFamily('serif');
   }
 
-  const isDefault = theme === 'system' && fontSize === '18' && fontFamily === 'serif';
+  const isDefault = theme === 'light' && fontSize === '18' && fontFamily === 'serif';
 
   return (
     <div className="space-y-6 text-sm">
