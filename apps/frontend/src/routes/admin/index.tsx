@@ -53,17 +53,15 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
-          Bảng điều khiển
+      <header className="mb-8 space-y-2">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fg-muted">
+          TỔNG QUAN
         </p>
-        <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">Tổng quan</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Nhanh chóng theo dõi thư viện và tình trạng hàng đợi crawl.
-        </p>
-      </div>
+        <h1 className="font-sans text-display-md text-fg">Bảng điều khiển</h1>
+        <p className="text-body-sm text-fg-muted">Số liệu nhanh về thư viện và hàng đợi crawler.</p>
+      </header>
 
-      <Section eyebrow="Thư viện" title="Nội dung">
+      <Section eyebrow="THƯ VIỆN" title="Nội dung">
         <StatCard
           icon={Database}
           label="Sources"
@@ -95,7 +93,7 @@ function AdminDashboard() {
         />
       </Section>
 
-      <Section eyebrow="Hàng đợi" title="Crawler">
+      <Section eyebrow="HÀNG ĐỢI" title="Crawler">
         <StatCard
           icon={FileCheck2}
           label="Chapter đã crawl"
@@ -109,6 +107,7 @@ function AdminDashboard() {
           label="Job hoàn thành"
           value={stats?.completed}
           subValue="20k gần nhất trong queue"
+          tone="positive"
           href="/admin/jobs"
         />
         <StatCard
@@ -125,7 +124,7 @@ function AdminDashboard() {
           icon={AlertTriangle}
           label="Thất bại"
           value={stats?.failed}
-          tone={stats?.failed && stats.failed > 0 ? 'warning' : 'neutral'}
+          tone={stats?.failed && stats.failed > 0 ? 'warning' : 'default'}
           href="/admin/jobs"
         />
       </Section>
@@ -143,72 +142,70 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section>
-      <div className="mb-4">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-1">
+    <section className="space-y-4">
+      <div className="space-y-1">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fg-muted">
           {eyebrow}
         </p>
-        <h2 className="font-heading font-semibold text-lg tracking-tight">{title}</h2>
+        <h2 className="font-sans text-heading-md text-fg">{title}</h2>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{children}</div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{children}</div>
     </section>
   );
 }
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  textValue,
-  subValue,
-  tone = 'neutral',
-  href,
-}: {
-  icon: typeof Database;
-  label: string;
-  value?: number | null;
-  textValue?: string;
-  subValue?: string;
-  tone?: 'neutral' | 'positive' | 'warning';
+type StatTone = 'default' | 'positive' | 'warning' | 'accent';
+
+type StatCardProps = {
   href: string;
-}) {
-  const display =
+  icon: typeof BookOpen; // any lucide-react icon
+  label: string;
+  value?: number | null;  // numeric value (used when textValue is absent); null treated as missing
+  textValue?: string;     // pre-formatted string (e.g., "12.4 MB"); takes precedence
+  subValue?: string;
+  tone?: StatTone;
+};
+
+function StatCard({ href, icon: Icon, label, value, textValue, subValue, tone = 'default' }: StatCardProps) {
+  const displayValue =
     textValue !== undefined
       ? textValue
       : value === undefined || value === null
         ? '—'
         : value.toLocaleString('vi-VN');
-  const valueTone =
-    tone === 'warning' && value && value > 0
-      ? 'text-[hsl(var(--color-cta))]'
-      : 'text-foreground';
-  const valueSizeClass =
-    textValue !== undefined && textValue.length > 8 ? 'text-3xl' : 'text-4xl';
+
+  // Gradient bg-clip-text only when the value is a positive accent (Spec B line 86-88).
+  const numericValue = typeof value === 'number' ? value : Number(textValue?.replace(/[^\d]/g, '') ?? 0);
+  const accentValue = tone === 'positive' && numericValue > 0;
 
   return (
     <Link
       to={href}
-      aria-label={`${label}: ${display}`}
-      className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
+      className="group flex flex-col gap-3 rounded-lg border border-border bg-bg-elevated p-6 transition-all duration-fast hover:border-border-strong hover:shadow-elev focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
-      <div className="group h-full rounded-xl border border-border bg-background p-5 transition-all duration-200 hover:border-foreground/40 hover:shadow-sm">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Icon className="h-4 w-4" aria-hidden />
-            <p className="text-xs uppercase tracking-[0.18em] font-medium">{label}</p>
-          </div>
-          <ArrowRight
-            className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-foreground"
-            aria-hidden
-          />
-        </div>
-        <div className={`mt-3 font-heading font-bold tabular-nums tracking-tight ${valueSizeClass} ${valueTone}`}>
-          {display}
-        </div>
-        {subValue && (
-          <p className="mt-2 text-xs text-muted-foreground leading-snug">{subValue}</p>
-        )}
+      <div className="flex items-center gap-2 text-fg-muted">
+        <Icon className="h-4 w-4" />
+        <span className="text-[11px] font-medium uppercase tracking-[0.18em]">{label}</span>
       </div>
+
+      <div className="flex items-baseline justify-between gap-3">
+        <span
+          className={`text-display-sm tabular-nums tracking-tight ${
+            accentValue
+              ? 'bg-accent-gradient bg-clip-text text-transparent'
+              : tone === 'warning'
+                ? 'text-destructive'
+                : 'text-fg'
+          }`}
+        >
+          {displayValue}
+        </span>
+        <ArrowRight className="h-4 w-4 text-fg-muted transition-transform duration-fast group-hover:translate-x-0.5" />
+      </div>
+
+      {subValue ? (
+        <p className="text-body-sm text-fg-muted">{subValue}</p>
+      ) : null}
     </Link>
   );
 }
