@@ -116,8 +116,8 @@ function AdminLayout() {
             onClick={logout}
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-border hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">Đăng xuất</span>
+            <LogOut className="h-4 w-4" aria-hidden />
+            Đăng xuất
           </button>
         </div>
         <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full">
