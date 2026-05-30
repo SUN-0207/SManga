@@ -2,12 +2,8 @@ import { useRouterState } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { DesktopTopNav } from './DesktopTopNav';
 import { BottomTabBar } from './BottomTabBar';
-// TODO(Task 7): replace stub with real ContinueReadingBar import
-// import { ContinueReadingBar } from './ContinueReadingBar';
+import { ContinueReadingBar } from './ContinueReadingBar';
 import { ReaderHeader } from '@/components/reader/ReaderHeader';
-
-// Stub — Task 7 will replace with real implementation
-const ContinueReadingBar = () => null;
 
 /**
  * Reader root layout. Renders:
