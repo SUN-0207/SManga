@@ -24,6 +24,8 @@ function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const canSubmit = email.length > 0 && password.length > 0 && !busy;
+
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -44,92 +46,101 @@ function SignInPage() {
 
   return (
     <AuthShell>
-      <header className="mb-8 space-y-2">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium">
-          Tài khoản
-        </p>
-        <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">
-          Đăng nhập
-        </h1>
-        <p className="text-sm text-muted-foreground">Tiếp tục hành trình đọc của bạn.</p>
-      </header>
-
-      <GoogleButton redirect={redirect} label="Tiếp tục với Google" />
-
-      <form onSubmit={submit} className="space-y-4" noValidate>
-        <div className="space-y-1.5">
-          <label
-            htmlFor="email"
-            className="text-[11px] font-medium text-foreground/80 uppercase tracking-[0.18em]"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            placeholder="ban@email.com"
-            className="w-full h-11 px-3.5 rounded-md border border-border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:border-foreground/40 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label
-            htmlFor="password"
-            className="text-[11px] font-medium text-foreground/80 uppercase tracking-[0.18em]"
-          >
-            Mật khẩu
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              type={showPwd ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className="w-full h-11 pl-3.5 pr-11 rounded-md border border-border bg-background text-sm focus:outline-none focus:border-foreground/40 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPwd((v) => !v)}
-              aria-label={showPwd ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-              className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
+      <div className="space-y-8">
+        <header className="space-y-2">
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fg-muted">
+            CHÀO MỪNG TRỞ LẠI
           </p>
-        )}
+          <h1 className="font-sans text-heading-lg text-fg">Đăng nhập</h1>
+          <p className="text-body-sm text-fg-muted">
+            Tiếp tục đọc nơi bạn đã dừng lại.
+          </p>
+        </header>
 
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-md bg-[hsl(var(--color-cta))] text-white text-sm font-medium hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--color-cta))] focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-          {busy ? 'Đang đăng nhập...' : 'Đăng nhập'}
-        </button>
-      </form>
+        <GoogleButton redirect={redirect} label="Tiếp tục với Google" />
 
-      <p className="mt-8 pt-6 border-t border-border/60 text-sm text-muted-foreground text-center">
-        Chưa có tài khoản?{' '}
-        <Link
-          to="/dang-ky"
-          search={{ redirect }}
-          className="font-medium text-foreground hover:text-[hsl(var(--color-cta))] transition-colors duration-200"
-        >
-          Tạo tài khoản mới
-        </Link>
-      </p>
+        <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-fg-subtle">
+          <span className="h-px flex-1 bg-border" />
+          HOẶC
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <form onSubmit={submit} className="space-y-5">
+          <div className="space-y-2">
+            <label
+              htmlFor="email"
+              className="block text-[11px] font-medium uppercase tracking-[0.18em] text-fg-muted"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="block h-11 w-full rounded-md border border-border bg-bg-elevated px-3.5 text-body text-fg placeholder:text-fg-subtle transition-shadow duration-fast focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:shadow-glow-pink-soft"
+              placeholder="ban@example.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="password"
+              className="block text-[11px] font-medium uppercase tracking-[0.18em] text-fg-muted"
+            >
+              Mật khẩu
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPwd ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block h-11 w-full rounded-md border border-border bg-bg-elevated px-3.5 pr-11 text-body text-fg placeholder:text-fg-subtle transition-shadow duration-fast focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:shadow-glow-pink-soft"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                aria-label={showPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          {error ? (
+            <p className="text-body-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-accent-gradient px-4 text-[14px] font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+            {busy ? "Đang đăng nhập…" : "Đăng nhập"}
+          </button>
+        </form>
+
+        <p className="border-t border-border pt-6 text-center text-body-sm text-fg-muted">
+          Chưa có tài khoản?{" "}
+          <Link
+            to="/dang-ky"
+            search={{ redirect }}
+            className="font-medium text-accent transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            Tạo tài khoản mới
+          </Link>
+        </p>
+      </div>
     </AuthShell>
   );
 }
