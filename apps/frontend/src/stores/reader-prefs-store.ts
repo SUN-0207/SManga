@@ -12,6 +12,9 @@ interface ReaderPrefs {
   setTheme: (t: ReaderTheme) => void;
   setFontSize: (s: ReaderFontSize) => void;
   setFontFamily: (f: ReaderFontFamily) => void;
+  // Ephemeral UI state — excluded from localStorage via partialize
+  settingsOpen: boolean;
+  setSettingsOpen: (v: boolean) => void;
 }
 
 export const useReaderPrefs = create<ReaderPrefs>()(
@@ -23,10 +26,18 @@ export const useReaderPrefs = create<ReaderPrefs>()(
       setTheme: (theme) => set({ theme }),
       setFontSize: (fontSize) => set({ fontSize }),
       setFontFamily: (fontFamily) => set({ fontFamily }),
+      settingsOpen: false,
+      setSettingsOpen: (v) => set({ settingsOpen: v }),
     }),
     {
       name: 'smanga:reader',
       version: 3,
+      // Only persist display prefs — settingsOpen is ephemeral UI state
+      partialize: (state) => ({
+        theme: state.theme,
+        fontSize: state.fontSize,
+        fontFamily: state.fontFamily,
+      }),
       migrate: (persistedState: unknown, version) => {
         // Pivot 2026-05-30: redesign goes light-first. Previous migrations
         // forced 'system' → 'dark' (v2); reset all pre-v3 stored themes to
