@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Search, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Search, Trash2, X } from 'lucide-react';
 import {
   deleteUser,
   listAdminUsers,
@@ -306,7 +306,11 @@ function DeleteConfirm({
             disabled={!matches || busy}
             className="inline-flex h-10 items-center gap-1.5 rounded-md bg-destructive px-4 text-body-sm font-semibold text-white transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Trash2 className="h-4 w-4" />
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
             {busy ? 'Đang xoá…' : 'Xoá vĩnh viễn'}
           </button>
         </div>
