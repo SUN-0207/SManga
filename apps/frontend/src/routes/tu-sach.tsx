@@ -1,219 +1,128 @@
+import { useState } from 'react';
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, BookmarkX, History } from 'lucide-react';
-import { bookmarksApi } from '@/api/bookmarks';
-import { readingProgressApi } from '@/api/reading-progress';
+import { BookmarkX, Clock, CheckCircle2 } from 'lucide-react';
 import { me } from '@/api/auth';
+import { useAuthStore } from '@/stores/auth-store';
 
 export const Route = createFileRoute('/tu-sach')({
   beforeLoad: async () => {
-    const user = await me();
-    if (!user) {
-      throw redirect({ to: '/dang-nhap', search: { redirect: '/tu-sach' } });
-    }
+    const u = await me();
+    if (!u) throw redirect({ to: '/dang-nhap', search: { redirect: '/tu-sach' } });
+    useAuthStore.getState().setUser(u);
   },
-  component: Shelf,
+  component: LibraryPage,
 });
 
-function Shelf() {
-  const bookmarks = useQuery({ queryKey: ['bookmarks'], queryFn: bookmarksApi.list });
-  const progress = useQuery({
-    queryKey: ['reading-progress'],
-    queryFn: readingProgressApi.list,
-  });
+type ShelfTab = 'reading' | 'saved' | 'completed';
 
-  // Dedup: a story showing in "Đang đọc" shouldn't repeat in "Truyện đã đánh dấu"
-  const progressStoryIds = new Set((progress.data ?? []).map((p) => p.storyId));
-  const bookmarksOnly = (bookmarks.data ?? []).filter((b) => !progressStoryIds.has(b.storyId));
+function LibraryPage() {
+  const [tab, setTab] = useState<ShelfTab>('reading');
+
+  // Plan C: replace with real queries. For now empty arrays so UI shells render.
+  const items: any[] = [];
+  const counts = { reading: 0, saved: 0, completed: 0 };
 
   return (
-    <div className="container max-w-6xl py-10 sm:py-16 space-y-16">
-      <div>
-        <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
-          Của bạn
-        </p>
-        <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">
-          Tủ sách
-        </h1>
-        <p className="text-muted-foreground text-sm mt-2 max-w-xl">
-          Theo dõi truyện đang đọc và những truyện bạn đã đánh dấu để xem sau.
-        </p>
+    <div className="container py-8 lg:py-12 space-y-8">
+      <header>
+        <p className="text-label text-fg-muted uppercase mb-2">CỦA BẠN</p>
+        <h1 className="text-display-sm lg:text-display-md">Tủ sách</h1>
+        <p className="mt-2 text-body text-fg-muted">Theo dõi truyện đang đọc và những truyện bạn đã đánh dấu để xem sau.</p>
+      </header>
+
+      {/* Plan C: ReadingStatsCard slot here */}
+
+      <div className="flex gap-1 border-b border-border">
+        <TabButton active={tab === 'reading'} onClick={() => setTab('reading')}>
+          Đang đọc <span className="ml-1 text-fg-subtle">({counts.reading})</span>
+        </TabButton>
+        <TabButton active={tab === 'saved'} onClick={() => setTab('saved')}>
+          Đã lưu <span className="ml-1 text-fg-subtle">({counts.saved})</span>
+        </TabButton>
+        <TabButton active={tab === 'completed'} onClick={() => setTab('completed')}>
+          Đã hoàn thành <span className="ml-1 text-fg-subtle">({counts.completed})</span>
+        </TabButton>
       </div>
 
-      <Section
-        eyebrow="Đang đọc"
-        title="Tiếp tục từ chỗ đã dừng"
-        empty={(progress.data?.length ?? 0) === 0}
-        emptyIcon={History}
-        emptyText="Chưa có truyện nào đang đọc. Vào một chương bất kỳ và đọc 5 giây — chúng tôi sẽ tự ghi nhớ."
-      >
-        {(progress.data ?? []).map((p) => (
-          <ContinueCard
-            key={p.storyId}
-            slug={p.slug}
-            title={p.title}
-            author={p.author}
-            chapterIndex={Number(p.chapterIndex)}
-            totalChapters={p.totalChapters}
-            updatedAt={p.updatedAt}
-          />
-        ))}
-      </Section>
-
-      <Section
-        eyebrow="Đã lưu"
-        title="Truyện đã đánh dấu"
-        empty={bookmarksOnly.length === 0}
-        emptyIcon={BookmarkX}
-        emptyText={
-          (bookmarks.data?.length ?? 0) > 0
-            ? 'Các truyện bạn lưu đã xuất hiện ở phần "Đang đọc" phía trên.'
-            : 'Chưa lưu truyện nào. Bấm "Lưu truyện" ở trang chi tiết để thêm vào đây.'
-        }
-      >
-        {bookmarksOnly.map((b) => (
-          <BookmarkCard
-            key={b.storyId}
-            slug={b.slug}
-            title={b.title}
-            author={b.author}
-            totalChapters={b.totalChapters}
-          />
-        ))}
-      </Section>
+      {items.length === 0 ? (
+        <EmptyShelf tab={tab} />
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {items.map((it) => <LibraryCard key={it.id} item={it} />)}
+        </div>
+      )}
     </div>
   );
 }
 
-function Section({
-  eyebrow,
-  title,
-  children,
-  empty,
-  emptyIcon: Icon,
-  emptyText,
-}: {
-  eyebrow: string;
-  title: string;
-  children: React.ReactNode;
-  empty: boolean;
-  emptyIcon: typeof History;
-  emptyText: string;
-}) {
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <section className="space-y-6">
-      <div>
-        <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
-          {eyebrow}
-        </p>
-        <h2 className="font-heading font-bold text-2xl sm:text-3xl tracking-tight">{title}</h2>
-        <div className="mt-4 h-px w-full bg-gradient-to-r from-border via-border to-transparent" />
-      </div>
-      {empty ? (
-        <div className="flex flex-col items-center text-center gap-3 py-12">
-          <Icon className="h-10 w-10 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground max-w-md">{emptyText}</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{children}</div>
-      )}
-    </section>
-  );
-}
-
-function ContinueCard({
-  slug,
-  title,
-  author,
-  chapterIndex,
-  totalChapters,
-  updatedAt,
-}: {
-  slug: string;
-  title: string;
-  author: string | null;
-  chapterIndex: number;
-  totalChapters: number;
-  updatedAt: string;
-}) {
-  const pct = totalChapters > 0 ? Math.min(100, (chapterIndex / totalChapters) * 100) : 0;
-  return (
-    <Link
-      to="/truyen/$slug/chuong/$index"
-      params={{ slug, index: String(chapterIndex) }}
-      aria-label={`Tiếp tục đọc "${title}" tại chương ${chapterIndex} trên ${totalChapters}`}
-      className="group block rounded-xl border border-border bg-background p-5 hover:border-foreground/40 hover:shadow-md transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    <button
+      type="button"
+      onClick={onClick}
+      role="tab"
+      aria-selected={active}
+      className={`relative px-4 py-3 text-body font-semibold transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded ${
+        active ? 'text-fg' : 'text-fg-muted hover:text-fg'
+      }`}
     >
-      <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground font-medium mb-2">
-        Tiếp tục Chương {chapterIndex}
-      </p>
-      <h3 className="font-heading font-semibold text-lg leading-tight tracking-tight line-clamp-2 group-hover:underline underline-offset-4 decoration-foreground/40 transition-all duration-200">
-        {title}
-      </h3>
-      <p className="text-xs text-muted-foreground mt-1.5">{author ?? 'Khuyết danh'}</p>
-
-      <div className="mt-4 space-y-1">
-        <div className="flex items-baseline justify-between text-xs text-muted-foreground">
-          <span>
-            Chương {chapterIndex} / {totalChapters}
-          </span>
-          <span className="tabular-nums">{pct.toFixed(0)}%</span>
-        </div>
-        <div className="h-1 rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full bg-[hsl(var(--color-cta))] transition-[width] duration-500"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-        <span>Đọc lần cuối {formatRelative(updatedAt)}</span>
-        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-      </div>
-    </Link>
+      {children}
+      {active && <span aria-hidden className="absolute -bottom-px left-2 right-2 h-0.5 bg-accent-gradient rounded-full" />}
+    </button>
   );
 }
 
-function BookmarkCard({
-  slug,
-  title,
-  author,
-  totalChapters,
-}: {
-  slug: string;
-  title: string;
-  author: string | null;
-  totalChapters: number;
-}) {
+function LibraryCard({ item }: { item: any }) {
   return (
     <Link
       to="/truyen/$slug"
-      params={{ slug }}
+      params={{ slug: item.slug }}
       search={{ page: 1 }}
-      aria-label={`Mở trang truyện "${title}"`}
-      className="group block rounded-xl border border-border bg-background p-5 hover:border-foreground/40 hover:shadow-md transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
     >
-      <h3 className="font-heading font-semibold text-lg leading-tight tracking-tight line-clamp-2 group-hover:underline underline-offset-4 decoration-foreground/40 transition-all duration-200">
-        {title}
-      </h3>
-      <p className="text-xs text-muted-foreground mt-1.5">{author ?? 'Khuyết danh'}</p>
-      <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-        <span>{totalChapters} chương</span>
-        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+      <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">
+        {item.hasCover && (
+          <img
+            src={`/api/v1/cover/${item.storyId}`}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        {item.progress > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-bg/40">
+            <div className="h-full bg-accent-gradient" style={{ width: `${item.progress}%` }} />
+          </div>
+        )}
       </div>
+      <h3 className="mt-3 text-heading-md line-clamp-2">{item.title}</h3>
+      <p className="mt-1 text-body-sm text-fg-muted truncate">{item.author ?? 'Khuyết danh'}</p>
     </Link>
   );
 }
 
-function formatRelative(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const min = Math.round(diffMs / 60_000);
-  if (min < 1) return 'vừa xong';
-  if (min < 60) return `${min} phút trước`;
-  const hr = Math.round(min / 60);
-  if (hr < 24) return `${hr} giờ trước`;
-  const day = Math.round(hr / 24);
-  if (day < 30) return `${day} ngày trước`;
-  return new Date(iso).toLocaleDateString('vi-VN');
+function EmptyShelf({ tab }: { tab: ShelfTab }) {
+  // Plan C: replace with <EmptyState /> primitive + illustration
+  const config = {
+    reading: { icon: Clock, title: 'Chưa có truyện đang đọc', desc: 'Mở 1 chương bất kỳ và đọc 5 giây — chúng tôi sẽ tự ghi nhớ.' },
+    saved: { icon: BookmarkX, title: 'Tủ sách còn trống', desc: 'Đánh dấu truyện anh thích để dễ tìm lại. Bắt đầu khám phá nào.' },
+    completed: { icon: CheckCircle2, title: 'Chưa truyện nào hoàn tất', desc: 'Đọc đến chương cuối là tự động xuất hiện ở đây.' },
+  }[tab];
+  const Icon = config.icon;
+  return (
+    <div className="flex flex-col items-center text-center py-16 px-4">
+      <div className="h-16 w-16 rounded-full bg-bg-subtle flex items-center justify-center mb-4">
+        <Icon className="h-8 w-8 text-fg-subtle" aria-hidden />
+      </div>
+      <h3 className="text-heading-md">{config.title}</h3>
+      <p className="mt-2 max-w-sm text-body-sm text-fg-muted">{config.desc}</p>
+      <Link
+        to="/tim-kiem"
+        search={{ q: '', page: 1 }}
+        className="mt-6 inline-flex items-center gap-2 h-10 px-4 rounded-md bg-accent-gradient text-white text-body-sm font-semibold shadow-glow-pink-soft hover:shadow-glow-pink transition-shadow duration-200"
+      >
+        Khám phá truyện →
+      </Link>
+    </div>
+  );
 }
