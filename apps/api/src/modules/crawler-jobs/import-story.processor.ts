@@ -1,12 +1,14 @@
-import { Process, Processor } from '@nestjs/bull';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
 import { Inject, Logger } from '@nestjs/common';
-import type { Job } from 'bull';
-import { discoverChapters, importStory, importStoryMetadata } from '@smanga/crawler';
+import type { Job, Queue } from 'bull';
+import { importStory, importStoryMetadata } from '@smanga/crawler';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import {
+  JOB_DISCOVER_CHAPTERS,
   JOB_IMPORT_STORY,
   QUEUE_CRAWLER,
+  type DiscoverChaptersJobData,
   type ImportStoryJobData,
 } from '@/modules/queue/queue.constants';
 
@@ -14,18 +16,30 @@ import {
 export class ImportStoryProcessor {
   private readonly logger = new Logger(ImportStoryProcessor.name);
 
-  constructor(@Inject(DRIZZLE) private readonly db: Database) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
+    @InjectQueue(QUEUE_CRAWLER) private readonly queue: Queue,
+  ) {}
 
   @Process(JOB_IMPORT_STORY)
   async handle(job: Job<ImportStoryJobData>): Promise<void> {
-    const { url, skipDiscovery } = job.data;
-    this.logger.log(`import-story start ${job.id} url=${url} skipDiscovery=${skipDiscovery ?? false}`);
+    const { url, skipDiscovery, autoCrawl, requestedBy } = job.data;
+    this.logger.log(
+      `import-story start ${job.id} url=${url} skipDiscovery=${skipDiscovery ?? false} autoCrawl=${autoCrawl ?? false}`,
+    );
 
     if (skipDiscovery) {
       const { storyId, alreadyExisted } = await importStoryMetadata(this.db, url);
       this.logger.log(
         `import-story done ${job.id} storyId=${storyId} alreadyExisted=${alreadyExisted} (metadata only)`,
       );
+      if (autoCrawl) {
+        const payload: DiscoverChaptersJobData = { storyId, requestedBy, autoCrawl: true };
+        await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
+          jobId: `discover-chapters:${storyId}`,
+        });
+        this.logger.log(`import-story chained discover-chapters for ${storyId} (autoCrawl)`);
+      }
       return;
     }
 

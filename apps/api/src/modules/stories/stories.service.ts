@@ -1,13 +1,14 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
-import { desc, eq, sql, count, asc } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 import { resolveAdapterForUrl } from '@smanga/crawler';
 import { chapter, genre, story, storyGenre, storySource } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import {
   JOB_DISCOVER_CHAPTERS,
+  JOB_FETCH_CHAPTER,
   JOB_IMPORT_STORY,
   QUEUE_CRAWLER,
   type DiscoverChaptersJobData,
@@ -166,7 +167,7 @@ export class StoriesService {
    * imports in one call without each one blocking on a 671-page chapter list.
    * Caps at BULK_IMPORT_CAP to avoid starving the 1 rps token bucket.
    */
-  async enqueueImportBulk(urls: string[], requestedBy: string | null) {
+  async enqueueImportBulk(urls: string[], requestedBy: string | null, autoCrawl = false) {
     const trimmed = urls.map((u) => u.trim()).filter((u) => u.length > 0);
     const unique = [...new Set(trimmed)];
     if (unique.length === 0) {
@@ -184,11 +185,11 @@ export class StoriesService {
         skipped.push({ url, reason: 'no adapter for hostname' });
         continue;
       }
-      const payload: ImportStoryJobData = { url, requestedBy, skipDiscovery: true };
+      const payload: ImportStoryJobData = { url, requestedBy, skipDiscovery: true, autoCrawl };
       const job = await this.queue.add(JOB_IMPORT_STORY, payload);
       queued.push({ url, jobId: String(job.id) });
     }
-    return { queued, skipped, cap: BULK_IMPORT_CAP };
+    return { queued, skipped, cap: BULK_IMPORT_CAP, autoCrawl };
   }
 
   /**
@@ -196,7 +197,7 @@ export class StoriesService {
    * for a metadata-only story. Idempotent via Bull jobId per-story so
    * double-clicking the button doesn't double-enqueue.
    */
-  async enqueueDiscoverChapters(storyId: string, requestedBy: string | null) {
+  async enqueueDiscoverChapters(storyId: string, requestedBy: string | null, autoCrawl = false) {
     const [s] = await this.db
       .select({
         id: story.id,
@@ -209,10 +210,78 @@ export class StoriesService {
     if (s.discoveryStatus === 'running') {
       throw new ConflictException('chapter discovery already running for this story');
     }
-    const payload: DiscoverChaptersJobData = { storyId, requestedBy };
+    const payload: DiscoverChaptersJobData = { storyId, requestedBy, autoCrawl };
     const job = await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
       jobId: `discover-chapters:${storyId}`,
     });
     return { jobId: String(job.id) };
+  }
+
+  /**
+   * Bulk action over selected story rows on /admin/stories.
+   * - 'discover': fire chapter-list discovery for each (skips if discoveryStatus='running')
+   * - 'crawl-missing': enqueue fetch-chapter for every pending/failed chapter (skip if discovery not complete)
+   * - 'discover-and-crawl': discover first, chain crawl via autoCrawl flag
+   * Returns per-story result so the UI can flash success/skip counts.
+   */
+  async enqueueBulkAction(
+    ids: string[],
+    action: 'discover' | 'crawl-missing' | 'discover-and-crawl',
+    requestedBy: string | null,
+  ) {
+    if (ids.length === 0) throw new BadRequestException('ids must contain at least one entry');
+    if (ids.length > 100) throw new BadRequestException('bulk action cap is 100 stories per call');
+
+    const queued: { storyId: string; jobs: number }[] = [];
+    const skipped: { storyId: string; reason: string }[] = [];
+
+    for (const storyId of ids) {
+      const [s] = await this.db
+        .select({ id: story.id, discoveryStatus: story.discoveryStatus })
+        .from(story)
+        .where(eq(story.id, storyId))
+        .limit(1);
+      if (!s) {
+        skipped.push({ storyId, reason: 'not found' });
+        continue;
+      }
+
+      if (action === 'discover' || action === 'discover-and-crawl') {
+        if (s.discoveryStatus === 'running') {
+          skipped.push({ storyId, reason: 'discovery already running' });
+          continue;
+        }
+        const payload: DiscoverChaptersJobData = {
+          storyId,
+          requestedBy,
+          autoCrawl: action === 'discover-and-crawl',
+        };
+        await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
+          jobId: `discover-chapters:${storyId}`,
+        });
+        queued.push({ storyId, jobs: 1 });
+        continue;
+      }
+
+      // 'crawl-missing'
+      if (s.discoveryStatus !== 'complete') {
+        skipped.push({ storyId, reason: `discovery_status=${s.discoveryStatus}` });
+        continue;
+      }
+      const rows = await this.db
+        .select({ id: chapter.id })
+        .from(chapter)
+        .where(and(eq(chapter.storyId, storyId), inArray(chapter.status, ['pending', 'failed'])));
+      for (const r of rows) {
+        await this.queue.add(
+          JOB_FETCH_CHAPTER,
+          { chapterId: r.id },
+          { jobId: `fetch-chapter:${r.id}` },
+        );
+      }
+      queued.push({ storyId, jobs: rows.length });
+    }
+
+    return { queued, skipped };
   }
 }

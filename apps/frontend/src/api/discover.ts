@@ -39,6 +39,14 @@ export interface BulkImportResponse {
   queued: { url: string; jobId: string }[];
   skipped: { url: string; reason: string }[];
   cap: number;
+  autoCrawl: boolean;
+}
+
+export type BulkAction = 'discover' | 'crawl-missing' | 'discover-and-crawl';
+
+export interface BulkActionResponse {
+  queued: { storyId: string; jobs: number }[];
+  skipped: { storyId: string; reason: string }[];
 }
 
 export const discoverApi = {
@@ -52,9 +60,16 @@ export const discoverApi = {
       })
       .then((r) => r.data),
 
-  importBulk: (urls: string[]) =>
-    api.post<BulkImportResponse>('/stories/import-bulk', { urls }).then((r) => r.data),
+  importBulk: (urls: string[], autoCrawl: boolean) =>
+    api
+      .post<BulkImportResponse>('/stories/import-bulk', { urls, autoCrawl })
+      .then((r) => r.data),
 
   triggerDiscover: (storyId: string) =>
     api.post<{ jobId: string }>(`/stories/${storyId}/discover`).then((r) => r.data),
+
+  bulkAction: (ids: string[], action: BulkAction) =>
+    api
+      .post<BulkActionResponse>('/stories/bulk-action', { ids, action })
+      .then((r) => r.data),
 };

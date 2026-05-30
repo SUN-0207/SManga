@@ -1,4 +1,4 @@
-import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsUrl } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsOptional, IsUrl } from 'class-validator';
 
 export class ImportStoryDto {
   @IsUrl()
@@ -17,4 +17,9 @@ export class ImportStoryBulkDto {
   @ArrayUnique()
   @IsUrl({}, { each: true })
   urls!: string[];
+
+  /** Auto-chain: after metadata import, fire discover-chapters → fetch-chapter. */
+  @IsOptional()
+  @IsBoolean()
+  autoCrawl?: boolean;
 }

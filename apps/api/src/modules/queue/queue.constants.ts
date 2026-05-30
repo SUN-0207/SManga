@@ -14,11 +14,20 @@ export interface ImportStoryJobData {
    * the legacy `pnpm crawl` + single-URL admin import working unchanged.
    */
   skipDiscovery?: boolean;
+  /**
+   * Full-auto chain: after the metadata-only import finishes, the processor
+   * enqueues `discover-chapters` (carrying autoCrawl forward), which in turn
+   * enqueues `fetch-chapter` for every pending chapter. One click → fully
+   * crawled story without operator babysitting.
+   */
+  autoCrawl?: boolean;
 }
 
 export interface DiscoverChaptersJobData {
   storyId: string;
   requestedBy: string | null;
+  /** Forwarded from ImportStoryJobData. When true, chain `fetch-chapter` jobs. */
+  autoCrawl?: boolean;
 }
 
 export interface FetchChapterJobData {

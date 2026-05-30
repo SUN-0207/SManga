@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { StoriesService } from './stories.service';
+import { BulkActionDto } from './dto/bulk-action.dto';
 import { ImportStoryBulkDto, ImportStoryDto } from './dto/import-story.dto';
 import { ListStoriesDto } from './dto/list-stories.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
@@ -69,7 +70,7 @@ export class StoriesController {
   @UseGuards(JwtAuthGuard)
   @Roles(['admin'])
   importBulk(@Body() dto: ImportStoryBulkDto, @CurrentUser() u: { id: string }) {
-    return this.stories.enqueueImportBulk(dto.urls, u.id);
+    return this.stories.enqueueImportBulk(dto.urls, u.id, dto.autoCrawl ?? false);
   }
 
   /**
@@ -81,5 +82,17 @@ export class StoriesController {
   @Roles(['admin'])
   discoverChapters(@Param('id') id: string, @CurrentUser() u: { id: string }) {
     return this.stories.enqueueDiscoverChapters(id, u.id);
+  }
+
+  /**
+   * Bulk action over selected story rows on /admin/stories — lets the operator
+   * re-trigger discover/crawl across many stubs in one click instead of
+   * opening each detail page. Cap 100/call.
+   */
+  @Post('bulk-action')
+  @UseGuards(JwtAuthGuard)
+  @Roles(['admin'])
+  bulkAction(@Body() dto: BulkActionDto, @CurrentUser() u: { id: string }) {
+    return this.stories.enqueueBulkAction(dto.ids, dto.action, u.id);
   }
 }
