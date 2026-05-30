@@ -17,13 +17,23 @@ interface ReaderPrefs {
 export const useReaderPrefs = create<ReaderPrefs>()(
   persist(
     (set) => ({
-      theme: 'system',
+      theme: 'dark',
       fontSize: '18',
       fontFamily: 'serif',
       setTheme: (theme) => set({ theme }),
       setFontSize: (fontSize) => set({ fontSize }),
       setFontFamily: (fontFamily) => set({ fontFamily }),
     }),
-    { name: 'smanga:reader' },
+    {
+      name: 'smanga:reader',
+      version: 2,
+      migrate: (persistedState: unknown, version) => {
+        if (version < 2 && persistedState && typeof persistedState === 'object') {
+          const s = persistedState as { theme?: string };
+          if (s.theme === 'system') s.theme = 'dark';
+        }
+        return persistedState as ReaderPrefs;
+      },
+    },
   ),
 );

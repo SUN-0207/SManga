@@ -18,8 +18,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           ? 'dark'
           : 'light'
         : theme;
-    root.classList.remove('light', 'dark');
-    root.classList.add(resolved);
+    root.dataset.theme = resolved;
     root.style.setProperty('--reader-font-size', `${fontSize}px`);
     root.style.setProperty('--reader-font-family', FAMILY_CSS[fontFamily]);
   }, [theme, fontSize, fontFamily]);
@@ -29,9 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (theme !== 'system') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => {
-      const root = document.documentElement;
-      root.classList.remove('light', 'dark');
-      root.classList.add(e.matches ? 'dark' : 'light');
+      document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
     };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
