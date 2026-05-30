@@ -35,17 +35,17 @@ export function ReaderSettingsDrawer() {
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="h-14 sm:h-16 px-4 sm:px-5 flex items-center justify-between border-b border-border/60 shrink-0">
-          <h2 className="font-sans font-semibold text-heading-md">Cài đặt đọc</h2>
+        <header className="flex h-14 items-center justify-between border-b border-border px-5 sm:h-16">
+          <h2 className="font-sans text-heading-lg text-fg">Cài đặt đọc</h2>
           <button
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Đóng cài đặt"
-            className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-bg-subtle transition-colors duration-fast"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <X className="h-4 w-4" />
           </button>
-        </div>
+        </header>
         <div className="flex-1 overflow-y-auto p-4 sm:p-5">
           <ReaderSettings />
         </div>
