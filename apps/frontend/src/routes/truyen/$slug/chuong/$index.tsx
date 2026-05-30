@@ -102,10 +102,10 @@ function ChapterReader() {
   const wordCount = (chapter.content?.match(/\S+/g) ?? []).length;
   const readingMinutes = Math.max(1, Math.ceil(wordCount / 250));
 
-  // Drop-cap eligibility — suppress on smallest font size or when no letter in first 20 chars.
-  // The store ships fontSize as the string union '15' | '18' | '20' | '24'.
-  // Suppress at '15' per Spec C.
-  const dropCapAllowed = fontSize !== '15';
+  // Drop-cap eligibility — suppress on smallest font size, when no letter in first 20 chars,
+  // or when the user requests reduced motion (the gradient shimmer can read as motion).
+  // The store ships fontSize as the string union '15' | '18' | '20' | '24'. Suppress at '15' per Spec C.
+  const dropCapAllowed = fontSize !== '15' && !reduceMotion;
 
   function renderParagraph(para: string, i: number) {
     // Scene break detector
