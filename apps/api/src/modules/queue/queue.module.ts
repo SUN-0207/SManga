@@ -29,7 +29,12 @@ import { QUEUE_CRAWLER } from './queue.constants';
           defaultJobOptions: {
             attempts: 3,
             backoff: { type: 'exponential', delay: 30_000 },
-            removeOnComplete: { age: 86_400, count: 1000 },
+            // Keep last 20k completed jobs (7 days). A single story with ~1000
+            // chapters previously hit the old cap of 1000 and made the
+            // "Hoàn thành" stat look stuck — bump it so the dashboard reflects
+            // real progress across multiple stories. Trimming still applies so
+            // Redis memory stays bounded.
+            removeOnComplete: { age: 7 * 86_400, count: 20_000 },
             removeOnFail: false,
           },
         };
