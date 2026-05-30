@@ -5,9 +5,14 @@ import { useDiscoverImportStore } from '@/stores/discover-import-store';
 import { StubBadge } from './StubBadge';
 
 const STATUS_TONE: Record<string, string> = {
-  Full: 'bg-foreground text-background',
-  Hot: 'bg-[hsl(var(--color-cta))] text-white',
-  'Mới': 'bg-blue-500 text-white',
+  completed: 'bg-positive/15 text-positive border-positive/30',
+  ongoing: 'bg-accent/15 text-accent border-accent/30',
+  dropped: 'bg-bg-subtle text-fg-muted border-border',
+  unknown: 'bg-bg-subtle text-fg-muted border-border',
+  // Legacy labels from external sources
+  Full: 'bg-fg text-bg',
+  Hot: 'bg-accent/15 text-accent border-accent/30',
+  'Mới': 'bg-accent/15 text-accent border-accent/30',
 };
 
 export function DiscoverTable({
@@ -53,8 +58,8 @@ export function DiscoverTable({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-background overflow-hidden">
-        <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+      <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
+        <div className="px-5 py-8 text-center text-body-sm text-fg-muted">
           Đang tải catalog...
         </div>
       </div>
@@ -63,10 +68,10 @@ export function DiscoverTable({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-background overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
         <div className="px-5 py-12 text-center">
-          <p className="font-heading text-lg mb-1">Không có kết quả</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="font-sans text-heading-md text-fg mb-1">Không có kết quả</p>
+          <p className="text-body-sm text-fg-muted">
             Thử feed khác hoặc thay từ khóa tìm kiếm.
           </p>
         </div>
@@ -75,11 +80,11 @@ export function DiscoverTable({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-background overflow-hidden">
+    <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/30">
-            <tr className="border-b border-border text-left">
+        <table className="w-full text-left text-body-sm">
+          <thead className="sticky top-0 z-10 bg-bg/95 backdrop-blur">
+            <tr className="border-b border-border">
               <th className="w-10 px-4 py-2.5">
                 <Checkbox
                   checked={allVisibleSelected}
@@ -89,22 +94,22 @@ export function DiscoverTable({
                   aria-label="Chọn tất cả trên trang này"
                 />
               </th>
-              <th className="w-14 px-2 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+              <th className="w-14 px-2 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                 Bìa
               </th>
-              <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+              <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                 Tiêu đề
               </th>
-              <th className="px-3 py-2.5 w-44 text-[11px] uppercase tracking-wider font-medium text-muted-foreground hidden md:table-cell">
+              <th className="px-3 py-2.5 w-44 text-[11px] uppercase tracking-wider font-medium text-fg-muted hidden md:table-cell">
                 Tác giả
               </th>
-              <th className="px-3 py-2.5 w-20 text-[11px] uppercase tracking-wider font-medium text-muted-foreground hidden sm:table-cell">
+              <th className="px-3 py-2.5 w-20 text-[11px] uppercase tracking-wider font-medium text-fg-muted hidden sm:table-cell">
                 Nhãn
               </th>
-              <th className="px-3 py-2.5 w-24 text-[11px] uppercase tracking-wider font-medium text-muted-foreground tabular-nums hidden sm:table-cell">
+              <th className="px-3 py-2.5 w-24 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums hidden sm:table-cell">
                 Chương
               </th>
-              <th className="px-3 py-2.5 w-36 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+              <th className="px-3 py-2.5 w-36 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                 Trạng thái
               </th>
               <th />
@@ -139,12 +144,12 @@ function Row({
     <tr
       onClick={() => !disabled && onToggle()}
       aria-disabled={disabled}
-      className={`border-b border-border/60 last:border-0 transition-colors duration-150 ${
+      className={`border-b border-border/60 transition-colors duration-fast last:border-0 ${
         disabled
           ? 'opacity-60 cursor-not-allowed'
           : selected
-            ? 'bg-[hsl(var(--color-cta))]/5 cursor-pointer'
-            : 'hover:bg-muted/30 cursor-pointer'
+            ? 'border-l-2 border-l-accent bg-bg-subtle cursor-pointer'
+            : 'hover:bg-bg-subtle/60 cursor-pointer'
       }`}
     >
       <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
@@ -156,7 +161,7 @@ function Row({
         />
       </td>
       <td className="px-2 py-2">
-        <div className="relative h-14 w-10 rounded overflow-hidden bg-muted shrink-0">
+        <div className="relative h-14 w-10 rounded overflow-hidden bg-bg-subtle shrink-0">
           {item.coverThumbUrl ? (
             <img
               src={item.coverThumbUrl}
@@ -166,61 +171,66 @@ function Row({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground/40">
+            <div className="w-full h-full flex items-center justify-center text-fg-subtle">
               <BookText className="h-4 w-4" aria-hidden />
             </div>
           )}
           {importing && (
-            <div className="absolute inset-0 bg-blue-500/15 flex items-center justify-center">
-              <Loader2 className="h-3 w-3 text-blue-700 animate-spin" aria-hidden />
-            </div>
+            <span className="absolute inset-0 flex items-center justify-center rounded-full border border-accent/30 bg-accent/15">
+              <Loader2 className="h-3 w-3 text-accent animate-spin" aria-hidden />
+            </span>
           )}
         </div>
       </td>
       <td className="px-3 py-2">
-        <div className="font-medium text-sm leading-snug line-clamp-2">{item.title}</div>
+        <div className="font-medium text-body-sm text-fg leading-snug line-clamp-2">{item.title}</div>
         <a
           href={item.externalUrl}
           target="_blank"
           rel="noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer mt-0.5"
+          className="inline-flex items-center gap-1 text-[11px] text-fg-muted hover:text-fg transition-colors duration-fast cursor-pointer mt-0.5"
         >
           <ExternalLink className="h-2.5 w-2.5" aria-hidden />
           mở trên nguồn
         </a>
-        <div className="md:hidden text-[11px] text-muted-foreground mt-1">
+        <div className="md:hidden text-[11px] text-fg-muted mt-1">
           {item.author ?? 'Khuyết danh'}
           {item.totalChaptersHint !== null && ` · ${item.totalChaptersHint} chương`}
         </div>
       </td>
-      <td className="px-3 py-2 text-sm text-muted-foreground hidden md:table-cell">
+      <td className="px-3 py-2 text-body-sm text-fg-muted hidden md:table-cell">
         {item.author ?? '—'}
       </td>
       <td className="px-3 py-2 hidden sm:table-cell">
         {item.statusLabel && (
           <span
-            className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium ${
-              STATUS_TONE[item.statusLabel] ?? 'bg-muted text-foreground'
+            className={`inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium border ${
+              STATUS_TONE[item.statusLabel] ?? 'bg-bg-subtle text-fg-muted border-border'
             }`}
           >
             {item.statusLabel}
           </span>
         )}
       </td>
-      <td className="px-3 py-2 tabular-nums text-sm hidden sm:table-cell">
+      <td className="px-3 py-2 tabular-nums text-body-sm text-fg hidden sm:table-cell">
         {item.totalChaptersHint ?? '—'}
       </td>
       <td className="px-3 py-2">
         {alreadyImported && item.existingDiscoveryStatus ? (
           <StubBadge status={item.existingDiscoveryStatus} />
+        ) : importing ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Đang import
+          </span>
         ) : selected ? (
-          <span className="inline-flex items-center gap-1 text-xs text-[hsl(var(--color-cta))] font-medium">
+          <span className="inline-flex items-center gap-1 text-[11px] text-accent font-medium">
             <Check className="h-3 w-3" aria-hidden />
             Đã chọn
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-[11px] text-fg-muted">—</span>
         )}
       </td>
       <td className="px-3 py-2" />
@@ -250,7 +260,7 @@ function Checkbox({
       ref={(el) => {
         if (el) el.indeterminate = indeterminate ?? false;
       }}
-      className="h-4 w-4 rounded border-border text-[hsl(var(--color-cta))] focus-visible:ring-2 focus-visible:ring-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+      className="h-4 w-4 rounded border-border text-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
       {...rest}
     />
   );
