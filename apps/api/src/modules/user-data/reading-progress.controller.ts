@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Put, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { ReadingProgressService } from './reading-progress.service';
 import { ReadingProgressDto } from './dto/reading-progress.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
@@ -14,6 +15,19 @@ export class ReadingProgressController {
   @Get()
   list(@CurrentUser() u: { id: string }) {
     return this.svc.list(u.id);
+  }
+
+  @Get('continue-reading')
+  async continueReading(
+    @CurrentUser() u: { id: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const row = await this.svc.getContinueReading(u.id);
+    if (!row) {
+      res.status(HttpStatus.NO_CONTENT);
+      return;
+    }
+    return row;
   }
 
   @Put()

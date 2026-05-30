@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { readingProgress, story } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
@@ -39,5 +39,24 @@ export class ReadingProgressService {
       .innerJoin(story, eq(story.id, readingProgress.storyId))
       .where(eq(readingProgress.userId, userId))
       .orderBy(desc(readingProgress.updatedAt));
+  }
+
+  async getContinueReading(userId: string) {
+    const rows = await this.db
+      .select({
+        storyId: readingProgress.storyId,
+        storySlug: story.slug,
+        storyTitle: story.title,
+        hasCover: sql<boolean>`${story.cover} IS NOT NULL`,
+        chapterIndex: readingProgress.chapterIndex,
+        totalChapters: story.totalChapters,
+        updatedAt: readingProgress.updatedAt,
+      })
+      .from(readingProgress)
+      .innerJoin(story, eq(story.id, readingProgress.storyId))
+      .where(eq(readingProgress.userId, userId))
+      .orderBy(desc(readingProgress.updatedAt))
+      .limit(1);
+    return rows[0] ?? null;
   }
 }
