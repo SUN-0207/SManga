@@ -3,7 +3,7 @@
 > **For agentic workers:** Steps use checkbox (`- [ ]`) syntax for tracking. Several tasks require an actual VPS, DNS access, and shell — they're written for human execution with the agent assisting on file generation, but you can still bookkeep progress as you go.
 > **Prerequisites:** Plan 6 (deploy) and Plan 7 (catalog discovery) shipped. Cloudflare account with `smanga.shop` zone active.
 
-**Goal:** Move SManga from the Vercel + Railway + Neon + Upstash managed stack to a single Hetzner CX22 VPS running docker-compose. Cloudflare proxies traffic + provides edge CDN + free SSL termination. Cost flips from ~$0-40/mo (depending on data growth) to a flat **~$5/mo** that scales with usage instead of with vendor quotas.
+**Goal:** Move SManga from the Vercel + Railway + Neon + Upstash managed stack to a single Hetzner CX23 VPS running docker-compose. Cloudflare proxies traffic + provides edge CDN + free SSL termination. Cost flips from ~$0-40/mo (depending on data growth) to a flat **~$5/mo** that scales with usage instead of with vendor quotas.
 
 **Important user constraint:** Vercel deployment is kept as a **test/preview env**. VPS hosts the **new production** with a fresh database (no Neon → VPS data migration). The reader catalog is rebuilt on the VPS from scratch via the existing admin catalog-discover flow.
 
@@ -17,7 +17,7 @@ User (browser)  │                Cloudflare edge                  │
                                       │ HTTPS (Full strict)
                                       ▼
                 ┌────────────────────────────────────────────────┐
-                │           Hetzner CX22 Singapore                │
+                │           Hetzner CX23 Singapore                │
                 │  ┌──────────────────────────────────────────┐   │
                 │  │  Caddy (auto Let's Encrypt + reverse-    │   │
                 │  │         proxy + static FE)                │   │
@@ -45,7 +45,7 @@ All 4 services run on one VPS via `docker-compose`. Caddy handles SSL + reverse 
 **Tech Stack:** No app code changes. Adds `docker-compose.prod.yml`, `Caddyfile`, GitHub Actions SSH deploy workflow, R2 backup cron.
 
 **Cost target:**
-- Hetzner CX22 Singapore: €4.51 ≈ **$5/mo**
+- Hetzner CX23 Singapore: €4.49 ≈ **$5/mo**
 - Cloudflare free tier: **$0**
 - Cloudflare R2 backup storage (~1 GB used of 10 GB free): **$0**
 - Domain `smanga.shop`: already paid
@@ -74,13 +74,13 @@ docs/
 
 ### Task 1: Provision Hetzner VPS
 
-**Goal:** Get a CX22 in Singapore running with Docker + a non-root user.
+**Goal:** Get a CX23 in Singapore running with Docker + a non-root user.
 
 - [ ] **Step 1: Create the server**
   - Sign in at <https://console.hetzner.com>
   - **Add Server** → Location: **Singapore (sin)**
   - Image: **Ubuntu 24.04**
-  - Type: **CX22** (€4.51/mo, 2 vCPU, 4 GB, 40 GB NVMe)
+  - Type: **CX23** (€4.49/mo, 2 vCPU Intel/AMD x86, 4 GB, 40 GB NVMe). If Singapore doesn't list CX23 yet (SG region launched recently and inventory varies), fall back to Helsinki (`fsn1`) or Nuremberg (`nbg1`) — ~250ms RTT from VN, Cloudflare proxy at SG/HCM edge absorbs most of the latency for cached assets. Avoid CAX (Ampere ARM) for now since CI builds linux/amd64 images.
   - SSH Key: add your public key (`~/.ssh/id_ed25519.pub`)
   - Name: `smanga-prod`
   - Backups: optional (€0.90/mo for daily snapshots — recommended for hobby)
@@ -743,7 +743,7 @@ rclone ls r2:smanga-backups/
     gunzip smanga-YYYY-MM-DD.sql.gz
     docker compose exec -T postgres psql -U smanga -d smanga < smanga-YYYY-MM-DD.sql
     ```
-  - How to scale up (CX22 → CX32 = €8/mo, 4 vCPU, 8 GB): Hetzner UI → server → "Rescale" → choose type → reboot
+  - How to scale up (CX23 → CX32 = €8/mo, 4 vCPU, 8 GB): Hetzner UI → server → "Rescale" → choose type → reboot
   - How to add a second VPS (read replica Postgres + load-balanced Caddy) — defer until hobby outgrows
   - Cloudflare cache purge:
     - Dashboard → Caching → Configuration → Purge Everything (or selective by URL)
@@ -751,7 +751,7 @@ rclone ls r2:smanga-backups/
     - 522 → origin down → check `docker compose ps`, restart with `up -d`
     - 502/504 → api container unhealthy → `docker compose logs api`
     - Disk full → `docker system prune -af`
-    - Postgres OOM (CX22 has 4 GB shared) → tune `shared_buffers`, add swap, or rescale
+    - Postgres OOM (CX23 has 4 GB shared) → tune `shared_buffers`, add swap, or rescale
 
 **Acceptance criteria:**
 - Runbook lives at `docs/vps-runbook.md`
@@ -787,7 +787,7 @@ The fact that we're starting with a **fresh DB on VPS** (per user constraint) me
 
 | Item | Monthly |
 |---|---|
-| Hetzner CX22 Singapore | €4.51 (~$5) |
+| Hetzner CX23 Singapore | €4.49 (~$5) |
 | Hetzner snapshot backups | €0.90 (~$1) — optional |
 | Cloudflare proxy + CDN + SSL | $0 |
 | Cloudflare R2 (1 GB used / 10 GB free) | $0 |
