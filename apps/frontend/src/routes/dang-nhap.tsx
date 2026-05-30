@@ -65,7 +65,7 @@ function SignInPage() {
           <span className="h-px flex-1 bg-border" />
         </div>
 
-        <form onSubmit={submit} className="space-y-5">
+        <form onSubmit={submit} className="space-y-5" noValidate>
           <div className="space-y-2">
             <label
               htmlFor="email"
@@ -106,7 +106,7 @@ function SignInPage() {
               <button
                 type="button"
                 onClick={() => setShowPwd((v) => !v)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-label={showPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
                 {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -123,7 +123,7 @@ function SignInPage() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-accent-gradient px-4 text-[14px] font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-accent-gradient px-4 text-[14px] font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
             {busy ? "Đang đăng nhập…" : "Đăng nhập"}
