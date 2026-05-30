@@ -1,77 +1,97 @@
-import type { ReactNode } from 'react';
-import { Link } from '@tanstack/react-router';
-import { ArrowLeft } from 'lucide-react';
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { type ReactNode } from "react";
 
-export function AuthShell({ children }: { children: ReactNode }) {
+type AuthShellProps = {
+  children: ReactNode;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+};
+
+export function AuthShell({
+  children,
+  eyebrow = "TẠP CHÍ TRUYỆN CHỮ VIỆT",
+  title = "Đọc chậm. Đọc kỹ. Đọc lại.",
+  subtitle = "Một thư viện truyện chữ Việt biên tập như một tạp chí — không quảng cáo, không pop-up.",
+}: AuthShellProps) {
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      <aside className="hidden lg:flex flex-col justify-between p-12 xl:p-16 bg-gradient-to-br from-pink-50 via-rose-50 to-orange-50 dark:from-pink-950/30 dark:via-rose-950/20 dark:to-orange-950/20 border-r border-border/60">
-        <Link
-          to="/"
-          className="inline-flex items-baseline gap-1.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded w-fit"
-        >
-          <span className="font-heading font-bold text-3xl tracking-tight transition-opacity duration-200 group-hover:opacity-80">
-            SManga
-          </span>
-          <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-medium">
-            Tạp chí truyện
-          </span>
-        </Link>
+    <div className="min-h-screen w-full bg-bg text-fg lg:grid lg:grid-cols-2">
+      {/* LEFT — hero pane (lg+) */}
+      <aside
+        className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12"
+        style={{
+          background:
+            "linear-gradient(135deg, #0A0A0A 0%, rgba(236,72,153,0.12) 100%)",
+        }}
+      >
+        {/* Top-right pink glow orb */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(236,72,153,0.25) 0%, rgba(236,72,153,0) 70%)",
+          }}
+        />
 
-        <div className="space-y-8 max-w-md">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium">
-            Tạp chí truyện chữ Việt
-          </p>
-          <blockquote className="font-heading text-4xl xl:text-5xl leading-[1.15] tracking-tight">
-            Đọc truyện chữ,
-            <br />
-            <span className="italic text-muted-foreground">theo cách của bạn.</span>
-          </blockquote>
-          <ul className="space-y-2.5 text-sm text-foreground/70">
-            <li className="flex items-start gap-2">
-              <span aria-hidden className="mt-1.5 inline-block h-1 w-1 rounded-full bg-foreground/40 shrink-0" />
-              Tuyển chọn tiểu thuyết tiếng Việt
-            </li>
-            <li className="flex items-start gap-2">
-              <span aria-hidden className="mt-1.5 inline-block h-1 w-1 rounded-full bg-foreground/40 shrink-0" />
-              Trải nghiệm đọc tối giản, không quảng cáo
-            </li>
-            <li className="flex items-start gap-2">
-              <span aria-hidden className="mt-1.5 inline-block h-1 w-1 rounded-full bg-foreground/40 shrink-0" />
-              Tủ sách cá nhân, đồng bộ tiến độ đọc
-            </li>
-          </ul>
-        </div>
-
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded w-fit"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Về trang chủ
-        </Link>
-      </aside>
-
-      <main className="flex flex-col items-center justify-center px-6 py-12 sm:px-10">
-        <div className="lg:hidden mb-10 text-center">
+        <div className="relative z-10">
           <Link
             to="/"
-            className="inline-flex items-baseline gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+            className="inline-flex items-center gap-2 text-white/90 transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
           >
-            <span className="font-heading font-bold text-2xl tracking-tight">SManga</span>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground font-medium">
-              Tạp chí truyện
+            <span className="font-sans text-2xl font-semibold tracking-tight">
+              SManga
             </span>
           </Link>
         </div>
-        <div className="w-full max-w-sm">{children}</div>
-        <Link
-          to="/"
-          className="lg:hidden mt-8 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-          Về trang chủ
-        </Link>
+
+        <div className="relative z-10 space-y-6">
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/40">
+            {eyebrow}
+          </p>
+          <blockquote className="font-sans text-display-md leading-tight text-white">
+            {title}
+          </blockquote>
+          <p className="text-body italic text-white/60">{subtitle}</p>
+        </div>
+
+        <div className="relative z-10 flex items-center gap-3 text-white/40">
+          <span className="h-px w-10 bg-white/20" />
+          <span className="text-[11px] uppercase tracking-[0.18em]">
+            SManga · 2026
+          </span>
+        </div>
+      </aside>
+
+      {/* RIGHT — form pane */}
+      <main className="flex min-h-screen flex-col bg-bg">
+        {/* Mobile header (lg- only) */}
+        <header className="flex items-center justify-between border-b border-border px-6 py-5 lg:hidden">
+          <Link
+            to="/"
+            className="font-sans text-xl font-semibold tracking-tight text-fg transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            SManga
+          </Link>
+          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">
+            {eyebrow}
+          </p>
+        </header>
+
+        <div className="flex flex-1 items-center justify-center px-6 py-10 lg:px-12">
+          <div className="w-full max-w-sm">{children}</div>
+        </div>
+
+        <footer className="border-t border-border px-6 py-5 lg:hidden">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-body-sm text-fg-muted transition-colors duration-fast hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Quay lại trang chủ
+          </Link>
+        </footer>
       </main>
     </div>
   );
