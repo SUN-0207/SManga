@@ -31,9 +31,9 @@ export function DiscoverFilters({
   }
 
   return (
-    <div className="sticky top-16 z-10 bg-background/95 backdrop-blur-md border-b border-border/60 -mx-6 sm:-mx-8 px-6 sm:px-8 py-3 space-y-3">
-      {/* Sticks just under the admin top bar (h-16). admin/route.tsx makes
-          that top bar sticky too so the two stack cleanly when scrolling. */}
+    <div className="sticky top-14 sm:top-16 z-10 bg-background/95 backdrop-blur-md border-b border-border/60 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 space-y-3">
+      {/* Sticks just under the admin top bar (h-14 mobile / h-16 sm+).
+          admin/route.tsx makes that top bar sticky too so they stack cleanly. */}
       <div className="flex items-center gap-2 overflow-x-auto">
         {feeds.map((f) => (
           <button

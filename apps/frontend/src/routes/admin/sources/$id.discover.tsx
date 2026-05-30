@@ -5,8 +5,8 @@ import { ArrowLeft } from 'lucide-react';
 import { discoverApi } from '@/api/discover';
 import { DiscoverActionBar } from '@/components/admin/DiscoverActionBar';
 import { DiscoverFilters } from '@/components/admin/DiscoverFilters';
-import { DiscoverGrid } from '@/components/admin/DiscoverGrid';
 import { DiscoverPagination } from '@/components/admin/DiscoverPagination';
+import { DiscoverTable } from '@/components/admin/DiscoverTable';
 import { useDiscoverImportStore } from '@/stores/discover-import-store';
 
 export const Route = createFileRoute('/admin/sources/$id/discover')({
@@ -105,7 +105,7 @@ function DiscoverPage() {
         onQueryChange={setQuery}
       />
 
-      <DiscoverGrid items={browseQ.data?.items ?? []} isLoading={browseQ.isLoading} />
+      <DiscoverTable items={browseQ.data?.items ?? []} isLoading={browseQ.isLoading} />
 
       {browseQ.data && (
         <DiscoverPagination
