@@ -111,7 +111,7 @@ function ChapterReader() {
         {/* Content */}
         {data.chapter.isCrawled && data.chapter.content ? (
           <div
-            className="reader-prose font-body whitespace-pre-line my-10 text-foreground/90 max-w-prose mx-auto"
+            className="reader-prose font-prose whitespace-pre-line my-10 text-foreground/90 max-w-prose mx-auto"
             style={{
               fontSize: 'var(--reader-font-size, 18px)',
               fontFamily: 'var(--reader-font-family, Newsreader, ui-serif, Georgia, serif)',

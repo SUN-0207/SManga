@@ -160,7 +160,7 @@ function StoryDetail() {
             <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-3">
               Giới thiệu
             </p>
-            <div className="font-body text-base leading-[1.85] text-foreground/85 whitespace-pre-line first-letter:font-heading first-letter:text-5xl first-letter:font-bold first-letter:float-left first-letter:mr-2 first-letter:leading-[0.85] first-letter:mt-1">
+            <div className="font-prose text-base leading-[1.85] text-foreground/85 whitespace-pre-line first-letter:font-heading first-letter:text-5xl first-letter:font-bold first-letter:float-left first-letter:mr-2 first-letter:leading-[0.85] first-letter:mt-1">
               {s.description}
             </div>
           </div>

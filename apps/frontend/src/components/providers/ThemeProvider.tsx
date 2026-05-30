@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
 
 const FAMILY_CSS: Record<'sans' | 'serif' | 'mono', string> = {
-  sans: 'Roboto, ui-sans-serif, system-ui, sans-serif',
+  sans: 'Inter, ui-sans-serif, system-ui, sans-serif',
   serif: 'Newsreader, ui-serif, Georgia, Cambria, serif',
   mono: 'ui-monospace, SFMono-Regular, Menlo, monospace',
 };
