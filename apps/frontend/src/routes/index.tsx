@@ -1,239 +1,137 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
-import { listStories, type StorySummary } from '@/api/stories';
-import { StoryGrid } from '@/components/reader/StoryGrid';
+import { ArrowRight } from 'lucide-react';
+import { listStories } from '@/api/stories';
+import { useAuthStore } from '@/stores/auth-store';
 
-export const Route = createFileRoute('/')({
-  component: Landing,
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData({
-      queryKey: ['stories', { page: 1, limit: 48 }],
-      queryFn: () => listStories(1, 48),
-    }),
-});
+export const Route = createFileRoute('/')({ component: HomePage });
 
-function Landing() {
-  const { data: stories = [] } = useQuery({
-    queryKey: ['stories', { page: 1, limit: 48 }],
-    queryFn: () => listStories(1, 48),
+function HomePage() {
+  const user = useAuthStore((s) => s.user);
+  const storiesQ = useQuery({
+    queryKey: ['stories', { page: 1, limit: 12 }],
+    queryFn: () => listStories(1, 12),
   });
 
-  const featured = stories[0];
-  const rest = stories.slice(1);
-
   return (
-    <div className="space-y-16 sm:space-y-24 pb-20">
-      <EditorialHero featured={featured} totalCount={stories.length} hasMore={rest.length > 0} />
-
-      {rest.length > 0 && (
-        <section className="container">
-          <SectionHeader
-            eyebrow="Thư viện"
-            title="Mới cập nhật"
-            description={`${rest.length} truyện khác đang chờ bạn khám phá.`}
-          />
-          <StoryGrid stories={rest} />
-        </section>
-      )}
-
-      <DiscoveryStrip />
+    <div className="container py-8 lg:py-12 space-y-12 lg:space-y-16">
+      {user ? <LoggedInHero /> : <AnonHero />}
+      <UpdatedSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
+      <GenreSection />
     </div>
   );
 }
 
-function EditorialHero({
-  featured,
-  totalCount,
-  hasMore,
-}: {
-  featured?: StorySummary;
-  totalCount: number;
-  hasMore: boolean;
-}) {
+function AnonHero() {
   return (
-    <section className="relative overflow-hidden">
-      {/* Decorative editorial background */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,hsl(322_84%_60%/0.08),transparent_55%),radial-gradient(ellipse_at_bottom_left,hsl(240_4%_46%/0.05),transparent_50%)]"
-      />
-      <div
-        aria-hidden
-        className="absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-border to-transparent"
-      />
-
-      <div className="container pt-12 sm:pt-20 lg:pt-28">
-        <div className="grid lg:grid-cols-[1.2fr_1fr] gap-10 lg:gap-16 items-center">
-          {/* Editorial copy */}
-          <div className="space-y-6 max-w-2xl">
-            <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium">
-              <Sparkles className="h-3.5 w-3.5" />
-              Tạp chí truyện chữ Việt
-            </div>
-            <h1 className="font-heading font-bold leading-[0.95] tracking-tight text-5xl sm:text-6xl lg:text-7xl xl:text-[5.5rem]">
-              Đọc truyện chữ,
-              <br />
-              <span className="italic font-medium text-muted-foreground">
-                theo cách của bạn.
-              </span>
-            </h1>
-            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-prose">
-              Tuyển chọn tiểu thuyết tiếng Việt với trải nghiệm đọc tối giản —
-              không quảng cáo chen ngang, không pop-up, chỉ có bạn và câu chuyện.
-            </p>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              {featured && (
-                <Link
-                  to="/truyen/$slug"
-                  params={{ slug: featured.slug }}
-                  search={{ page: 1 }}
-                  className="group inline-flex items-center gap-2 h-11 px-6 rounded-full bg-[hsl(var(--color-cta))] text-white font-medium text-sm shadow-sm hover:shadow-md hover:opacity-95 transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--color-cta))] focus-visible:ring-offset-2"
-                >
-                  Đọc truyện nổi bật
-                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                </Link>
-              )}
-              {hasMore && (
-                <a
-                  href="#thu-vien"
-                  className="inline-flex items-center gap-2 h-11 px-5 rounded-full border border-border hover:border-foreground/40 hover:bg-muted/60 text-sm font-medium transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  Xem toàn bộ thư viện
-                </a>
-              )}
-            </div>
-            <p className="pt-4 text-xs uppercase tracking-[0.25em] text-muted-foreground">
-              {totalCount === 1 ? '1 truyện' : `${totalCount} truyện`} · Cập nhật liên tục · Miễn phí hoàn toàn
-            </p>
-          </div>
-
-          {/* Featured card */}
-          {featured ? <FeaturedCard story={featured} /> : <EmptyFeaturedSlot />}
-        </div>
+    <section className="relative overflow-hidden rounded-xl border border-border bg-bg-elevated p-8 lg:p-16">
+      <div aria-hidden className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
+      <p className="text-label text-fg-muted uppercase mb-3">TẠP CHÍ TRUYỆN CHỮ VIỆT</p>
+      <h1 className="text-display-sm sm:text-display-md lg:text-display-lg">
+        Đọc truyện chữ.<br />
+        <span className="bg-accent-gradient bg-clip-text text-transparent">Như nó nên là.</span>
+      </h1>
+      <p className="mt-6 max-w-xl text-body lg:text-base text-fg-muted">
+        Tuyển chọn tiểu thuyết tiếng Việt với trải nghiệm đọc tối giản — không quảng cáo chen ngang, không pop-up.
+      </p>
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Link
+          to="/tim-kiem"
+          search={{ q: '', page: 1 }}
+          className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-accent-gradient text-white text-body font-semibold shadow-glow-pink-soft hover:shadow-glow-pink transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+        >
+          Khám phá truyện <ArrowRight className="h-4 w-4" aria-hidden />
+        </Link>
+        <Link
+          to="/dang-nhap"
+          search={{ redirect: '/tu-sach' }}
+          className="inline-flex items-center h-11 px-5 rounded-md border border-border-strong hover:bg-bg-subtle text-body font-semibold transition-colors duration-fast"
+        >
+          Đăng nhập
+        </Link>
       </div>
     </section>
   );
 }
 
-function FeaturedCard({ story }: { story: StorySummary }) {
+function LoggedInHero() {
+  // Plan C will replace this with a real "Đọc tiếp" hero card driven by
+  // GET /me/continue-reading. For Plan A scope, fall back to AnonHero so
+  // logged-in users still see a valid landing experience.
+  return <AnonHero />;
+}
+
+function UpdatedSection({ stories, isLoading }: { stories: any[]; isLoading: boolean }) {
+  return (
+    <section>
+      <div className="flex items-end justify-between mb-6">
+        <div>
+          <p className="text-label text-fg-muted uppercase mb-2">THƯ VIỆN</p>
+          <h2 className="text-heading-lg">Mới cập nhật</h2>
+        </div>
+        <Link to="/tim-kiem" search={{ q: '', page: 1 }} className="text-body-sm text-fg-muted hover:text-fg transition-colors duration-fast">
+          Xem tất cả →
+        </Link>
+      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-[3/4] rounded-md bg-bg-subtle animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {stories?.map((s: any) => <StoryCard key={s.id} story={s} />)}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function StoryCard({ story }: { story: any }) {
   return (
     <Link
       to="/truyen/$slug"
       params={{ slug: story.slug }}
       search={{ page: 1 }}
-      className="group relative block w-full max-w-md mx-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl"
+      className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
     >
-      <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-[0_30px_60px_-20px_rgba(0,0,0,0.25),0_0_0_1px_rgba(0,0,0,0.05)] transition-transform duration-300 group-hover:-translate-y-1">
-        {story.hasCover ? (
+      <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">
+        {story.hasCover && (
           <img
             src={`/api/v1/cover/${story.id}`}
-            alt={`Bìa ${story.title}`}
-            className="w-full h-full object-cover"
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground text-sm">
-            Không có bìa
-          </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/85 via-zinc-950/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-white/70 mb-2 font-medium">
-            Truyện nổi bật
-          </p>
-          <h2 className="font-heading font-semibold text-2xl leading-tight tracking-tight line-clamp-2 mb-1.5">
-            {story.title}
-          </h2>
-          <p className="text-sm text-white/80 mb-3">
-            {story.author ?? 'Khuyết danh'} · {story.totalChapters} chương
-          </p>
-          <div className="inline-flex items-center gap-1.5 text-sm font-medium transition-all duration-200 group-hover:gap-2.5">
-            Đọc ngay
-            <ArrowRight className="h-3.5 w-3.5" />
-          </div>
-        </div>
       </div>
+      <h3 className="mt-3 text-heading-md line-clamp-2">{story.title}</h3>
+      <p className="mt-1 text-body-sm text-fg-muted truncate">{story.author ?? 'Khuyết danh'}</p>
     </Link>
   );
 }
 
-function EmptyFeaturedSlot() {
+function GenreSection() {
+  const genres = ['Đam mỹ', 'Xuyên không', 'Tiên hiệp', 'Kiếm hiệp', 'Ngôn tình', 'Huyền huyễn', 'Trọng sinh', 'Sủng'];
   return (
-    <div className="relative w-full max-w-md mx-auto aspect-[3/4] rounded-2xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-3 text-center p-8">
-      <BookOpen className="h-10 w-10 text-muted-foreground/50" />
-      <p className="font-heading text-lg">Thư viện đang trống</p>
-      <p className="text-xs text-muted-foreground max-w-xs">
-        Truyện sẽ sớm xuất hiện ở đây. Quay lại sau nhé.
-      </p>
-    </div>
-  );
-}
-
-function SectionHeader({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description?: string;
-}) {
-  return (
-    <div id="thu-vien" className="mb-8 scroll-mt-24">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
-            {eyebrow}
-          </p>
-          <h2 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">
-            {title}
-          </h2>
-        </div>
-        {description && (
-          <p className="text-sm text-muted-foreground max-w-xs">{description}</p>
-        )}
+    <section>
+      <div className="mb-6">
+        <p className="text-label text-fg-muted uppercase mb-2">KHÁM PHÁ</p>
+        <h2 className="text-heading-lg">Theo thể loại</h2>
       </div>
-      <div className="mt-6 h-px w-full bg-gradient-to-r from-border via-border to-transparent" />
-    </div>
-  );
-}
-
-function DiscoveryStrip() {
-  const themes = [
-    'Đam mỹ',
-    'Xuyên không',
-    'Tiên hiệp',
-    'Kiếm hiệp',
-    'Ngôn tình',
-    'Huyền huyễn',
-    'Trọng sinh',
-    'Sủng',
-  ];
-  return (
-    <section className="container">
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-muted/40 to-background p-8 sm:p-12">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-3">
-          Khám phá theo thể loại
-        </p>
-        <h3 className="font-heading font-semibold text-2xl sm:text-3xl tracking-tight mb-6 max-w-xl">
-          Tìm truyện phù hợp với tâm trạng hôm nay.
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {themes.map((t) => (
-            <span
-              key={t}
-              className="inline-flex items-center h-9 px-4 rounded-full text-sm bg-background border border-border text-foreground/70"
-            >
-              {t}
-            </span>
-          ))}
-        </div>
-        <p className="mt-5 text-xs text-muted-foreground">
-          Bộ lọc thể loại sẽ ra mắt trong bản cập nhật tiếp theo.
-        </p>
+      <div className="flex flex-wrap gap-2">
+        {genres.map((g) => (
+          <Link
+            key={g}
+            to="/tim-kiem"
+            search={{ q: g, page: 1 }}
+            className="inline-flex items-center h-9 px-4 rounded-full border border-border hover:border-border-strong hover:bg-bg-subtle text-body-sm transition-colors duration-fast"
+          >
+            {g}
+          </Link>
+        ))}
       </div>
     </section>
   );
 }
-
