@@ -98,8 +98,44 @@ function ChapterReader() {
         ? 'font-mono'
         : 'font-prose';
 
-  // Estimated reading time: ~1250 chars/min Vietnamese
-  const estMinutes = Math.max(1, Math.ceil((chapter.content?.length ?? 0) / 1250));
+  // Word-based reading time (Spec C: ceil(wordCount / 250))
+  const wordCount = (chapter.content?.match(/\S+/g) ?? []).length;
+  const readingMinutes = Math.max(1, Math.ceil(wordCount / 250));
+
+  // Drop-cap eligibility — suppress on smallest font size or when no letter in first 20 chars.
+  // The store ships fontSize as the string union '15' | '18' | '20' | '24'.
+  // Suppress at '15' per Spec C.
+  const dropCapAllowed = fontSize !== '15';
+
+  function renderParagraph(para: string, i: number) {
+    // Scene break detector
+    const trimmed = para.trim();
+    if (trimmed === '* * *' || trimmed === '***' || /^[*·•・]{3,}$/.test(trimmed)) {
+      return (
+        <p key={i} aria-hidden className="scene-break">
+          · · ·
+        </p>
+      );
+    }
+    if (i === 0 && dropCapAllowed) {
+      // Find first letter (skip leading non-letters) — Unicode-aware
+      const match = para.match(/^([^\p{L}]{0,20})(\p{L})(.*)$/su);
+      if (match) {
+        const [, prefix, letter, rest] = match;
+        return (
+          <p key={i}>
+            {prefix}
+            <span className="drop-cap" aria-hidden>
+              {letter}
+            </span>
+            <span className="sr-only">{letter}</span>
+            {rest}
+          </p>
+        );
+      }
+    }
+    return <p key={i}>{para}</p>;
+  }
 
   return (
     <div className="min-h-screen bg-bg text-fg">
@@ -168,15 +204,12 @@ function ChapterReader() {
           {cleanTitle || chapter.title}
         </h1>
         <p className="text-label text-fg-subtle mb-9">
-          CHƯƠNG {chapter.index} · {estMinutes} PHÚT ĐỌC
+          CHƯƠNG {chapter.index} · {readingMinutes} PHÚT ĐỌC
         </p>
 
         {chapter.isCrawled && chapter.content ? (
           <div className={`${fontFamilyClass} ${fontSizeClass} text-fg/95 [&_p]:mb-5`}>
-            {chapter.content.split('\n\n').map((para, i) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <p key={i}>{para}</p>
-            ))}
+            {chapter.content.split('\n\n').map(renderParagraph)}
           </div>
         ) : (
           <div className="border border-dashed border-border rounded-xl p-10 text-center text-fg-muted my-10">

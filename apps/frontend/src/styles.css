@@ -81,3 +81,38 @@ body {
   --destructive-foreground: #FFFFFF;
   --radius: 0.625rem;
 }
+
+/* Plan C3: drop-cap for chapter first paragraph */
+.drop-cap {
+  font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  font-size: 3.5em;
+  line-height: 0.85;
+  float: left;
+  margin: 6px 12px 0 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop-cap {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: var(--fg);
+  }
+}
+
+/* Plan C3: scene break "* * *" → centered dots */
+.scene-break {
+  display: block;
+  text-align: center;
+  margin: 2.5em 0;
+  font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+  font-size: 1.5em;
+  letter-spacing: 0.4em;
+  color: var(--fg-muted);
+  user-select: none;
+}
