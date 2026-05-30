@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Search, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Trash2, X } from 'lucide-react';
 import {
   deleteUser,
   listAdminUsers,
@@ -261,54 +261,42 @@ function DeleteConfirm({
   const matches = typed === user.email;
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={onCancel}
-        aria-label="Huỷ"
-        className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-sm cursor-default"
-      />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 px-4 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-user-title"
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md rounded-xl border border-border bg-background shadow-xl"
+        className="w-full max-w-md rounded-xl border border-border bg-bg-elevated p-6 shadow-elev"
       >
-        <div className="px-6 py-5 border-b border-border/60 flex items-start gap-3">
-          <div className="shrink-0 h-9 w-9 rounded-full bg-destructive/15 text-destructive flex items-center justify-center">
-            <AlertTriangle className="h-5 w-5" aria-hidden />
-          </div>
-          <div className="min-w-0">
-            <h2 id="delete-user-title" className="font-sans font-semibold text-lg text-fg">
-              Xoá tài khoản
-            </h2>
-            <p className="text-body-sm text-fg-muted mt-1">
-              Tài khoản, bookmark và tiến độ đọc của <span className="font-medium text-fg">{user.email}</span> sẽ
-              bị xoá vĩnh viễn. Hành động này không thể hoàn tác.
-            </p>
-          </div>
-        </div>
-        <div className="px-6 py-5 space-y-4">
-          <label className="block space-y-1.5">
-            <span className="text-[11px] font-medium text-fg-muted uppercase tracking-[0.18em]">
-              Nhập email để xác nhận
-            </span>
-            <input
-              type="text"
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-              autoFocus
-              placeholder={user.email}
-              className="w-full h-10 px-3 rounded-md border border-border bg-background text-body text-fg focus:outline-none focus:border-destructive/60 focus:ring-2 focus:ring-destructive/20 transition-all duration-200"
-            />
-          </label>
-          {error && <p className="text-body-sm text-destructive">{error}</p>}
-        </div>
-        <div className="px-6 py-4 border-t border-border/60 flex items-center justify-end gap-2">
+        <h2 id="delete-user-title" className="font-sans text-heading-md text-fg">
+          Xoá người dùng
+        </h2>
+        <p className="mt-2 text-body-sm text-fg-muted">
+          Hành động này không thể hoàn tác. Để xác nhận, nhập email{" "}
+          <span className="font-mono text-fg">{user.email}</span> bên dưới.
+        </p>
+
+        <input
+          type="email"
+          autoComplete="off"
+          autoFocus
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          placeholder={user.email}
+          className="mt-4 block h-11 w-full rounded-md border border-border bg-bg px-3.5 text-body text-fg placeholder:text-fg-subtle focus:border-destructive/40 focus:outline-none focus:ring-2 focus:ring-destructive/40"
+        />
+
+        {error ? (
+          <p className="mt-2 text-body-sm text-destructive" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        <div className="mt-6 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex items-center h-9 px-3.5 rounded-md text-body-sm border border-border text-fg-muted hover:border-border-strong hover:bg-bg-subtle transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="inline-flex h-10 items-center rounded-md px-4 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Huỷ
           </button>
@@ -316,13 +304,13 @@ function DeleteConfirm({
             type="button"
             onClick={onConfirm}
             disabled={!matches || busy}
-            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-body-sm font-medium bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex h-10 items-center gap-1.5 rounded-md bg-destructive px-4 text-body-sm font-semibold text-white transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-            Xoá vĩnh viễn
+            <Trash2 className="h-4 w-4" />
+            {busy ? 'Đang xoá…' : 'Xoá vĩnh viễn'}
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
