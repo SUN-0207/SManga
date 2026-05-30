@@ -87,7 +87,7 @@ function AdminLayout() {
             type="button"
             onClick={() => setMobileNavOpen(false)}
             aria-label="Đóng menu"
-            className="inline-flex items-center justify-center h-8 w-8 rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="inline-flex items-center justify-center h-8 w-8 rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -103,7 +103,7 @@ function AdminLayout() {
             type="button"
             onClick={() => setMobileNavOpen(true)}
             aria-label="Mở menu"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer md:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -117,7 +117,7 @@ function AdminLayout() {
             <button
               type="button"
               onClick={logout}
-              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border-strong bg-bg px-3 text-body-sm font-medium text-fg transition-colors duration-fast hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border-strong bg-bg px-3 text-body-sm font-medium text-fg transition-colors duration-fast hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
               Đăng xuất
@@ -161,8 +161,8 @@ function SidebarNav({ path }: { path: string }) {
             to={n.href}
             className={
               active
-                ? 'group flex h-9 items-center gap-2.5 rounded-md bg-gradient-to-r from-accent to-accent-strong px-3 text-body-sm font-medium text-white shadow-glow-pink-soft transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
-                : 'group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
+                ? 'group flex h-9 items-center gap-2.5 rounded-md bg-gradient-to-r from-accent to-accent-strong px-3 text-body-sm font-medium text-white shadow-glow-pink-soft transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer'
+                : 'group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer'
             }
           >
             <Icon className="h-4 w-4" />
@@ -179,7 +179,7 @@ function SidebarFooter() {
     <div className="px-3 py-4 border-t border-border space-y-0.5 shrink-0">
       <Link
         to="/"
-        className="group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
       >
         <ExternalLink className="h-4 w-4" />
         Xem trang đọc
@@ -201,8 +201,8 @@ function MobileDrawerNav({ path, onClose }: { path: string; onClose: () => void 
             onClick={onClose}
             className={
               active
-                ? 'group flex h-9 items-center gap-2.5 rounded-md bg-gradient-to-r from-accent to-accent-strong px-3 text-body-sm font-medium text-white shadow-glow-pink-soft'
-                : 'group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted hover:bg-bg-subtle hover:text-fg'
+                ? 'group flex h-9 items-center gap-2.5 rounded-md bg-gradient-to-r from-accent to-accent-strong px-3 text-body-sm font-medium text-white shadow-glow-pink-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer'
+                : 'group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer'
             }
           >
             <Icon className="h-4 w-4" />
