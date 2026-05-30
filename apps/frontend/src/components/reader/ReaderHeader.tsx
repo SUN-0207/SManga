@@ -75,14 +75,26 @@ export function ReaderHeader() {
             <span className="hidden sm:inline">Tìm kiếm</span>
           </Link>
           {user ? (
-            <Link
-              to="/tu-sach"
-              className="inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              aria-label="Tủ sách của bạn"
-            >
-              <Library className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Tủ sách</span>
-            </Link>
+            <>
+              <Link
+                to="/tu-sach"
+                className="inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label="Tủ sách của bạn"
+              >
+                <Library className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">Tủ sách</span>
+              </Link>
+              {user.role === 'admin' && (
+                <a
+                  href="/admin"
+                  className="inline-flex items-center gap-1.5 h-9 px-3 text-sm rounded-md border border-foreground/20 hover:border-foreground/40 hover:bg-muted/70 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  aria-label="Vào trang quản trị"
+                >
+                  <Shield className="h-4 w-4" aria-hidden />
+                  <span className="hidden sm:inline">Quản trị</span>
+                </a>
+              )}
+            </>
           ) : (
             <Link
               to="/dang-nhap"
