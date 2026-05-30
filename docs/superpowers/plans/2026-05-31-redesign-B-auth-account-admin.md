@@ -14,6 +14,29 @@
 
 ---
 
+## Task 0 — Pre-flight context (alignment notes for the implementer)
+
+Read this before touching any file. These notes resolve known mismatches between the spec, Plan A's shipped state, and the actual code.
+
+- **Light-first theme is the default (Plan A shipped 2026-05-30).** Spec B was written assuming dark-default; Plan A flipped it to light via the reader-prefs v3 migration. The Completion checklist below has been adjusted: smoke in **LIGHT theme first**, then toggle to dark via the Cài đặt drawer. Replace any "dark theme by default" assumption you encounter with "light by default."
+- **Reader prefs store contract (read `apps/frontend/src/stores/reader-prefs-store.ts` once):**
+  - Import path is `@/stores/reader-prefs-store` (NOT `@/stores/useReaderPrefs`).
+  - Types: `ReaderTheme = 'light' | 'dark' | 'system'`, `ReaderFontSize = '15' | '18' | '20' | '24'` (STRINGS), `ReaderFontFamily = 'sans' | 'serif' | 'mono'`.
+  - The store does **not** expose a `reset` action. Either (a) add one with a small refactor task before Task 5 (`reset: () => set({ theme: 'light', fontSize: '18', fontFamily: 'serif' })` plus interface entry), or (b) implement a local `resetDefaults()` helper inside `ReaderSettings.tsx` that calls the three setters in sequence. Pick (b) for the smallest blast radius unless you also need it elsewhere.
+- **Discover import store (`apps/frontend/src/stores/discover-import-store.ts`):**
+  - Import path is `@/stores/discover-import-store` (NOT `@/stores/useDiscoverImportStore`).
+  - The store exports `selected`, `importing`, `toggle`, `clearSelection`, `selectAll`, `markImporting`, `markDone`. There is **no** `clear`, no `autoCrawl`, and no `setAutoCrawl` on the store — `autoCrawl`/`setAutoCrawl` are LOCAL `useState` in the existing DiscoverActionBar. Keep them local in Task 13.
+- **Auth routes already use a shared `<GoogleButton>` component** (`apps/frontend/src/components/auth/GoogleButton.tsx`). There is no `providers` object in scope on `dang-nhap.tsx`/`dang-ky.tsx`. Tasks 2 and 3 reuse `<GoogleButton redirect={redirect} label="…" />` rather than inlining a Google button + GoogleGlyph. Do NOT add a `providers.google` gate or inline a `GoogleGlyph` helper. The existing GoogleButton stays.
+- **Auth route existing identifiers (do not rename in Plan B — spec says no behavior changes):**
+  - `dang-nhap.tsx`: `email`, `password`, `showPwd`, `error` (NOT `errorMessage`), `busy` (NOT `loginMutation.isPending`), `submit` (NOT `handleSubmit`). No `canSubmit` — derive locally with `const canSubmit = email.length > 0 && password.length > 0 && !busy;` when needed for the disabled prop.
+  - `dang-ky.tsx`: `name`, `email`, `password`, `showPwd`, `error`, `busy`, `submit`, plus an existing `canSubmit` and `pwdTooShort` you can reuse.
+- **Tailwind radius scale (actual `tailwind.config.ts`):** `md = 10px`, `lg = 16px`, `xl = 24px` (Spec A's "8/12/16" wording is aspirational; the shipped config differs). Plan B uses `rounded-md` / `rounded-lg` / `rounded-xl` / `rounded-2xl` and they render at 10/16/24/32. Decide separately whether to align the config to 8/12/16 (out of scope for Plan B).
+- **AuthShell font choice (Inter, not Newsreader):** Spec B intentionally uses `font-sans` (Inter) for the auth hero blockquote — auth is chrome, not prose. The `font-heading` alias in tailwind.config.ts already points at Inter, so `font-sans text-display-md` and `font-heading text-display-md` resolve identically. No code change; just don't "fix" it to Newsreader.
+
+> **Implementer Step 0 for every Task that edits an existing file:** open the target file, scan for the existing state-variable names + handler names + prop shapes, and map them to the snippets below before pasting. The snippets show the new className strings and the structural shape — they intentionally retain the existing identifiers wherever spec says "no behavior changes."
+
+---
+
 ## Phase B1 — Auth retoken
 
 Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.tsx`. Phase commits incrementally so each surface can be verified visually before moving on.
@@ -29,6 +52,8 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
 - [ ] **Step 1: Read context**
   Read Spec B section "1. Auth — `/dang-nhap` + `/dang-ky`" in `docs/superpowers/specs/2026-05-30-redesign-B-auth-account-admin-design.md` (lines 19-31) and the AuthShell audit entry above.
+
+  **Step 1b: Verify call sites.** Run `grep -rn '<AuthShell' apps/frontend/src/routes/` — expect ONLY `<AuthShell>` (no props) from `dang-nhap.tsx` and `dang-ky.tsx`. If any call site passes props today, capture them; the new prop signature below accepts them as optional. Note: `font-sans text-display-md` on the blockquote is INTENTIONAL — Spec B uses Inter for the auth hero (auth is chrome, not prose). `font-heading` is also Inter so the two are equivalent; don't "fix" to Newsreader.
 
 - [ ] **Step 2: Replace `AuthShell.tsx` content**
 
@@ -159,13 +184,22 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
 - [ ] **Step 2: Replace form body**
 
-  Locate the existing form JSX in `dang-nhap.tsx` and replace the entire returned tree (inside `<AuthShell>`) with the structure below. Keep all existing hooks (`useState`, `useNavigate`, `useMutation`, `useSearch`) and the `handleSubmit` logic untouched — only the markup changes.
+  Locate the existing form JSX in `dang-nhap.tsx` and replace the entire returned tree (inside `<AuthShell>`) with the structure below. **Keep all existing hooks and identifiers unchanged**:
+  - state: `email`, `password`, `showPwd`, `error`, `busy`
+  - handler: `submit` (NOT `handleSubmit`)
+  - Google CTA: reuse the existing `<GoogleButton redirect={redirect} label="Tiếp tục với Google" />` import. Do NOT inline a GoogleGlyph helper, do NOT add a `providers.google` gate.
+  - Derive `const canSubmit = email.length > 0 && password.length > 0 && !busy;` near the top of the component body (it does not exist yet in this file).
+
+  Step 0: Open `apps/frontend/src/routes/dang-nhap.tsx` and confirm the above names. If they differ, substitute in the snippet rather than renaming the file's state.
 
   ```tsx
   // dang-nhap.tsx — form markup inside <AuthShell>
-  import { Eye, EyeOff } from "lucide-react";
+  // Imports already include: useState, useNavigate, useRouter, Link, Eye, EyeOff, Loader2,
+  // apiLogin, useAuthStore, AuthShell, GoogleButton. No new imports needed for retoken.
 
-  // ... existing hook logic above ...
+  // ... existing hook logic above (email/password/showPwd/error/busy/submit) ...
+  // Add this near the bottom of the hook block:
+  const canSubmit = email.length > 0 && password.length > 0 && !busy;
 
   return (
     <AuthShell>
@@ -180,25 +214,15 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
           </p>
         </header>
 
-        {providers.google ? (
-          <>
-            <button
-              type="button"
-              onClick={handleGoogle}
-              className="flex h-11 w-full items-center justify-center gap-3 rounded-md border border-border-strong bg-bg-elevated px-4 text-body-sm font-medium text-fg transition-colors duration-fast hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-            >
-              <GoogleGlyph className="h-5 w-5" />
-              Tiếp tục với Google
-            </button>
-            <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-fg-subtle">
-              <span className="h-px flex-1 bg-border" />
-              HOẶC
-              <span className="h-px flex-1 bg-border" />
-            </div>
-          </>
-        ) : null}
+        <GoogleButton redirect={redirect} label="Tiếp tục với Google" />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-fg-subtle">
+          <span className="h-px flex-1 bg-border" />
+          HOẶC
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <form onSubmit={submit} className="space-y-5">
           <div className="space-y-2">
             <label
               htmlFor="email"
@@ -247,18 +271,19 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
             </div>
           </div>
 
-          {errorMessage ? (
+          {error ? (
             <p className="text-body-sm text-destructive" role="alert">
-              {errorMessage}
+              {error}
             </p>
           ) : null}
 
           <button
             type="submit"
-            disabled={!canSubmit || loginMutation.isPending}
-            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-accent-gradient px-4 text-[14px] font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!canSubmit}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-accent-gradient px-4 text-[14px] font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loginMutation.isPending ? "Đang đăng nhập…" : "Đăng nhập"}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+            {busy ? "Đang đăng nhập…" : "Đăng nhập"}
           </button>
         </form>
 
@@ -266,6 +291,7 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
           Chưa có tài khoản?{" "}
           <Link
             to="/dang-ky"
+            search={{ redirect }}
             className="font-medium text-accent transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Tạo tài khoản mới
@@ -274,21 +300,9 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
       </div>
     </AuthShell>
   );
-
-  // Helper: official Google G logo (full-color). Place at bottom of file.
-  function GoogleGlyph({ className }: { className?: string }) {
-    return (
-      <svg viewBox="0 0 18 18" className={className} aria-hidden>
-        <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-        <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-      </svg>
-    );
-  }
   ```
 
-  > **Note on `providers.google`**: keep the existing source (likely `useSiteSettings()` or similar). If the existing file does not yet have a `providers` object in scope, wrap the Google block in `false &&` (literal false) until that gate is wired — do NOT invent a hook.
+  > **Google button:** the existing `<GoogleButton>` component handles its own provider-discovery via `getAuthProviders()` and self-hides when Google is not configured. Do NOT inline a Google button or a GoogleGlyph helper. Do NOT delete `apps/frontend/src/components/auth/GoogleButton.tsx`.
 
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes
@@ -318,11 +332,19 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
   Mirror Task 2's structure. Header eyebrow becomes "TÀI KHOẢN MỚI", H1 becomes "Tạo tài khoản". Add an optional name field (top), keep email + password order, keep the live "Mật khẩu phải có ít nhất 8 ký tự" hint, change CTA label to "Tạo tài khoản", change footer link to point at `/dang-nhap`.
 
+  **Keep existing identifiers** (verified in `dang-ky.tsx`):
+  - state: `name`, `email`, `password`, `showPwd`, `error`, `busy`
+  - handler: `submit` (NOT `handleSubmit`)
+  - already-derived: `canSubmit`, `pwdTooShort` — reuse rather than re-deriving.
+  - Google CTA: reuse existing `<GoogleButton redirect={redirect} label="Đăng ký với Google" />`. No inline Google button, no GoogleGlyph helper, no `providers.google` gate.
+
+  Step 0: Open `apps/frontend/src/routes/dang-ky.tsx` and confirm the above names.
+
   ```tsx
   // dang-ky.tsx — form markup inside <AuthShell>
-  import { Eye, EyeOff } from "lucide-react";
+  // Imports already include Eye, EyeOff, Loader2, GoogleButton, AuthShell — no new ones needed.
 
-  // ... existing hook logic above (name/email/password/showPwd state, registerMutation, handleSubmit) ...
+  // ... existing hook logic above (name/email/password/showPwd/error/busy/submit/canSubmit/pwdTooShort) ...
 
   return (
     <AuthShell>
@@ -337,25 +359,15 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
           </p>
         </header>
 
-        {providers.google ? (
-          <>
-            <button
-              type="button"
-              onClick={handleGoogle}
-              className="flex h-11 w-full items-center justify-center gap-3 rounded-md border border-border-strong bg-bg-elevated px-4 text-body-sm font-medium text-fg transition-colors duration-fast hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-            >
-              <GoogleGlyph className="h-5 w-5" />
-              Đăng ký với Google
-            </button>
-            <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-fg-subtle">
-              <span className="h-px flex-1 bg-border" />
-              HOẶC
-              <span className="h-px flex-1 bg-border" />
-            </div>
-          </>
-        ) : null}
+        <GoogleButton redirect={redirect} label="Đăng ký với Google" />
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-fg-subtle">
+          <span className="h-px flex-1 bg-border" />
+          HOẶC
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <form onSubmit={submit} className="space-y-5">
           <div className="space-y-2">
             <label
               htmlFor="name"
@@ -438,18 +450,19 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
             </p>
           </div>
 
-          {errorMessage ? (
+          {error ? (
             <p className="text-body-sm text-destructive" role="alert">
-              {errorMessage}
+              {error}
             </p>
           ) : null}
 
           <button
             type="submit"
-            disabled={!canSubmit || registerMutation.isPending}
-            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-accent-gradient px-4 text-[14px] font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!canSubmit}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-accent-gradient px-4 text-[14px] font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {registerMutation.isPending ? "Đang tạo tài khoản…" : "Tạo tài khoản"}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+            {busy ? "Đang tạo tài khoản…" : "Tạo tài khoản"}
           </button>
         </form>
 
@@ -457,6 +470,7 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
           Đã có tài khoản?{" "}
           <Link
             to="/dang-nhap"
+            search={{ redirect }}
             className="font-medium text-accent transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Đăng nhập
@@ -465,9 +479,9 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
       </div>
     </AuthShell>
   );
-
-  // Reuse the same GoogleGlyph helper from dang-nhap.tsx — duplicate it at the bottom of this file.
   ```
+
+  > **No GoogleGlyph helper:** reuse the existing `<GoogleButton>` component — same as Task 2. No code duplication across `dang-nhap.tsx` and `dang-ky.tsx`.
 
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes
@@ -499,6 +513,13 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 - [ ] **Step 1: Read context**
   Read the audit entry for `tai-khoan.tsx` above and Spec B section "2. Account — `/tai-khoan`" (lines 33-46).
 
+  **Step 1b: Identifier map.** Open `apps/frontend/src/routes/tai-khoan.tsx` and list the real names for each card. Likely candidates the audit referenced (verify and substitute in the snippets below):
+  - Avatar card: `avatarUrl` / `fallbackInitial` (or `preview`/`initial`) — file-input handler (`handleFileChange` or `onFile`), remove handler (`handleRemove` or `onRemove`).
+  - Profile card: form `isDirty` flag, mutation (`profileMutation` or `saveProfileM`), success flash (`showSaved` or `saved`/`flash`).
+  - Password card: `newPassword` state used for the "Đủ điều kiện" chip; the file already has a `PwdField` helper. Reuse its existing prop signature.
+
+  Substitute the real names into the snippets below before pasting. The snippets show new classNames + new structural shape (header + page wrapper + Plan C slot); they do NOT redesign the data layer.
+
 - [ ] **Step 2: Replace page wrapper + local Card primitive**
 
   Open `apps/frontend/src/routes/tai-khoan.tsx`. Find the local `Card` component (around line 41-51 per audit) and replace it with the version below. Then find the page-level `<main>`/`<div>` wrapping the content and prepend the page header + Plan C slot.
@@ -528,7 +549,21 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
   }
   ```
 
-  Then locate the page's top-level return (the `<main className="...">` or similar) and replace its opening with:
+  Then locate the page's top-level return (the `<main className="...">` or similar). Concretely:
+
+  **Before** (sketch — the existing file currently has 3 `<Card>` invocations as direct children of `<main>` or a similar wrapper):
+
+  ```tsx
+  return (
+    <main className="mx-auto ...">
+      <Card title="Ảnh đại diện">…</Card>
+      <Card title="Hồ sơ">…</Card>
+      <Card title="Mật khẩu">…</Card>
+    </main>
+  );
+  ```
+
+  **After** — replace the opening `<main>`, prepend the page header + Plan C slot, and **wrap the existing 3 `<Card>` invocations in a single `<div className="space-y-6">`**:
 
   ```tsx
   return (
@@ -543,15 +578,21 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
         </p>
       </header>
 
-      {/* Plan C: ReadingStatsCard slot */}
+      {/* Plan C inserts <ReadingStatsCard /> here, REPLACING this comment block. */}
       {/* <ReadingStatsCard /> — added in Plan C (Spec C differentiators) */}
 
       <div className="space-y-6">
-        {/* existing 3 cards: <Card title="Ảnh đại diện">...</Card> etc */}
+        {/* Move the existing 3 <Card> invocations INTO this div, in order:
+            Avatar → Profile → Password. Do not duplicate them; relocate. */}
+        <Card title="Ảnh đại diện">…</Card>
+        <Card title="Hồ sơ">…</Card>
+        <Card title="Mật khẩu">…</Card>
       </div>
     </main>
   );
   ```
+
+  > **Plan C coupling:** Plan C Task 8 (ReadingStatsCard) is written to REPLACE the comment placeholder above with the real `<ReadingStatsCard />`. Plan C depends on Plan B Task 4 having shipped first. Do not delete the comment — Plan C looks for it.
 
 - [ ] **Step 3: Retoken Avatar card body**
 
@@ -687,7 +728,8 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
 - [ ] **Step 6: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes
-  Open http://localhost:3000/tai-khoan (logged-in) → expect: TÀI KHOẢN eyebrow + display-md "Hồ sơ của bạn" header; 3 cards on `bg-elevated` with `border-border` and `rounded-lg`; avatar circle has `border-border` ring; "Tải ảnh lên" outlined; "Xoá ảnh" turns destructive on hover; "Lưu thay đổi" is `bg-fg text-bg` (not pink); "Đã lưu" flash is `text-positive` with Check icon; "<!-- Plan C: ReadingStatsCard slot -->" comment present in source above the 3 cards.
+  Open http://localhost:3000/tai-khoan (logged-in, LIGHT theme — Plan A default) → expect: TÀI KHOẢN eyebrow + display-md "Hồ sơ của bạn" header; 3 cards on `bg-elevated` with `border-border` and `rounded-lg`; avatar circle has `border-border` ring; "Tải ảnh lên" outlined; "Xoá ảnh" turns destructive on hover; "Lưu thay đổi" is `bg-fg text-bg` (dark slab with light text in LIGHT theme, light slab with dark text in DARK theme); "Đã lưu" flash is `text-positive` with Check icon; the Plan C placeholder comment `{/* <ReadingStatsCard /> — added in Plan C (Spec C differentiators) */}` is present in source above the 3 cards.
+  Toggle to DARK theme via the Cài đặt drawer (reader) → re-open `/tai-khoan` → expect: the "Lưu thay đổi" button INVERTS correctly (light bg + dark text) and remains readable. If the button appears invisible or low-contrast in either theme, the `bg-bg` / `text-bg` tokens are not resolving — fix the tailwind config before continuing.
   Upload a 1MB jpg → expect: still produces a 256×256 webp (no logic change).
   Submit wrong current password → expect: "Mật khẩu hiện tại không đúng." in `text-destructive`.
 
@@ -709,6 +751,10 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 - [ ] **Step 1: Read context**
   Read the audit entry for `ReaderSettings.tsx` above and Spec B section "3. Reader Settings drawer" (lines 48-61).
 
+  **Store contract (read first):** `apps/frontend/src/stores/reader-prefs-store.ts` defines `ReaderFontSize = '15' | '18' | '20' | '24'` (STRINGS), `ReaderTheme = 'light' | 'dark' | 'system'`, `ReaderFontFamily = 'sans' | 'serif' | 'mono'`. The store does NOT export a `reset` action. We use the existing string union (do NOT migrate to numbers — that would silently re-map every persisted user pref and require a v4 migration which is out of scope).
+
+  **Animation technique — explicit deviation from Spec B:** Spec B lists "View Transitions API with CSS transform fallback". Per the spec's own risk-mitigation paragraph (Firefox compat, complexity), we implement **CSS-only**: a `useLayoutEffect` measures the active button rect and animates a positioned pill with `transition-[left,width] duration-200 ease-out`. We do NOT call `document.startViewTransition()`. Document this in code comments so future readers don't add it back.
+
 - [ ] **Step 2: Replace `RadioGroup` with `SegmentedControl`**
 
   Replace the entire contents of `ReaderSettings.tsx` with:
@@ -717,34 +763,50 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
   // apps/frontend/src/components/reader/ReaderSettings.tsx
   import { useEffect, useLayoutEffect, useRef, useState } from "react";
   import { RotateCcw } from "lucide-react";
-  import { useReaderPrefs } from "@/stores/useReaderPrefs";
+  import {
+    useReaderPrefs,
+    type ReaderTheme,
+    type ReaderFontSize,
+    type ReaderFontFamily,
+  } from "@/stores/reader-prefs-store";
+
+  // Animation: per Spec B risk-mitigation, we use CSS-only sliding pill
+  // (NOT View Transitions API) for Firefox compat + simplicity. See plan Task 5.
 
   const THEMES = [
     { value: "light", label: "Sáng" },
     { value: "dark", label: "Tối" },
     { value: "system", label: "Hệ thống" },
-  ] as const;
+  ] as const satisfies readonly { value: ReaderTheme; label: string }[];
 
   const FONT_SIZES = [
-    { value: 16, label: "Nhỏ" },
-    { value: 18, label: "Vừa" },
-    { value: 20, label: "To" },
-    { value: 22, label: "Rất to" },
-  ] as const;
+    { value: "15", label: "Nhỏ" },
+    { value: "18", label: "Vừa" },
+    { value: "20", label: "To" },
+    { value: "24", label: "Rất to" },
+  ] as const satisfies readonly { value: ReaderFontSize; label: string }[];
 
   const FONT_FAMILIES = [
     { value: "serif", label: "Serif" },
     { value: "sans", label: "Sans" },
     { value: "mono", label: "Mono" },
-  ] as const;
+  ] as const satisfies readonly { value: ReaderFontFamily; label: string }[];
 
-  const DEFAULT_THEME = "light";
-  const DEFAULT_SIZE = 18;
-  const DEFAULT_FAMILY = "serif";
+  const DEFAULT_THEME: ReaderTheme = "light";
+  const DEFAULT_SIZE: ReaderFontSize = "18";
+  const DEFAULT_FAMILY: ReaderFontFamily = "serif";
 
   export function ReaderSettings() {
-    const { theme, fontSize, fontFamily, setTheme, setFontSize, setFontFamily, reset } =
+    const { theme, fontSize, fontFamily, setTheme, setFontSize, setFontFamily } =
       useReaderPrefs();
+
+    // Local reset helper — the store does NOT export a `reset` action.
+    // Could be promoted to the store later if needed elsewhere (out of scope here).
+    function resetDefaults() {
+      setTheme(DEFAULT_THEME);
+      setFontSize(DEFAULT_SIZE);
+      setFontFamily(DEFAULT_FAMILY);
+    }
 
     const isDefault =
       theme === DEFAULT_THEME && fontSize === DEFAULT_SIZE && fontFamily === DEFAULT_FAMILY;
@@ -755,7 +817,7 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
           <SegmentedControl
             value={theme}
             options={THEMES}
-            onChange={(v) => setTheme(v as typeof theme)}
+            onChange={(v) => setTheme(v)}
           />
         </Field>
 
@@ -763,7 +825,7 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
           <SegmentedControl
             value={fontSize}
             options={FONT_SIZES}
-            onChange={(v) => setFontSize(v as number)}
+            onChange={(v) => setFontSize(v)}
           />
         </Field>
 
@@ -771,7 +833,7 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
           <SegmentedControl
             value={fontFamily}
             options={FONT_FAMILIES}
-            onChange={(v) => setFontFamily(v as typeof fontFamily)}
+            onChange={(v) => setFontFamily(v)}
           />
         </Field>
 
@@ -780,7 +842,7 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
         <div className="flex justify-end pt-2">
           <button
             type="button"
-            onClick={reset}
+            onClick={resetDefaults}
             disabled={isDefault}
             className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-body-sm text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -803,9 +865,9 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
     );
   }
 
-  type SegmentOption<V> = { value: V; label: string };
+  type SegmentOption<V extends string> = { value: V; label: string };
 
-  function SegmentedControl<V extends string | number>({
+  function SegmentedControl<V extends string>({
     value,
     options,
     onChange,
@@ -858,7 +920,9 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
         {pillStyle ? (
           <div
             aria-hidden
-            className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-bg-elevated shadow-sm transition-[left,width] duration-200 ease-out"
+            // Active pill — per Spec B, use bg-fg/text-bg high-contrast in light theme,
+            // bg-bg-elevated in dark. Border + shadow add definition either way.
+            className="pointer-events-none absolute top-1 bottom-1 rounded-full border border-border bg-bg-elevated shadow-sm transition-[left,width] duration-200 ease-out dark:border-transparent"
             style={{ left: pillStyle.left, width: pillStyle.width }}
           />
         ) : null}
@@ -888,6 +952,8 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
   }
   ```
 
+  > **Verify in both themes:** Spec B line 54 calls for `bg-fg text-bg` in light + `bg-bg-elevated` in dark. The snippet above ships `bg-bg-elevated border-border shadow-sm` for both themes (border + shadow give definition against `bg-bg-subtle` track in light theme). If during Step 3 visual verify the active pill is invisible in light theme, switch to the spec-literal pattern: `bg-fg text-bg dark:bg-bg-elevated dark:text-fg` on the pill div AND drop the conditional text-color on the buttons.
+
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes
   Open http://localhost:3000/truyen/<some-slug>/chuong-1 → click avatar → Cài đặt → expect: drawer opens with 3 segmented tracks (rounded-full pill on `bg-subtle`), the active option has a white `bg-bg-elevated` pill behind it that slides between options with a 200ms ease-out animation when clicked.
@@ -914,7 +980,9 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
 - [ ] **Step 2: Add `LivePreview` component + insert into render tree**
 
-  In `ReaderSettings.tsx`, add the component below the existing `SegmentedControl` definition and insert it in the return tree where the comment `{/* Live preview — Task 6 inserts <LivePreview /> here */}` is:
+  In `ReaderSettings.tsx`, add the component below the existing `SegmentedControl` definition and insert it in the return tree where the comment `{/* Live preview — Task 6 inserts <LivePreview /> here */}` is.
+
+  Note: `fontSize` is a STRING ('15' | '18' | '20' | '24') per Task 5. The template literal `` `${fontSize}px` `` works for both strings and numbers, so the snippet below is correct given Task 5's string union.
 
   ```tsx
   function LivePreview() {
@@ -953,7 +1021,7 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes
   Open http://localhost:3000/truyen/<slug>/chuong-1 → open Cài đặt drawer → expect: "Bản xem trước" section sits below the 3 segmented controls with a fixed 3-line Vietnamese sample.
-  Click Cỡ chữ → To → expect: preview font-size jumps to 20px instantly.
+  Click Cỡ chữ → To (value '20') → expect: preview font-size jumps to 20px instantly. Click Rất to (value '24') → 24px.
   Click Phông chữ → Sans → expect: preview re-renders in Inter.
   Click Mono → expect: preview re-renders in monospace.
 
@@ -977,11 +1045,13 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
 - [ ] **Step 2: Verify and adjust header**
 
-  Confirm the header uses `h-14` and the title uses `text-heading-lg`. If the audit's "already migrated" note is correct, only the heading-size token may need bumping from `text-heading-md` to `text-heading-lg`. Open the file and adjust the header block:
+  Confirm the header uses `h-14 sm:h-16` (matches admin top bar at md+) and the title uses `text-heading-lg`. Per Spec B line 61 the spec wording says "h-14" but the existing code uses `h-14 sm:h-16` for visual alignment with the rest of the app — **preserve the responsive bump**. If the audit's "already migrated" note is correct, only the heading-size token may need bumping from `text-heading-md` to `text-heading-lg`.
+
+  This file is small (~56 lines). Read it once, then change only the header block (and X import if missing). Leave the rest of the file (`<aside>` chrome, slide-in transitions, backdrop, body content slot, footer if any) untouched.
 
   ```tsx
   {/* drawer header (inside the <aside> after slide-in container) */}
-  <header className="flex h-14 items-center justify-between border-b border-border px-5">
+  <header className="flex h-14 items-center justify-between border-b border-border px-5 sm:h-16">
     <h2 className="font-sans text-heading-lg text-fg">Cài đặt đọc</h2>
     <button
       type="button"
@@ -994,7 +1064,7 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
   </header>
   ```
 
-  If `X` from lucide-react isn't imported, add it. Ensure the panel itself uses `bg-bg-elevated border-l border-border shadow-elev`.
+  If `X` from lucide-react isn't imported, add it. Ensure the panel itself uses `bg-bg-elevated border-l border-border shadow-elev` (the audit said this is already in place — do not duplicate).
 
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes
@@ -1091,32 +1161,41 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 - [ ] **Step 1: Read context**
   Read the audit entry for `admin/route.tsx` above. Re-read Spec B section "4. Admin — `/admin/*` retoken" → Sidebar (lines 67-71).
 
+  **Step 1b: Capture existing names.** Open `apps/frontend/src/routes/admin/route.tsx` and record:
+  - The NAV array constant name (e.g., `NAV`, `NAV_ITEMS`) and the per-item shape: `to` or `href`? `label`, `icon`, `exact?` flag?
+  - The active-state pattern. Per audit: the file uses `path.startsWith(n.href)` (or `to`) to compute `active` manually; it does NOT use TanStack Router's `activeProps`/`activeOptions`. Preserve the manual ternary — do not introduce `activeProps`.
+  - The mobile-drawer state setter name (likely `mobileOpen`/`setMobileOpen` — confirm or capture the real names).
+  - The user object name on the top bar (likely `user`/`me`/`currentUser`) and the logout handler (likely `handleLogout` or `logoutMutation.mutate`).
+
+  Substitute the real names into the snippets below.
+
 - [ ] **Step 2: Patch nav item classes**
 
-  Open `apps/frontend/src/routes/admin/route.tsx`. Find the `<Link>` rendering inside the `SidebarNav` block. Replace its className logic with:
+  Open `apps/frontend/src/routes/admin/route.tsx`. Find the `<Link>` rendering inside the `SidebarNav` block. **Preserve the existing manual `active` ternary** — only swap the className strings. The shape is roughly:
 
   ```tsx
+  // Conceptual — the existing file uses something like:
+  // const active = n.exact ? path === n.href : path.startsWith(n.href);
   <Link
-    key={item.to}
-    to={item.to}
-    activeOptions={{ exact: item.to === "/admin" }}
-    className="group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-    activeProps={{
-      className:
-        "group flex h-9 items-center gap-2.5 rounded-md bg-gradient-to-r from-accent to-accent-strong px-3 text-body-sm font-medium text-white shadow-glow-pink-soft transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-    }}
+    key={n.href}
+    to={n.href}
+    className={
+      active
+        ? "group flex h-9 items-center gap-2.5 rounded-md bg-gradient-to-r from-accent to-accent-strong px-3 text-body-sm font-medium text-white shadow-glow-pink-soft transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        : "group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    }
   >
-    <item.icon className="h-4 w-4" />
-    {item.label}
+    <n.icon className="h-4 w-4" />
+    {n.label}
   </Link>
   ```
 
-  > Adjust the props to whatever TanStack Router `<Link>` shape is in the existing file. The crux is: inactive uses `text-fg-muted hover:bg-bg-subtle`, active uses gradient `from-accent to-accent-strong` + `shadow-glow-pink-soft` + `text-white`.
+  > The crux: inactive uses `text-fg-muted hover:bg-bg-subtle`, active uses gradient `from-accent to-accent-strong` + `shadow-glow-pink-soft` + `text-white`. Do NOT switch to TanStack Router's `activeProps`/`activeOptions` — the existing manual ternary stays.
 
-  Find the sidebar root wrapper and ensure it uses `bg-bg` (not `bg-muted/20`):
+  Find the sidebar root wrapper. **Preserve `sticky top-0 self-start`** (the desktop aside pins while the main column scrolls) — only swap the bg/border tokens:
 
   ```tsx
-  <aside className="hidden h-screen w-60 flex-col border-r border-border bg-bg md:flex">
+  <aside className="sticky top-0 hidden h-screen w-60 flex-col self-start border-r border-border bg-bg md:flex">
   ```
 
   Find the brand area at the top and ensure border:
@@ -1142,7 +1221,31 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
   </Link>
   ```
 
-  Repeat the same pattern for the mobile drawer's nav items (the file renders the same NAV array twice — once for desktop, once inside the drawer).
+  **Mobile drawer nav items — paste the same active/inactive className pattern** in the second NAV render (inside the drawer `<aside className="fixed inset-y-0 ...">`):
+
+  ```tsx
+  {/* inside the mobile drawer */}
+  {NAV.map((n) => {
+    const active = n.exact ? path === n.href : path.startsWith(n.href);
+    return (
+      <Link
+        key={n.href}
+        to={n.href}
+        onClick={() => setMobileOpen(false)}
+        className={
+          active
+            ? "group flex h-9 items-center gap-2.5 rounded-md bg-gradient-to-r from-accent to-accent-strong px-3 text-body-sm font-medium text-white shadow-glow-pink-soft"
+            : "group flex h-9 items-center gap-2.5 rounded-md px-3 text-body-sm font-medium text-fg-muted hover:bg-bg-subtle hover:text-fg"
+        }
+      >
+        <n.icon className="h-4 w-4" />
+        {n.label}
+      </Link>
+    );
+  })}
+  ```
+
+  > **The mobile drawer aside** keeps its existing `fixed inset-y-0` positioning — no `sticky` change there.
 
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes
@@ -1167,6 +1270,8 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
 - [ ] **Step 1: Read context**
   Re-read the Top bar section in Spec B (lines 73-76) and the audit entry for `admin/route.tsx`.
+
+  **Step 1b: Capture identifiers.** From Task 9 Step 1b you should already have: (a) the mobile-open setter name (`setMobileOpen` is the assumed name in the snippet below — substitute if different), (b) the user object name (`user?.email` is assumed — substitute, e.g. `me?.email`), (c) the logout handler name (`handleLogout` is assumed — substitute, e.g. `logoutMutation.mutate`). Verify these before pasting. If logout is a mutation, use `onClick={() => logoutMutation.mutate()}`.
 
 - [ ] **Step 2: Patch top bar**
 
@@ -1229,8 +1334,16 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
 **Why this task:** Per Spec B, all admin tables need consistent sticky headers with `bg/95 backdrop-blur`, body rows with `border-b border-border/60` + `hover:bg-bg-subtle/60`, selected rows with pink `border-l-2 border-accent`, and status badges using the new `positive`/`destructive`/`accent` tokens.
 
+> **Sub-task breakdown (commit per group to keep diffs reviewable):**
+> - **Task 11a** — Steps 2-4: `StubBadge.tsx`, `JobsTable.tsx`, `DiscoverTable.tsx` (shared admin table components). Commit message: `feat(admin): retoken JobsTable + DiscoverTable + StubBadge`.
+> - **Task 11b** — Step 5: `users.tsx` table + role select + IconButton + pagination. Commit message: `feat(admin): retoken users table + role select + delete icon`.
+> - **Task 11c** — Steps 6-7: `stories/index.tsx` (FilterChip, table, status), `sources/index.tsx` (StatusDot, table). Commit message: `feat(admin): retoken stories + sources tables`.
+> Step 9 retains a single combined commit option only if the diffs end up small.
+
 - [ ] **Step 1: Read context**
   Read audit entries for JobsTable, DiscoverTable, StubBadge, users, stories/index, sources/index above.
+
+  **State-set coverage check:** Plan covers `completed | active | waiting | delayed | paused | failed` for JobsTable. The existing STATE_TONE on `JobsTable.tsx` is typed `Record<string, string>` (audit lines 8-15) so any state string the API emits gets a fallback at runtime. Spec B line 82 lists `"Hoàn thành" / "Thất bại" / "Mới"` as illustrative tones — the literal "Mới" badge does NOT appear in the audited surfaces (no Stories/Users "newly created" badge was flagged); treat "Mới" as illustrative-only. If you discover a real "Mới" badge during implementation, add it to the appropriate STATUS_TONE map with the `bg-accent/15 text-accent border-accent/30` tone.
 
 - [ ] **Step 2: Update `StubBadge.tsx` tone map**
 
@@ -1361,25 +1474,91 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
 - [ ] **Step 5: Update `users.tsx` table + role select + delete IconButton**
 
-  In users.tsx find the table, search form, and per-row controls. Replace stale tokens:
+  In users.tsx find the table, search form, and per-row controls. Use the exact classNames below. The `setDeleting`/`user` identifiers shown are placeholders — substitute the file's real names (likely `setConfirmDelete`/`u` or similar — verify before pasting).
 
-  - Search input → same `h-11 rounded-md border-border bg-bg-elevated` pattern from Task 2
-  - Submit pill → `bg-fg text-bg` utilitarian button
-  - Avatar fallback `bg-foreground/10` → `bg-bg-subtle text-fg-muted`
-  - Role `<select>` → `h-9 rounded-md border border-border bg-bg-elevated text-body-sm text-fg focus:ring-2 focus:ring-accent/40`
-  - Table sticky header same as JobsTable
-  - Delete IconButton:
-    ```tsx
-    <button
-      type="button"
-      onClick={() => setDeleting(user)}
-      aria-label="Xoá người dùng"
-      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
-    >
-      <Trash2 className="h-4 w-4" />
-    </button>
-    ```
-  - Pagination footer Prev/Next outlined ghost on `border-border`
+  **(a) Search input + submit pill:**
+
+  ```tsx
+  <input
+    type="search"
+    placeholder="Tìm theo email hoặc tên…"
+    className="block h-11 w-full max-w-md rounded-md border border-border bg-bg-elevated px-3.5 text-body text-fg placeholder:text-fg-subtle transition-shadow duration-fast focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40"
+  />
+  <button
+    type="submit"
+    className="inline-flex h-10 items-center rounded-md bg-fg px-5 text-body-sm font-semibold text-bg transition-opacity duration-fast hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+  >
+    Tìm
+  </button>
+  ```
+
+  **(b) Avatar fallback (in the user-cell):**
+
+  ```tsx
+  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-bg-subtle text-body-sm font-semibold text-fg-muted">
+    {initial}
+  </span>
+  ```
+
+  **(c) Role `<select>`:**
+
+  ```tsx
+  <select
+    value={role}
+    onChange={(e) => updateRole(user.id, e.target.value)}
+    className="h-9 rounded-md border border-border bg-bg-elevated px-3 text-body-sm text-fg transition-colors duration-fast hover:border-border-strong focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    <option value="reader">Reader</option>
+    <option value="admin">Admin</option>
+  </select>
+  ```
+
+  **(d) Table sticky header (same as JobsTable in Step 3):**
+
+  ```tsx
+  <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
+    <table className="w-full text-left text-body-sm">
+      <thead className="sticky top-0 z-10 bg-bg/95 backdrop-blur">
+        <tr className="border-b border-border">
+          <th className="px-4 py-3 text-[11px] font-medium uppercase tracking-wider text-fg-muted">…</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr className="border-b border-border/60 last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60">
+          {/* td: text-fg / text-fg-muted */}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  ```
+
+  **(e) Delete IconButton:**
+
+  ```tsx
+  <button
+    type="button"
+    onClick={() => setDeleting(user)}
+    aria-label="Xoá người dùng"
+    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+  >
+    <Trash2 className="h-4 w-4" />
+  </button>
+  ```
+
+  **(f) Pagination Prev/Next:**
+
+  ```tsx
+  <button
+    type="button"
+    disabled={page === 1}
+    onClick={() => setPage((p) => p - 1)}
+    className="inline-flex h-9 items-center gap-1 rounded-md border border-border bg-bg px-3 text-body-sm font-medium text-fg transition-colors duration-fast hover:border-border-strong hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    <ChevronLeft className="h-4 w-4" />
+    Trước
+  </button>
+  {/* Same shape for Next with ChevronRight */}
+  ```
 
 - [ ] **Step 6: Update `stories/index.tsx` table + FilterChip + STATUS_TONE**
 
@@ -1394,7 +1573,7 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
   };
   ```
 
-  Replace FilterChip active/inactive:
+  Replace FilterChip active/inactive. **Rationale for the contrasting active treatment:** the sidebar nav (Task 9) uses gradient pink + glow as the *signature* admin focal point — there should be only ONE such moment per surface. Filter chips stay utilitarian (`bg-fg text-bg`) so the eye is not pulled away from the sidebar's active item.
 
   ```tsx
   function FilterChip({
@@ -1477,24 +1656,39 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 - [ ] **Step 1: Read context**
   Read the audit entry for `admin/index.tsx` and Spec B section on Dashboard (lines 85-89).
 
+  **Step 1b: Capture existing StatCard signature.** The existing `StatCard` accepts `{icon, label, value, textValue, subValue, tone, href}` and is invoked at 8 call sites (Sources, Truyện, Chapter tổng, Dung lượng, Chapter đã crawl, Job hoàn thành, Đang chạy+chờ, Thất bại). Notable existing semantics:
+  - `textValue` is used by the "Dung lượng" tile to render a formatted string (e.g., `"12.4 MB"`) instead of a number.
+  - `tone='positive'` is set on the "Chapter đã crawl" tile when the count > 0.
+  - `tone='warning'` is set on the "Thất bại" tile when failed jobs > 0.
+
+  We **keep** all existing props (no rename) and add `accentValue` semantics as an alias for `tone === 'positive' && resolvedValue > 0`. Do NOT rename `href` → `to` or drop `textValue` — that would break the 8 call sites.
+
 - [ ] **Step 2: Replace `StatCard` component**
 
-  Open `apps/frontend/src/routes/admin/index.tsx`. Find the local `StatCard` definition. Replace with:
+  Open `apps/frontend/src/routes/admin/index.tsx`. Find the local `StatCard` definition. Replace with the version below — **same prop signature as today**, only the inner markup is retoken'd:
 
   ```tsx
+  type StatTone = "default" | "positive" | "warning" | "accent";
+
   type StatCardProps = {
-    to: string;
+    href: string;
     icon: typeof BookOpen; // any lucide-react icon
     label: string;
-    value: string | number;
+    value?: number;        // numeric value (used when textValue is absent)
+    textValue?: string;    // pre-formatted string (e.g., "12.4 MB"); takes precedence
     subValue?: string;
-    accentValue?: boolean; // when true, value uses gradient bg-clip-text
+    tone?: StatTone;
   };
 
-  function StatCard({ to, icon: Icon, label, value, subValue, accentValue }: StatCardProps) {
+  function StatCard({ href, icon: Icon, label, value, textValue, subValue, tone = "default" }: StatCardProps) {
+    const displayValue = textValue ?? (value ?? 0).toLocaleString("vi-VN");
+    // Gradient bg-clip-text only when the value is a positive accent (Spec B line 86-88).
+    const numericValue = typeof value === "number" ? value : Number(textValue?.replace(/[^\d]/g, "") ?? 0);
+    const accentValue = tone === "positive" && numericValue > 0;
+
     return (
       <Link
-        to={to}
+        to={href}
         className="group flex flex-col gap-3 rounded-lg border border-border bg-bg-elevated p-6 transition-all duration-fast hover:border-border-strong hover:shadow-elev focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <div className="flex items-center gap-2 text-fg-muted">
@@ -1507,10 +1701,12 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
             className={`text-display-sm tabular-nums tracking-tight ${
               accentValue
                 ? "bg-accent-gradient bg-clip-text text-transparent"
-                : "text-fg"
+                : tone === "warning"
+                  ? "text-destructive"
+                  : "text-fg"
             }`}
           >
-            {value}
+            {displayValue}
           </span>
           <ArrowRight className="h-4 w-4 text-fg-muted transition-transform duration-fast group-hover:translate-x-0.5" />
         </div>
@@ -1523,7 +1719,20 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
   }
   ```
 
-  Pass `accentValue={crawledCount > 0}` (or similar boolean derived from the existing data) when rendering the "Đã crawl" StatCard. Pass `accentValue={false}` (or omit) for the others unless the data shape says otherwise.
+  **Call-site touch list (all 8 — verify against existing code):**
+
+  | # | Tile | Existing prop set (preserve) | Expected accent behavior |
+  |---|------|-----------------------------|--------------------------|
+  | 1 | Sources | `value={sourcesQuery.data?.length ?? 0}`, `tone='default'` | none |
+  | 2 | Truyện | `value={storiesQuery.data?.total ?? 0}`, `tone='default'` | none |
+  | 3 | Chapter tổng | `value={storiesQuery.data?.totalChapters ?? 0}`, `tone='default'` | none |
+  | 4 | Dung lượng | `textValue={formatBytes(storageQuery.data?.bytes ?? 0)}`, `tone='default'` | none (string value) |
+  | 5 | Chapter đã crawl | `value={storiesQuery.data?.crawledChapters ?? 0}`, `tone='positive'` | **gradient bg-clip-text when > 0** |
+  | 6 | Job hoàn thành | `value={jobsStatsQuery.data?.completed ?? 0}`, `tone='positive'` | gradient bg-clip-text when > 0 |
+  | 7 | Đang chạy + chờ | `value={(jobsStatsQuery.data?.active ?? 0) + (jobsStatsQuery.data?.waiting ?? 0)}`, `tone='default'` | none |
+  | 8 | Thất bại | `value={jobsStatsQuery.data?.failed ?? 0}`, `tone='warning'` | text-destructive (not gradient) |
+
+  > **Source-of-truth note:** the exact data-path keys (`crawledChapters`, `completed`, etc.) may differ from the table above. Open the current `admin/index.tsx` and substitute the real `*.data?.<field>` reads — DO NOT invent a `crawledCount` variable. Audit confirmed 4 react-query reads on the page: sources, stories, jobs.stats, storage; pull from those.
 
 - [ ] **Step 3: Update Section headers**
 
@@ -1578,21 +1787,59 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 - [ ] **Step 1: Read context**
   Read audit entries for `DiscoverActionBar.tsx` and the BulkActionBar block inside `stories/index.tsx`.
 
-- [ ] **Step 2: Replace `DiscoverActionBar.tsx`**
+  **Store contract:** `apps/frontend/src/stores/discover-import-store.ts` (import path `@/stores/discover-import-store` — NOT `@/stores/useDiscoverImportStore`) exports `selected` (Set<string>), `importing`, `toggle`, `clearSelection` (NOT `clear`), `selectAll`, `markImporting`, `markDone`. There is no `autoCrawl` / `setAutoCrawl` on the store — those are LOCAL `useState` in the existing component. Keep them local.
+
+  **Behavior preservation (Spec says no behavior changes):** the existing component has `async function submit()` calling `discoverApi.importBulk(urls, autoCrawl)` plus local `submitting` / `info` / `error` and an `onImported` callback prop. We retain that plumbing; only chrome + classNames swap. Do NOT introduce React Query in this retoken.
+
+- [ ] **Step 2: Replace `DiscoverActionBar.tsx` chrome (keep existing logic)**
 
   ```tsx
   // apps/frontend/src/components/admin/DiscoverActionBar.tsx
+  import { useState } from "react";
   import { X, Loader2 } from "lucide-react";
-  import { useDiscoverImportStore } from "@/stores/useDiscoverImportStore";
-  // ... existing imports for mutation hook ...
+  import { useDiscoverImportStore } from "@/stores/discover-import-store";
+  // existing imports: discoverApi, types, etc.
 
-  export function DiscoverActionBar({ /* existing props */ }) {
-    const { selected, clear, autoCrawl, setAutoCrawl } = useDiscoverImportStore();
-    // ... existing mutation logic ...
+  type DiscoverActionBarProps = {
+    onImported?: (urls: string[]) => void;
+    // ... other existing props ...
+  };
+
+  export function DiscoverActionBar({ onImported }: DiscoverActionBarProps) {
+    // Read from store (selectors keep this stable):
+    const selected = useDiscoverImportStore((s) => s.selected);
+    const clearSelection = useDiscoverImportStore((s) => s.clearSelection);
+    const markImporting = useDiscoverImportStore((s) => s.markImporting);
+    const markDone = useDiscoverImportStore((s) => s.markDone);
+
+    // Local UI state (NOT in store):
+    const [autoCrawl, setAutoCrawl] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [info, setInfo] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     if (selected.size === 0) return null;
     const count = selected.size;
     const overLimit = count > 50;
+
+    async function submit() {
+      const urls = Array.from(selected);
+      setSubmitting(true);
+      setError(null);
+      setInfo(null);
+      try {
+        markImporting(urls);
+        await discoverApi.importBulk(urls, autoCrawl);
+        setInfo(`Đã đưa ${urls.length} vào hàng đợi.`);
+        onImported?.(urls);
+        markDone(urls);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Lỗi không xác định");
+        markDone(urls);
+      } finally {
+        setSubmitting(false);
+      }
+    }
 
     return (
       <div className="pointer-events-none fixed bottom-6 left-1/2 z-40 w-[min(95vw,720px)] -translate-x-1/2">
@@ -1617,7 +1864,11 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
           <button
             type="button"
-            onClick={clear}
+            onClick={() => {
+              clearSelection();
+              setInfo(null);
+              setError(null);
+            }}
             className="inline-flex h-9 items-center gap-1 rounded-md border border-border-strong bg-bg-subtle px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle/80 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <X className="h-4 w-4" />
@@ -1626,11 +1877,11 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 
           <button
             type="button"
-            onClick={() => importMutation.mutate()}
-            disabled={importMutation.isPending || overLimit}
+            onClick={submit}
+            disabled={submitting || overLimit}
             className="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent-gradient px-4 text-body-sm font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {importMutation.isPending ? (
+            {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Đang import…
@@ -1642,6 +1893,9 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
             )}
           </button>
         </div>
+
+        {/* Existing info/error message rendering — keep as-is, just retoken classNames:
+            info → text-positive, error → text-destructive */}
       </div>
     );
   }
@@ -1751,69 +2005,87 @@ Smallest blast radius. Three files: `AuthShell.tsx`, `dang-nhap.tsx`, `dang-ky.t
 **Why this task:** Per Spec B, the delete confirm modal backdrop is `bg-fg/40 backdrop-blur-sm`, panel is `bg-elevated rounded-xl border-border shadow-elev`, and the final confirm button is `bg-destructive text-white`. Email-typed confirmation behavior is preserved.
 
 - [ ] **Step 1: Read context**
-  Re-read audit entry for `users.tsx` — modal lives inline in this route.
+  Re-read audit entry for `users.tsx` — the file has a SEPARATE `function DeleteConfirm({ user, busy, error, onCancel, onConfirm })` component (around lines 243-325) that is rendered as `{confirmDelete && <DeleteConfirm user={confirmDelete} busy={deleteM.isPending} error={deleteErr} onCancel={...} onConfirm={...} />}` from the parent. Internal email-typed state (`typed` + `matches`) lives inside DeleteConfirm.
 
-- [ ] **Step 2: Replace `DeleteConfirm` modal**
+  **Do not collapse to inline JSX** — keep the existing prop signature so the parent doesn't need to change. Edit the body of `DeleteConfirm` in place: swap classNames + container shape only.
 
-  In `users.tsx`, find the DeleteConfirm modal block (typically conditional render when `deleting` is set). Replace with:
+- [ ] **Step 2: Retoken `DeleteConfirm` body**
+
+  In `users.tsx`, find `function DeleteConfirm({ user, busy, error, onCancel, onConfirm })` and replace its returned JSX with the version below — same props, same internal `typed`/`matches` state:
 
   ```tsx
-  {deleting ? (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 px-4 backdrop-blur-sm">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="delete-user-title"
-        className="w-full max-w-md rounded-xl border border-border bg-bg-elevated p-6 shadow-elev"
-      >
-        <h2 id="delete-user-title" className="font-sans text-heading-md text-fg">
-          Xoá người dùng
-        </h2>
-        <p className="mt-2 text-body-sm text-fg-muted">
-          Hành động này không thể hoàn tác. Để xác nhận, nhập email{" "}
-          <span className="font-mono text-fg">{deleting.email}</span> bên dưới.
-        </p>
+  function DeleteConfirm({
+    user,
+    busy,
+    error,
+    onCancel,
+    onConfirm,
+  }: {
+    user: User;
+    busy: boolean;
+    error: string | null;
+    onCancel: () => void;
+    onConfirm: () => void;
+  }) {
+    const [typed, setTyped] = useState("");
+    const matches = typed === user.email;
 
-        <input
-          type="email"
-          autoComplete="off"
-          value={confirmEmail}
-          onChange={(e) => setConfirmEmail(e.target.value)}
-          placeholder={deleting.email}
-          className="mt-4 block h-11 w-full rounded-md border border-border bg-bg px-3.5 text-body text-fg placeholder:text-fg-subtle focus:border-destructive/40 focus:outline-none focus:ring-2 focus:ring-destructive/40"
-        />
-
-        {errorMessage ? (
-          <p className="mt-2 text-body-sm text-destructive" role="alert">
-            {errorMessage}
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 px-4 backdrop-blur-sm">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-user-title"
+          className="w-full max-w-md rounded-xl border border-border bg-bg-elevated p-6 shadow-elev"
+        >
+          <h2 id="delete-user-title" className="font-sans text-heading-md text-fg">
+            Xoá người dùng
+          </h2>
+          <p className="mt-2 text-body-sm text-fg-muted">
+            Hành động này không thể hoàn tác. Để xác nhận, nhập email{" "}
+            <span className="font-mono text-fg">{user.email}</span> bên dưới.
           </p>
-        ) : null}
 
-        <div className="mt-6 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              setDeleting(null);
-              setConfirmEmail("");
-            }}
-            className="inline-flex h-10 items-center rounded-md px-4 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            Huỷ
-          </button>
-          <button
-            type="button"
-            onClick={() => deleteMutation.mutate(deleting.id)}
-            disabled={confirmEmail !== deleting.email || deleteMutation.isPending}
-            className="inline-flex h-10 items-center gap-1.5 rounded-md bg-destructive px-4 text-body-sm font-semibold text-white transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Trash2 className="h-4 w-4" />
-            {deleteMutation.isPending ? "Đang xoá…" : "Xoá vĩnh viễn"}
-          </button>
+          <input
+            type="email"
+            autoComplete="off"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            placeholder={user.email}
+            className="mt-4 block h-11 w-full rounded-md border border-border bg-bg px-3.5 text-body text-fg placeholder:text-fg-subtle focus:border-destructive/40 focus:outline-none focus:ring-2 focus:ring-destructive/40"
+          />
+
+          {error ? (
+            <p className="mt-2 text-body-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <div className="mt-6 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="inline-flex h-10 items-center rounded-md px-4 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Huỷ
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={!matches || busy}
+              className="inline-flex h-10 items-center gap-1.5 rounded-md bg-destructive px-4 text-body-sm font-semibold text-white transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              {busy ? "Đang xoá…" : "Xoá vĩnh viễn"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  ) : null}
+    );
+  }
   ```
+
+  > **Parent stays unchanged.** The call site `{confirmDelete && <DeleteConfirm user={confirmDelete} busy={deleteM.isPending} error={deleteErr} onCancel={() => setConfirmDelete(null)} onConfirm={() => deleteM.mutate(confirmDelete.id)} />}` (or whatever real names are in use) does not need to change. If your real parent names differ from `confirmDelete` / `deleteM` / `deleteErr`, leave them as they are.
 
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes
@@ -1835,18 +2107,18 @@ After all 14 tasks are done and committed:
 
 - [ ] Run `pnpm --filter @smanga/frontend typecheck` once more → expect: passes
 - [ ] Run `pnpm --filter @smanga/frontend build` → expect: succeeds
-- [ ] Manual smoke (dark theme by default):
-  - [ ] `/dang-nhap` and `/dang-ky` render with dark hero + pink CTA + bg-elevated inputs; submit + redirect flows still work
-  - [ ] `/tai-khoan` — 3 cards on bg-elevated, "Lưu thay đổi" is bg-fg, "Đã lưu" flash is positive, "<!-- Plan C: ReadingStatsCard slot -->" comment present
-  - [ ] Reader Settings drawer — 3 segmented controls slide animate, live preview reflects choices instantly
+- [ ] Manual smoke (LIGHT theme — Plan A default since the v3 migration; Spec B was written for dark-default but the codebase now ships light-first):
+  - [ ] `/dang-nhap` and `/dang-ky` render with dark hero (LEFT pane gradient is always dark — that's intentional, hero is a fixed-mood chrome surface) + pink CTA + bg-elevated inputs on the RIGHT pane; submit + redirect flows still work
+  - [ ] `/tai-khoan` — 3 cards on bg-elevated, "Lưu thay đổi" is `bg-fg text-bg` (renders as dark slab in LIGHT theme), "Đã lưu" flash is positive, the Plan C placeholder comment `{/* <ReadingStatsCard /> — added in Plan C (Spec C differentiators) */}` is present in source above the 3 cards
+  - [ ] Reader Settings drawer — 3 segmented controls slide animate (CSS transform, NOT View Transitions API per Spec B risk mitigation), live preview reflects choices instantly, fontSize options are 15/18/20/24 (strings)
   - [ ] BookmarkToggle + StoryCard no longer reference `--color-cta`
-  - [ ] Admin sidebar — active item is pink gradient with glow
+  - [ ] Admin sidebar — active item is pink gradient with glow; desktop aside is `sticky top-0 self-start` (preserved from existing code)
   - [ ] Admin top bar — sticky bg/95 backdrop-blur, Đăng xuất always visible
   - [ ] Admin tables — sticky headers, status badges use new tokens, selected rows have pink left border
-  - [ ] Admin dashboard — Đã crawl value uses gradient bg-clip-text when > 0
-  - [ ] Action bars — gradient pink count chip + glow primary CTA
-  - [ ] Delete user modal — bg-destructive confirm, email-typed gate works
-- [ ] Toggle to light theme via Cài đặt drawer → repeat key checks (auth, account, admin sidebar, tables) → expect: no theme-breaking raw colors
+  - [ ] Admin dashboard — `tone='positive'` tile (Chapter đã crawl) uses gradient bg-clip-text when value > 0; existing `textValue` strings (e.g., "Dung lượng") still render correctly
+  - [ ] Action bars — gradient pink count chip + glow primary CTA; submit() function still wired (no React Query introduced)
+  - [ ] Delete user modal — bg-destructive confirm, email-typed gate works; existing DeleteConfirm component prop signature preserved
+- [ ] Toggle to DARK theme via Cài đặt drawer → repeat key checks (auth, account "Lưu thay đổi" inverts correctly, admin sidebar gradient still pops, tables still legible, SegmentedControl active pill still visible) → expect: no theme-breaking raw colors and the bg-fg/text-bg inversion is symmetric
 - [ ] All commits present on local branch — DO NOT push. Inform user when Phase B is verified locally.
 
 ## Out of scope (do not touch in Plan B)
