@@ -14,9 +14,9 @@
 
 **Critical decisions resolved during audit:**
 
-1. **`/ban` is a pure redirect (no UI surface).** Spec C says "ReadingStatsCard on /ban if logged in" — but `/ban` already redirects logged-in users to `/tai-khoan` (line 8 of `ban.tsx`). **Resolution:** leave `ban.tsx` untouched. ReadingStatsCard ships on `/tu-sach` and `/tai-khoan` only. The redirect already routes "Bạn" tab traffic into the stats-card surface.
+1. **`/ban` is a pure redirect (no UI surface).** Spec C §Feature 2 "Where it lives" (line 93) AND Spec C "Files affected" (line 269) both still mention `/ban` and `ban.tsx` — but Plan A made `/ban` a redirect to `/tai-khoan` (line 8 of `ban.tsx`). Spec C is internally inconsistent here. **Resolution (overrides spec):** leave `ban.tsx` untouched. ReadingStatsCard ships on `/tu-sach` and `/tai-khoan` only. The redirect already routes "Bạn" tab traffic into the stats-card surface. Follow-up: amend Spec C to delete the `/ban` references (recommended) so future readers don't trip over the mismatch. Same note applies to `/tim-kiem` / `tim-kiem.tsx` references in Spec C's Files-affected table — Plan A made them a redirect too, and Plan C Task 14 correctly satisfies that surface via `/kham-pha`.
 2. **`/tim-kiem` is a redirect to `/kham-pha?q=…` (Plan A).** **Resolution:** Spec C's `/tim-kiem` no-results EmptyState is satisfied by integrating EmptyState into `/kham-pha`. No separate `/tim-kiem` work needed.
-3. **`/me/continue-reading` endpoint — build it.** Audit shows we *could* reuse `readingProgressApi.list()[0]` from FE. But Spec C explicitly requires the dedicated endpoint with the shape `{ storyId, storySlug, storyTitle, hasCover, chapterIndex, totalChapters, updatedAt }`. The list endpoint omits `hasCover` and returns the full array (unbounded). We add the dedicated endpoint per spec (LIMIT 1, 204 on empty, server-cheap).
+3. **Dedicated continue-reading endpoint — build it.** Audit shows we *could* reuse `readingProgressApi.list()[0]` from FE. But Spec C requires a dedicated endpoint with the shape `{ storyId, storySlug, storyTitle, hasCover, chapterIndex, totalChapters, updatedAt }` (LIMIT 1, 204 on empty, server-cheap). The list endpoint omits `hasCover` and returns the full array (unbounded). **URL contract:** The final URL is `/api/v1/me/reading-progress/continue-reading` (hung off the existing `ReadingProgressController` whose `@Controller({ path: 'me/reading-progress', version: '1' })` decorator we keep as-is, to avoid spawning a new controller for one route). The FE hides the exact path behind `meApi.continueReading()` so callers never see it. Spec C's abstract `/me/continue-reading` reference is satisfied by this clean-name wrapper; any contract test or docs reader should be pointed at `meApi.continueReading()` rather than the raw URL.
 4. **`weeklyHours` gated on migration 0008.** Phase C1 ships `weeklyHours: 0` placeholder. Phase C3 ships migration 0008 + session tracking and lights up the real value. ReadingStatsCard hides the "Giờ đọc" tile while the value is 0 *and* the user has progress (avoids the "0 giờ" mocking-the-user state).
 
 ---
@@ -36,7 +36,11 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
   Read `apps/api/src/modules/user-data/reading-progress.service.ts` (44 lines) and `packages/db/src/schema/story.ts` (to confirm `hasCover` column name).
 
 - [ ] **Step 2: Add `getContinueReading` method**
-  Append to `reading-progress.service.ts` after the `list` method:
+  First, update the drizzle-orm import on line 2 to add `sql`:
+  ```ts
+  import { desc, eq, sql } from 'drizzle-orm';
+  ```
+  Then append to `reading-progress.service.ts` after the `list` method:
   ```ts
   async getContinueReading(userId: string) {
     const rows = await this.db
@@ -44,7 +48,7 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
         storyId: readingProgress.storyId,
         storySlug: story.slug,
         storyTitle: story.title,
-        hasCover: story.hasCover,
+        hasCover: sql<boolean>`${story.cover} IS NOT NULL`,
         chapterIndex: readingProgress.chapterIndex,
         totalChapters: story.totalChapters,
         updatedAt: readingProgress.updatedAt,
@@ -57,7 +61,7 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
     return rows[0] ?? null;
   }
   ```
-  No new imports needed (`desc`, `eq`, `story`, `readingProgress` already imported at top).
+  Note: `story` has no `hasCover` column — the actual column is `cover: bytea` (nullable). Other services (e.g. `apps/api/src/modules/stories/stories.service.ts:64,87`) compute `hasCover` via `sql<boolean>\`${story.cover} IS NOT NULL\``. We follow that same pattern. `desc`, `eq`, `story`, `readingProgress` were already imported; only `sql` is newly added.
 
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/api typecheck` → expect: passes.
@@ -136,6 +140,15 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
   import type { Database } from '@smanga/db';
   import { DRIZZLE } from '@/modules/db/db.provider';
 
+  /**
+   * postgres-js's `db.execute()` returns the row array directly (a postgres.RowList),
+   * NOT `{ rows: T[] }` like the node-postgres adapter does. See
+   * `apps/api/src/modules/stories/stories.service.ts:40-43` for the defensive pattern.
+   * This helper normalizes both shapes so callers can rely on a plain array.
+   */
+  const rowsOf = <T>(r: unknown): T[] =>
+    Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
+
   export interface UserStats {
     totalChaptersRead: number;
     libraryCount: number;
@@ -208,7 +221,7 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
         this.computeStreak(userId),
       ]);
 
-      const dailyChaptersLast7 = (dailyRows.rows as Array<{ day: string; chapters: number }>)
+      const dailyChaptersLast7 = rowsOf<{ day: string; chapters: number }>(dailyRows)
         .map((r) => Number(r.chapters));
 
       // weeklyHours: zero until migration 0008 lights up session_seconds.
@@ -244,11 +257,12 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
         FROM ordered
         WHERE day = today - (rn - 1) * interval '1 day'
       `);
-      const rows = result.rows as Array<{ streak: number }>;
+      const rows = rowsOf<{ streak: number }>(result);
       return rows.length > 0 ? Number(rows[0].streak) : 0;
     }
   }
   ```
+  Note: `db.execute()` under `drizzle-orm/postgres-js` returns the row array directly — it does NOT have a `.rows` property. The `rowsOf<T>` helper above normalizes both shapes (postgres-js array, node-postgres `{ rows }`) so `dailyRows` and the streak `result` can be consumed safely. This is the same defensive pattern used in `apps/api/src/modules/stories/stories.service.ts:40-43`.
 
 - [ ] **Step 3: Create `stats.controller.ts`**
   Write `apps/api/src/modules/user-data/stats.controller.ts`:
@@ -416,17 +430,24 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
     const cr = q.data;
     if (!cr) return null;
 
-    // Hide when already reading the same story's chapter
+    // Hide when already reading the same story's chapter.
+    // Note: AppShell already hides the bar on ALL chapter routes via its `isChapter` regex,
+    // so in practice this branch never fires today. We keep it as intentional double-defense:
+    // if AppShell's regex ever changes, the bar still won't appear "on top of itself" while
+    // the reader is on the matching chapter.
     const onThisChapter = path.startsWith(`/truyen/${cr.storySlug}/chuong/`);
     if (onThisChapter) return null;
 
     const chapter = Math.floor(Number(cr.chapterIndex));
 
+    // Sticky offset must match the responsive height of DesktopTopNav.
+    // Plan B Task 10 sets the admin top bar to `h-14 sm:h-16` and the reader nav follows
+    // the same pattern. If the reader nav uses a different height, update both values here.
     return (
       <Link
         to="/truyen/$slug/chuong/$index"
         params={{ slug: cr.storySlug, index: String(chapter) }}
-        className="sticky top-14 z-20 block border-b border-accent/20 transition-colors duration-fast hover:bg-accent/12"
+        className="sticky top-14 sm:top-16 z-20 block border-b border-accent/20 transition-colors duration-fast hover:bg-accent/12"
         style={{
           background:
             'linear-gradient(90deg, rgba(236,72,153,0.12), rgba(244,114,182,0.04))',
@@ -509,6 +530,8 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
   }
   ```
 
+  Note: the `['me', 'reading-progress']` invalidation is the same query key that Task 7's `/tu-sach` page uses for `readingProgressApi.list()`. Until Task 7 lands, no consumer reads that key, so the invalidation is a no-op. After Task 7 lands, navigating from a chapter to `/tu-sach` will surface fresh progress immediately.
+
 - [ ] **Step 4: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes.
   Run dev: `pnpm dev:frontend` and open `http://localhost:3000/` while logged in with a user that has progress → expect: pink-tinted sticky bar appears below the header with the correct story + chapter.
@@ -562,9 +585,9 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
       return (
         <StatsContainer>
           <p className="text-label text-fg-muted uppercase mb-2">HOẠT ĐỘNG ĐỌC</p>
-          <h2 className="text-heading-lg mb-3">Chào bạn — chưa có gì để thống kê.</h2>
+          <h2 className="text-heading-lg mb-3">Bắt đầu đọc để theo dõi hoạt động của bạn</h2>
           <p className="text-body-sm text-fg-muted mb-5 max-w-md">
-            Bắt đầu đọc để theo dõi hoạt động của bạn — streak, chương đọc, sparkline 7 ngày.
+            Streak, chương đọc, sparkline 7 ngày — tất cả sẽ xuất hiện ở đây sau chương đầu tiên.
           </p>
           <Link
             to="/"
@@ -594,14 +617,16 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+        <div
+          className={`grid grid-cols-2 ${
+            s.weeklyHours > 0 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'
+          } gap-2.5 mb-5`}
+        >
           <MiniStat label="Tổng" value={s.totalChaptersRead} unit="chương" />
           <MiniStat label="Thư viện" value={s.libraryCount} unit="truyện" />
           <MiniStat label="Hoàn thành" value={s.completedCount} unit="truyện" />
-          {s.weeklyHours > 0 ? (
+          {s.weeklyHours > 0 && (
             <MiniStat label="Giờ đọc" value={s.weeklyHours} unit="giờ / tuần" />
-          ) : (
-            <MiniStat label="Hôm nay" value={s.dailyChaptersLast7.at(-1) ?? 0} unit="chương" />
           )}
         </div>
 
@@ -911,6 +936,8 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
 
   Note: line `to="/kham-pha"` matches the Plan A route. If `/kham-pha` route doesn't accept a `search` param of `{ q, page }`, the typechecker will catch it — relax `search` accordingly. Audit confirms `/kham-pha` accepts `{ q, page, genre }`.
 
+  Note: the new `LibraryCard` keys rows by `item.storyId` (not the legacy `item.id`) and uses `/api/v1/cover/${item.storyId}` for the cover URL. The rewrite purges the prior `id`-based shape entirely — any leftover `it.id` references from the pre-Plan-C version are dropped along with the placeholder `items: any[] = []`.
+
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes.
   Run dev: open `http://localhost:3000/tu-sach` while logged in → expect: ReadingStatsCard renders above the tab bar; "Đang đọc" tab shows real progress rows; "Đã lưu" shows real bookmarks; "Đã hoàn thành" shows rows where chapter ≥ totalChapters.
@@ -924,19 +951,34 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
 ### Task 8: Mount `ReadingStatsCard` on `/tai-khoan`
 
 **Files:**
-- Modify: `apps/frontend/src/routes/tai-khoan.tsx` (insert above `<AvatarCard user={user} />` on line 34)
+- Modify: `apps/frontend/src/routes/tai-khoan.tsx`
 
-**Why this task:** Spec C reserves the slot at the top of the account page. Pure insertion — Plan B will retoken the rest.
+**Why this task:** Spec C reserves the slot at the top of the account page. The actual insertion target depends on whether Plan B Task 4 has shipped yet (see below).
+
+**Depends on:** Plan B Task 4 (account page restructure). Plan B Task 4 wraps the account cards in a `<div className="space-y-6">` and inserts a placeholder comment `{/* <ReadingStatsCard /> — added in Plan C (Spec C differentiators) */}` at the exact mount point. Plan C Task 8 replaces that placeholder with the real component. If Plan C Task 8 ships BEFORE Plan B Task 4, fall back to the legacy mount path documented at the bottom of this task.
 
 - [ ] **Step 1: Read context**
-  Read lines 18-40 of `apps/frontend/src/routes/tai-khoan.tsx`. The insertion point is between line 33 (`</header>`) and line 34 (`<AvatarCard user={user} />`).
+  Read `apps/frontend/src/routes/tai-khoan.tsx`. Confirm which structure is currently in place:
+  - **Plan B Task 4 has shipped:** the file contains a `<div className="space-y-6">` wrapper around the cards and a comment line `{/* <ReadingStatsCard /> — added in Plan C (Spec C differentiators) */}`. Use Step 2A.
+  - **Plan B Task 4 has NOT shipped:** the original layout still has `</header>` followed directly by `<AvatarCard user={user} />`. Use Step 2B.
 
-- [ ] **Step 2: Insert the component**
-  Add the import at the top of `apps/frontend/src/routes/tai-khoan.tsx`:
+- [ ] **Step 2A: Replace the Plan B placeholder (preferred path)**
+  Add the import at the top:
   ```tsx
   import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
   ```
-  Then insert `<ReadingStatsCard />` between `</header>` and `<AvatarCard user={user} />`:
+  Replace the placeholder comment line `{/* <ReadingStatsCard /> — added in Plan C (Spec C differentiators) */}` with:
+  ```tsx
+        <ReadingStatsCard />
+  ```
+  The component then sits inside the `<div className="space-y-6">` wrapper, gaining the gap-6 spacing for free. Do NOT delete the wrapper.
+
+- [ ] **Step 2B: Insert above `<AvatarCard>` (fallback only — if Plan B Task 4 has not shipped)**
+  Add the import:
+  ```tsx
+  import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
+  ```
+  Insert `<ReadingStatsCard />` between `</header>` and `<AvatarCard user={user} />`:
   ```tsx
         </header>
 
@@ -944,6 +986,7 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
 
         <AvatarCard user={user} />
   ```
+  When Plan B Task 4 later lands, it will detect this real `<ReadingStatsCard />` and SKIP inserting its placeholder comment (Plan B Task 4 step 2 already handles this case — it only inserts the comment when the real component is absent).
 
 - [ ] **Step 3: Verify locally**
   Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes.
@@ -966,11 +1009,11 @@ Two new routes on the existing `UserDataModule`. No new DTOs (read-only). Auth v
   Re-read lines 9-22 + 57-62 of `apps/frontend/src/routes/index.tsx`.
 
 - [ ] **Step 2: Replace `LoggedInHero`**
-  Update imports at top of `apps/frontend/src/routes/index.tsx`:
-  ```tsx
-  import { ArrowRight, BookOpen } from 'lucide-react';
-  import { meApi } from '@/api/me';
-  ```
+  Update the imports at the top of `apps/frontend/src/routes/index.tsx`:
+  - `ArrowRight` is already imported on line 3 — ADD `BookOpen` to that same `lucide-react` import. After editing, line 3 reads: `import { ArrowRight, BookOpen } from 'lucide-react';`.
+  - `useQuery` is already imported on line 2 (`import { useQuery } from '@tanstack/react-query';`) — no change needed.
+  - Add a new line: `import { meApi } from '@/api/me';`.
+
   Then replace the `LoggedInHero` function (lines 57-62) with:
   ```tsx
   function LoggedInHero() {
@@ -1118,10 +1161,13 @@ Drop-cap, Newsreader 600 title, reading-time eyebrow, and scene-break ship witho
   ```
   With the drop-cap + scene-break aware renderer. Above the `return` (after `estMinutes` declaration ~line 102) add:
   ```tsx
-    // Drop-cap eligibility — suppress on smallest font size or when no letter in first 20 chars
+    // Drop-cap eligibility — suppress on smallest font size or when no letter in first 20 chars.
+    // Plan B Task 5 changed FONT_SIZES to numeric values [16, 18, 20, 22] (smallest = 16, not 15).
+    // The store therefore returns `fontSize` as a number. Use numeric comparison.
+    // Spec C calls for suppression at the "Nhỏ" size — that is value `16` after Plan B.
     const wordCount = (chapter.content?.match(/\S+/g) ?? []).length;
     const readingMinutes = Math.max(1, Math.ceil(wordCount / 250));
-    const dropCapAllowed = fontSize !== '15';
+    const dropCapAllowed = Number(fontSize) > 16;
 
     function renderParagraph(para: string, i: number) {
       // Scene break detector
@@ -1167,6 +1213,7 @@ Drop-cap, Newsreader 600 title, reading-time eyebrow, and scene-break ship witho
           CHƯƠNG {chapter.index} · {readingMinutes} PHÚT ĐỌC
         </p>
   ```
+  **Delete the now-unused `const estMinutes = …` declaration on line 102.** `readingMinutes` (word-based, more accurate) replaces it; leaving `estMinutes` produces a TS6133 "declared but never used" warning.
 
   Notes on accessibility:
   - The `aria-hidden` `<span class="drop-cap">` is purely decorative — the actual letter is also rendered inside an `<span class="sr-only">` so screen readers read the full word ("Thẩm") without the visual drop-cap glyph being announced. Tailwind v4 provides `.sr-only` out of the box.
@@ -1178,7 +1225,7 @@ Drop-cap, Newsreader 600 title, reading-time eyebrow, and scene-break ship witho
   - First paragraph: pink-gradient drop-cap on the first letter, body text flowing around it.
   - "N PHÚT ĐỌC" eyebrow under the title (word-based now).
   - If a paragraph contains `* * *`, it renders as centered `· · ·` decoration.
-  - In reader settings, switching to font size "Nhỏ" (15) → drop-cap disappears, paragraph renders normally.
+  - In reader settings, switching to font size "Nhỏ" (16 after Plan B Task 5) → drop-cap disappears, paragraph renders normally. Switching back to "Vừa" (18) or larger → drop-cap returns.
   - macOS / DevTools `Emulate CSS prefers-reduced-motion: reduce` → drop-cap renders solid `var(--fg)` color (no gradient).
 
 - [ ] **Step 5: Commit**
@@ -1384,6 +1431,8 @@ Drop-cap, Newsreader 600 title, reading-time eyebrow, and scene-break ship witho
 
 EmptyState is the unifying primitive across 8 surfaces. We build it once, then thread it through.
 
+**Sequencing note:** Phase C4 (Tasks 12-15) MUST ship AFTER Plan B Tasks 11 + 14, which retoken admin tables/badges/filter chips (`apps/frontend/src/routes/admin/users.tsx`, `apps/frontend/src/routes/admin/stories/index.tsx`) and the delete modal in `users.tsx`. Plan C Task 15 then drops the unified `EmptyState` into those already-retoken'd surfaces. If Phase C4 lands first, the `EmptyState` markup will still render correctly (it uses Plan A tokens), but the surrounding table/badge styles will look mismatched until Plan B catches up. Also: Plan B Task 11 retokens `JobsTable.tsx` but does NOT touch `apps/frontend/src/routes/admin/jobs.tsx` directly — Plan C Task 15 edits the route file and is therefore independent of Plan B's JobsTable work.
+
 ### Task 12: Create `EmptyState` primitive + 4 SVG illustrations
 
 **Files:**
@@ -1401,15 +1450,27 @@ EmptyState is the unifying primitive across 8 surfaces. We build it once, then t
 - [ ] **Step 2: Create `EmptyState.tsx`**
   Write `apps/frontend/src/components/ui/EmptyState.tsx`:
   ```tsx
-  import { Link, type LinkProps } from '@tanstack/react-router';
+  import { Link } from '@tanstack/react-router';
   import type { ReactNode } from 'react';
 
+  /**
+   * EmptyState — unified empty-surface primitive for Spec C.
+   *
+   * Typing trade-off: `to` is typed as `string` (and `search`/`params` as plain records)
+   * rather than indexing `LinkProps['to']`. TanStack Router's `LinkProps['to']` is a
+   * heavily-generic mapped type that collapses to a loose form once erased through this
+   * boundary; the previous attempt used `as never` casts that erased the safety anyway.
+   * Accepting an explicit `string` keeps the primitive simple and avoids forcing every
+   * call site to satisfy the router's full conditional types. The trade-off: a caller
+   * passing `to="/truyen/$slug"` without `params` will navigate to a literal
+   * `'/truyen/$slug'`. Callers must pass `params` when the route has dynamic segments.
+   */
   export interface EmptyStateProps {
     illustration: ReactNode;
     title: string;
     description: string;
     cta?:
-      | { label: string; to: LinkProps['to']; search?: LinkProps['search']; params?: LinkProps['params'] }
+      | { label: string; to: string; search?: Record<string, unknown>; params?: Record<string, string> }
       | { label: string; onClick: () => void };
   }
 
@@ -1421,9 +1482,12 @@ EmptyState is the unifying primitive across 8 surfaces. We build it once, then t
         <p className="mt-2 max-w-md text-body-sm sm:text-body text-fg-muted">{description}</p>
         {cta && 'to' in cta && (
           <Link
-            to={cta.to}
-            search={cta.search as never}
-            params={cta.params as never}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            to={cta.to as any}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            search={cta.search as any}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            params={cta.params as any}
             className="mt-6 inline-flex items-center gap-2 h-10 px-5 rounded-md bg-accent-gradient text-white text-body-sm font-semibold shadow-glow-pink-soft hover:shadow-glow-pink transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             {cta.label} →
@@ -1633,34 +1697,39 @@ EmptyState is the unifying primitive across 8 surfaces. We build it once, then t
 **Why this task:** `/kham-pha` is the public search/browse surface. `/tim-kiem` is already a redirect into it (Plan A), so this single edit satisfies both Spec C surfaces.
 
 - [ ] **Step 1: Read context**
-  Read all of `apps/frontend/src/routes/kham-pha.tsx`. Find where the "no results" path currently renders (likely a conditional on `storiesQ.data?.length === 0` or a fallback text block).
+  Read all of `apps/frontend/src/routes/kham-pha.tsx`. Confirm the current state: there is a local `function EmptyState()` at line 130 (used at line 124 via `<EmptyState />`) and the file imports `Search` from `lucide-react` (line 4) for use inside that local function and the search-input glyph at line 52.
 
 - [ ] **Step 2: Replace the no-results block**
-  At the top, add:
+
+  Step 2a — DELETE the existing local empty primitive (it collides with the new import):
+  - Remove the existing `function EmptyState() { … }` declaration on lines 130-146 of `kham-pha.tsx`. After deletion, the call site `<EmptyState />` on line 124 will resolve to the imported primitive added below.
+  - DO NOT remove the `Search` Lucide import from line 4 — it is still used on line 52 (the search input glyph). Only the second usage inside the deleted local `EmptyState` goes away.
+
+  Step 2b — Add the imports at the top of the file:
   ```tsx
+  import { useNavigate } from '@tanstack/react-router';
   import { EmptyState } from '@/components/ui/EmptyState';
   import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
   ```
-  Wherever the page currently shows the empty/no-results state, replace with:
+  (Merge the `useNavigate` import into the existing `@tanstack/react-router` import line if you prefer — `import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';`.)
+
+  Step 2c — Update the call site (line 124) to pass the new props. Replace the bare `<EmptyState />` with:
   ```tsx
   <EmptyState
     illustration={<EmptySearch />}
     title="Không tìm thấy truyện nào khớp"
-    description="Thử từ khoá khác, hoặc xem các đề xuất bên dưới."
+    description="Thử từ khoá khác, hoặc xoá bộ lọc để xem tất cả."
     cta={{
-      label: 'Xem mới cập nhật',
-      onClick: () => {
-        const el = document.getElementById('latest-updated');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      },
+      label: 'Xoá bộ lọc',
+      onClick: () => navigate({ to: '/kham-pha', search: { q: '', page: 1, genre: undefined } }),
     }}
   />
   ```
-  Ensure the "Mới cập nhật" section in `kham-pha.tsx` has `id="latest-updated"` on its wrapping element (add it if missing).
+  Inside the page component, declare `const navigate = useNavigate();` near the top (before the JSX). This avoids the smooth-scroll-to-nowhere problem: `/kham-pha` does not currently have a "Mới cập nhật" section, so the CTA instead clears the active filters and returns the user to the unfiltered browse view. Same Spec C intent ("escape route from the empty state"), but the action actually resolves.
 
 - [ ] **Step 3: Verify locally**
-  Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes.
-  Open `http://localhost:3000/kham-pha?q=zzz_no_match` → expect: search illustration + correct copy + "Xem mới cập nhật" button that smooth-scrolls to the latest section.
+  Run: `pnpm --filter @smanga/frontend typecheck` → expect: passes (no duplicate-identifier error for `EmptyState`).
+  Open `http://localhost:3000/kham-pha?q=zzz_no_match` → expect: search illustration + title "Không tìm thấy truyện nào khớp" + "Xoá bộ lọc" button. Clicking the button navigates to `/kham-pha` with `q=''` and clears the active genre, returning the full browse view.
 
 - [ ] **Step 4: Commit**
   ```bash
@@ -1686,16 +1755,23 @@ EmptyState is the unifying primitive across 8 surfaces. We build it once, then t
   import { EmptyState } from '@/components/ui/EmptyState';
   import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
   ```
-  Replace the search-no-results path. The user's search query lives in local state (look for `search`/`q`/`useState`). The "Xoá tìm kiếm" CTA must clear it:
+  Confirmed from `apps/frontend/src/routes/admin/users.tsx`: the search query is held in two places — the typed-input local state `searchInput` (declared on line 27 as `const [searchInput, setSearchInput] = useState(q);`) and the URL search param `q` (cleared via `navigate({ search: { q: '', page: 1 } })`). The page already has a `clearSearch` handler on line 54 that does both. Reuse that handler. Replace the search-no-results path:
   ```tsx
   <EmptyState
     illustration={<EmptySearch />}
     title="Không tìm thấy tài khoản nào"
     description="Thử từ khoá khác."
-    cta={{ label: 'Xoá tìm kiếm', onClick: () => setSearch('') }}
+    cta={{ label: 'Xoá tìm kiếm', onClick: clearSearch }}
   />
   ```
-  Replace `setSearch('')` with whatever setter the file actually uses to clear the query (e.g. `setQ('')`).
+  If `clearSearch` is not yet defined as a callable (i.e. it's an inline event handler on the form), extract it into a named function in the component scope first:
+  ```tsx
+  const clearSearch = () => {
+    setSearchInput('');
+    void navigate({ search: { q: '', page: 1 } });
+  };
+  ```
+  Then both the form's "clear" button and the EmptyState CTA can call it.
 
 - [ ] **Step 3: `/admin/jobs` — wire EmptyState**
   Add imports:
@@ -1750,7 +1826,7 @@ After all tasks land, sweep the following in one session:
 - [ ] **Stats update** within ~60s of a chapter read (cache TTL) or instantly on the next route navigation (TanStack Query invalidation in `ReadingProgressTracker`).
 - [ ] **Streak verification** with seeded data: insert 5 consecutive days of progress → `streakDays = 5`. Insert with a 1-day gap → `streakDays = 1` (only today). Insert today only → `streakDays = 1`.
 - [ ] **EmptyState** renders on all 8 surfaces with the correct copy + CTA per Spec C table (3 × tu-sach tabs + kham-pha + tim-kiem-via-redirect + admin/users + admin/jobs + admin/stories).
-- [ ] **Drop-cap** renders pink gradient on the first letter of the first paragraph of every crawled chapter. Suppressed at font size "Nhỏ" (15) and under `prefers-reduced-motion: reduce`. Falls back to non-gradient when the first 20 chars have no letter.
+- [ ] **Drop-cap** renders pink gradient on the first letter of the first paragraph of every crawled chapter. Suppressed at font size "Nhỏ" (16, after Plan B Task 5) and under `prefers-reduced-motion: reduce`. Falls back to non-gradient when the first 20 chars have no letter.
 - [ ] **Screen reader** test: `VoiceOver` / NVDA reading the first paragraph reads the full word (e.g. "Thẩm"), not "T... Thẩm". (Test by routing through the page with screen reader on.)
 - [ ] **Reading time** correct on a 1000-word chapter (~4 minutes via `ceil(wordCount / 250)`).
 - [ ] **Scene break** `* * *` renders as centered `· · ·` decoration. Plain text paragraphs render normally.
