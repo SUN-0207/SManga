@@ -17,7 +17,7 @@ interface ReaderPrefs {
 export const useReaderPrefs = create<ReaderPrefs>()(
   persist(
     (set) => ({
-      theme: 'dark',
+      theme: 'light',
       fontSize: '18',
       fontFamily: 'serif',
       setTheme: (theme) => set({ theme }),
@@ -26,11 +26,15 @@ export const useReaderPrefs = create<ReaderPrefs>()(
     }),
     {
       name: 'smanga:reader',
-      version: 2,
+      version: 3,
       migrate: (persistedState: unknown, version) => {
-        if (version < 2 && persistedState && typeof persistedState === 'object') {
+        // Pivot 2026-05-30: redesign goes light-first. Previous migrations
+        // forced 'system' → 'dark' (v2); reset all pre-v3 stored themes to
+        // 'light' so the new default applies on next load. Users can still
+        // opt back into dark via Cài đặt drawer.
+        if (version < 3 && persistedState && typeof persistedState === 'object') {
           const s = persistedState as { theme?: string };
-          if (s.theme === 'system') s.theme = 'dark';
+          s.theme = 'light';
         }
         return persistedState as ReaderPrefs;
       },
