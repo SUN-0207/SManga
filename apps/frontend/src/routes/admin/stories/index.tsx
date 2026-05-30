@@ -19,10 +19,10 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_TONE: Record<string, string> = {
-  ongoing: 'bg-[hsl(var(--color-cta))]/15 text-[hsl(var(--color-cta))] border-[hsl(var(--color-cta))]/30',
-  completed: 'bg-foreground/10 text-foreground border-foreground/20',
-  dropped: 'bg-muted text-muted-foreground border-border',
-  unknown: 'bg-muted text-muted-foreground border-border',
+  completed: 'bg-positive/15 text-positive border-positive/30',
+  ongoing: 'bg-accent/15 text-accent border-accent/30',
+  dropped: 'bg-bg-subtle text-fg-muted border-border',
+  unknown: 'bg-bg-subtle text-fg-muted border-border',
 };
 
 type Filter = 'all' | 'full' | 'stub';
@@ -82,27 +82,27 @@ function AdminStoriesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-fg-muted font-medium mb-2">
           Nội dung
         </p>
-        <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">Truyện</h1>
-        <p className="text-sm text-muted-foreground mt-2 max-w-xl">
+        <h1 className="font-sans font-bold text-3xl sm:text-4xl tracking-tight text-fg">Truyện</h1>
+        <p className="text-body-sm text-fg-muted mt-2 max-w-xl">
           Khám phá catalog từ source rồi import metadata. Chọn nhiều truyện và bấm quét + crawl
           hàng loạt thay vì làm từng truyện.
         </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-background p-5">
-        <h2 className="font-heading font-semibold text-base mb-4">Bắt đầu từ catalog</h2>
+      <div className="rounded-lg border border-border bg-bg-elevated p-5">
+        <h2 className="font-sans font-semibold text-heading-md text-fg mb-4">Bắt đầu từ catalog</h2>
         <Link
           to="/admin/sources"
-          className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-fg text-bg text-body-sm font-medium hover:opacity-90 transition-opacity duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2"
         >
           <Compass className="h-4 w-4" />
           Chọn nguồn để khám phá
         </Link>
         <details className="mt-4 group">
-          <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors duration-200 select-none">
+          <summary className="text-body-sm text-fg-muted cursor-pointer hover:text-fg transition-colors duration-fast select-none">
             Hoặc dán URL trực tiếp một truyện
           </summary>
           <div className="mt-3 pt-3 border-t border-border/60">
@@ -111,10 +111,10 @@ function AdminStoriesPage() {
         </details>
       </div>
 
-      <div className="rounded-xl border border-border bg-background overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <h2 className="font-heading font-semibold text-base mr-2">Danh sách truyện</h2>
+            <h2 className="font-sans font-semibold text-heading-md text-fg mr-2">Danh sách truyện</h2>
             <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
               Tất cả ({stories.length})
             </FilterChip>
@@ -127,14 +127,14 @@ function AdminStoriesPage() {
           </div>
         </div>
         {isLoading ? (
-          <p className="text-sm text-muted-foreground p-8 text-center">Đang tải...</p>
+          <p className="text-body-sm text-fg-muted p-8 text-center">Đang tải...</p>
         ) : filtered.length === 0 ? (
           <EmptyState filter={filter} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left">
+            <table className="w-full text-left text-body-sm">
+              <thead className="sticky top-0 z-10 bg-bg/95 backdrop-blur">
+                <tr className="border-b border-border">
                   <th className="pl-5 pr-2 py-2.5 w-10">
                     <input
                       type="checkbox"
@@ -144,25 +144,25 @@ function AdminStoriesPage() {
                       }}
                       onChange={toggleAll}
                       aria-label="Chọn tất cả truyện hiển thị"
-                      className="h-4 w-4 rounded border-border accent-[hsl(var(--color-cta))] cursor-pointer"
+                      className="h-4 w-4 rounded border-border text-accent cursor-pointer"
                     />
                   </th>
-                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     Tiêu đề
                   </th>
-                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     Tác giả
                   </th>
-                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     Trạng thái
                   </th>
-                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     Discovery
                   </th>
-                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground tabular-nums">
+                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums">
                     Chapter
                   </th>
-                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     Cập nhật
                   </th>
                   <th className="px-3 py-2.5 w-10" />
@@ -175,8 +175,8 @@ function AdminStoriesPage() {
                   return (
                     <tr
                       key={r.id}
-                      className={`group border-b border-border/60 last:border-0 transition-colors duration-150 ${
-                        isChecked ? 'bg-muted/40' : 'hover:bg-muted/30'
+                      className={`group border-b border-border/60 last:border-0 transition-colors duration-fast ${
+                        isChecked ? 'border-l-2 border-l-accent bg-bg-subtle' : 'hover:bg-bg-subtle/60'
                       }`}
                     >
                       <td className="pl-5 pr-2 py-3">
@@ -185,19 +185,19 @@ function AdminStoriesPage() {
                           checked={isChecked}
                           onChange={() => toggleOne(r.id)}
                           aria-label={`Chọn ${r.title}`}
-                          className="h-4 w-4 rounded border-border accent-[hsl(var(--color-cta))] cursor-pointer"
+                          className="h-4 w-4 rounded border-border text-accent cursor-pointer"
                         />
                       </td>
-                      <td className="px-3 py-3 font-medium">
+                      <td className="px-3 py-3 font-medium text-fg">
                         <Link
                           to="/admin/stories/$id"
                           params={{ id: r.id }}
-                          className="hover:underline underline-offset-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                          className="hover:underline underline-offset-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
                         >
                           {r.title}
                         </Link>
                       </td>
-                      <td className="px-3 py-3 text-muted-foreground">{r.author ?? '—'}</td>
+                      <td className="px-3 py-3 text-fg-muted">{r.author ?? '—'}</td>
                       <td className="px-3 py-3">
                         <span
                           className={`inline-flex items-center h-5 px-2 rounded-full text-[11px] border whitespace-nowrap ${STATUS_TONE[r.status] ?? STATUS_TONE.unknown}`}
@@ -208,14 +208,14 @@ function AdminStoriesPage() {
                       <td className="px-3 py-3">
                         <StubBadge status={r.discoveryStatus} />
                       </td>
-                      <td className="px-3 py-3 tabular-nums">
-                        {isStub ? <span className="text-muted-foreground">—</span> : r.totalChapters}
+                      <td className="px-3 py-3 tabular-nums text-fg">
+                        {isStub ? <span className="text-fg-muted">—</span> : r.totalChapters}
                       </td>
-                      <td className="px-3 py-3 text-xs text-muted-foreground tabular-nums">
+                      <td className="px-3 py-3 text-[11px] text-fg-muted tabular-nums">
                         {new Date(r.updatedAt).toLocaleDateString('vi-VN')}
                       </td>
                       <td className="px-3 py-3 text-right">
-                        <ChevronRight className="h-4 w-4 inline text-muted-foreground/40 transition-all duration-200 group-hover:text-foreground group-hover:translate-x-0.5" />
+                        <ChevronRight className="h-4 w-4 inline text-fg-subtle transition-all duration-fast group-hover:text-fg group-hover:translate-x-0.5" />
                       </td>
                     </tr>
                   );
@@ -239,7 +239,7 @@ function EmptyState({ filter }: { filter: Filter }) {
   let msg = 'Chưa có truyện nào.';
   if (filter === 'stub') msg = 'Không có truyện chỉ metadata.';
   else if (filter === 'full') msg = 'Không có truyện đã đủ chapter.';
-  return <p className="text-sm text-muted-foreground p-8 text-center">{msg}</p>;
+  return <p className="text-body-sm text-fg-muted p-8 text-center">{msg}</p>;
 }
 
 function BulkActionBar({
@@ -284,25 +284,24 @@ function BulkActionBar({
   if (ids.length === 0 && !info && !error) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[min(720px,calc(100%-3rem))] rounded-2xl border border-border bg-background shadow-[0_30px_60px_-20px_rgba(0,0,0,0.35)] p-4 space-y-3">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-foreground text-background text-xs font-bold tabular-nums">
-            {ids.length}
-          </span>
-          <span className="text-muted-foreground">
-            đã chọn{ids.length > 100 ? ' (vượt giới hạn 100)' : ''}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[min(820px,calc(100%-3rem))]">
+      <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border-strong bg-bg-elevated px-4 py-3 shadow-elev flex-wrap">
+        <span className="inline-flex h-7 items-center rounded-full bg-accent-gradient px-3 text-[12px] font-semibold text-white">
+          {ids.length}
+        </span>
+        <span className="text-body-sm text-fg-muted">
+          đã chọn{ids.length > 100 ? ' (vượt giới hạn 100)' : ''}
+        </span>
+        <div className="ml-auto flex items-center gap-1.5 flex-wrap">
           <button
             type="button"
             onClick={onClear}
             disabled={mut.isPending || ids.length === 0}
             aria-label="Bỏ chọn tất cả"
-            className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex h-9 items-center gap-1 rounded-md border border-border-strong bg-bg-subtle px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle/80 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="h-4 w-4" />
+            Bỏ chọn
           </button>
           <ActionButton
             onClick={() => mut.mutate({ action: 'discover' })}
@@ -333,8 +332,8 @@ function BulkActionBar({
           </ActionButton>
         </div>
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      {info && !error && <p className="text-xs text-emerald-600">{info}</p>}
+      {error && <p className="mt-2 text-[11px] text-destructive text-center">{error}</p>}
+      {info && !error && <p className="mt-2 text-[11px] text-positive text-center">{info}</p>}
     </div>
   );
 }
@@ -354,14 +353,26 @@ function ActionButton({
   variant: 'outline' | 'cta';
   children: React.ReactNode;
 }) {
-  const base =
-    'inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-  const cls =
-    variant === 'cta'
-      ? `${base} bg-[hsl(var(--color-cta))] text-white hover:opacity-95 focus-visible:ring-[hsl(var(--color-cta))]`
-      : `${base} border border-border hover:border-foreground/40 hover:bg-muted/60 focus-visible:ring-primary`;
+  if (variant === 'cta') {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent-gradient px-4 text-body-sm font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : icon}
+        {children}
+      </button>
+    );
+  }
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className={cls}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border-strong bg-bg-subtle px-3.5 text-body-sm font-medium text-fg transition-colors duration-fast hover:bg-bg-subtle/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+    >
       {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : icon}
       {children}
     </button>
@@ -381,11 +392,11 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={
+      className={`inline-flex h-8 items-center rounded-full px-3 text-body-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
         active
-          ? 'inline-flex items-center h-7 px-3 rounded-full text-[11px] font-medium bg-foreground text-background transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2'
-          : 'inline-flex items-center h-7 px-3 rounded-full text-[11px] border border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary'
-      }
+          ? 'bg-fg text-bg'
+          : 'border border-border text-fg-muted hover:border-border-strong hover:bg-bg-subtle hover:text-fg'
+      }`}
     >
       {children}
     </button>

@@ -31,49 +31,49 @@ function AdminSourcesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-fg-muted font-medium mb-2">
           Hệ thống
         </p>
-        <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">Sources</h1>
-        <p className="text-sm text-muted-foreground mt-2 max-w-xl">
+        <h1 className="font-sans font-bold text-3xl sm:text-4xl tracking-tight text-fg">Sources</h1>
+        <p className="text-body-sm text-fg-muted mt-2 max-w-xl">
           Các nguồn (adapter) được đăng ký để crawl truyện. ID phải khớp với folder
           adapter trong{' '}
-          <code className="text-xs px-1.5 py-0.5 rounded bg-muted">packages/crawler/src/sources/</code>.
+          <code className="text-[11px] px-1.5 py-0.5 rounded bg-bg-subtle text-fg-muted">packages/crawler/src/sources/</code>.
         </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-background p-5">
-        <h2 className="font-heading font-semibold text-base mb-4">Thêm source mới</h2>
+      <div className="rounded-lg border border-border bg-bg-elevated p-5">
+        <h2 className="font-sans font-semibold text-heading-md text-fg mb-4">Thêm source mới</h2>
         <SourceForm />
       </div>
 
-      <div className="rounded-xl border border-border bg-background overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-          <h2 className="font-heading font-semibold text-base">Danh sách</h2>
-          <span className="text-xs text-muted-foreground tabular-nums">{sources.length}</span>
+          <h2 className="font-sans font-semibold text-heading-md text-fg">Danh sách</h2>
+          <span className="text-[11px] text-fg-muted tabular-nums">{sources.length}</span>
         </div>
         {isLoading ? (
-          <p className="text-sm text-muted-foreground p-8 text-center">Đang tải...</p>
+          <p className="text-body-sm text-fg-muted p-8 text-center">Đang tải...</p>
         ) : sources.length === 0 ? (
-          <p className="text-sm text-muted-foreground p-8 text-center">Chưa có source nào.</p>
+          <p className="text-body-sm text-fg-muted p-8 text-center">Chưa có source nào.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left">
-                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+            <table className="w-full text-left text-body-sm">
+              <thead className="sticky top-0 z-10 bg-bg/95 backdrop-blur">
+                <tr className="border-b border-border">
+                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     ID
                   </th>
-                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     Tên
                   </th>
-                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     Base URL
                   </th>
-                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground tabular-nums">
+                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums">
                     RPS
                   </th>
-                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                  <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     Trạng thái
                   </th>
                   <th />
@@ -81,23 +81,23 @@ function AdminSourcesPage() {
               </thead>
               <tbody>
                 {sources.map((r) => (
-                  <tr key={r.id} className="border-b border-border/60 last:border-0">
-                    <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{r.id}</td>
-                    <td className="px-5 py-3 font-medium">{r.name}</td>
+                  <tr key={r.id} className="border-b border-border/60 last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60">
+                    <td className="px-5 py-3 font-mono text-[11px] text-fg-muted">{r.id}</td>
+                    <td className="px-5 py-3 font-medium text-fg">{r.name}</td>
                     <td className="px-5 py-3">
                       <a
                         href={r.baseUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[11px] text-fg-muted hover:text-fg transition-colors duration-fast cursor-pointer"
                       >
                         {r.baseUrl}
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </td>
-                    <td className="px-5 py-3 tabular-nums text-sm">{r.rateLimitRps}</td>
+                    <td className="px-5 py-3 tabular-nums text-body-sm text-fg">{r.rateLimitRps}</td>
                     <td className="px-5 py-3">
-                      <StatusDot active={r.isActive} />
+                      <StatusDot enabled={r.isActive} />
                     </td>
                     <td className="px-5 py-3 text-right">
                       <div className="inline-flex items-center gap-1">
@@ -106,7 +106,7 @@ function AdminSourcesPage() {
                           params={{ id: r.id }}
                           search={{ feed: undefined, page: 1, q: '' }}
                           aria-label={`Khám phá ${r.name}`}
-                          className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted/70 text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                         >
                           <Compass className="h-4 w-4" />
                         </Link>
@@ -115,7 +115,7 @@ function AdminSourcesPage() {
                           onClick={() => handleRemove(r.id)}
                           disabled={deleting === r.id}
                           aria-label="Xóa source"
-                          className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-md text-fg-muted transition-colors duration-fast hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -132,14 +132,13 @@ function AdminSourcesPage() {
   );
 }
 
-function StatusDot({ active }: { active: boolean }) {
+function StatusDot({ enabled }: { enabled: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs">
-      <span
-        aria-hidden
-        className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`}
-      />
-      {active ? 'active' : 'inactive'}
-    </span>
+    <span
+      className={`inline-block h-2 w-2 rounded-full ${
+        enabled ? 'bg-positive' : 'bg-bg-subtle'
+      }`}
+      aria-label={enabled ? 'Đang bật' : 'Đã tắt'}
+    />
   );
 }
