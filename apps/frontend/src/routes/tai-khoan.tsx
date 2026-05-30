@@ -123,18 +123,20 @@ function AvatarCard({ user }: { user: User }) {
   return (
     <Card title="Ảnh đại diện" description="Ảnh sẽ được crop vuông và nén còn 256×256.">
       <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-        <div className="relative h-20 w-20 overflow-hidden rounded-full border border-border bg-bg-subtle">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className="flex h-full w-full items-center justify-center text-heading-md text-fg-muted">
-              {fallbackInitial}
-            </span>
-          )}
+        <div className="relative h-20 w-20 flex-shrink-0">
+          <div className="h-full w-full overflow-hidden rounded-full border border-border bg-bg-subtle">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-heading-md text-fg-muted">
+                {fallbackInitial}
+              </span>
+            )}
+          </div>
           {okFlash && (
             <span
               aria-hidden
-              className="absolute bottom-0 right-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-white shadow"
+              className="absolute -bottom-1 -right-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-white shadow"
             >
               <Check className="h-3.5 w-3.5" />
             </span>
