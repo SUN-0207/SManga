@@ -166,8 +166,8 @@ ALTER TABLE reading_progress ADD COLUMN session_seconds integer NOT NULL DEFAULT
 | `/tu-sach` Đã lưu (empty) | Tủ sách còn trống | Đánh dấu truyện anh thích để dễ tìm lại. Bắt đầu khám phá nào. | Khám phá truyện → /kham-pha |
 | `/tu-sach` Đang đọc (empty) | Chưa có truyện đang đọc | Mở 1 chương bất kỳ và đọc 5 giây — chúng tôi sẽ tự ghi nhớ. | Khám phá truyện → /kham-pha |
 | `/tu-sach` Đã hoàn thành (empty) | Chưa truyện nào hoàn tất | Đọc đến chương cuối là tự động xuất hiện ở đây. | (no CTA, just text) |
-| `/kham-pha` (no results) | Không tìm thấy truyện nào khớp | Thử từ khoá khác, hoặc xem các đề xuất bên dưới. | Xem mới cập nhật → scroll-to |
-| `/tim-kiem?q=...` (no results) | (same as above) | (same) | (same) |
+| `/kham-pha` (no results) | Không tìm thấy truyện nào khớp | Thử từ khoá khác, hoặc xoá bộ lọc để xem tất cả. | Xoá bộ lọc (onClick resets q/page/genre) |
+| `/tim-kiem?q=...` (no results) | (same as above — /tim-kiem redirects to /kham-pha) | (same) | (same) |
 | `/admin/users` (search no results) | Không tìm thấy tài khoản nào | Thử từ khoá khác. | Xoá tìm kiếm |
 | `/admin/jobs` (no jobs) | Hàng đợi đang trống | Crawl một truyện để thấy job xuất hiện ở đây. | Đi đến Truyện → /admin/stories |
 | `/admin/stories` (no stories) | Chưa có truyện nào | Bắt đầu từ catalog của một nguồn để import metadata. | Chọn nguồn → /admin/sources |

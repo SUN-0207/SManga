@@ -261,7 +261,7 @@ function StoriesEmptyState({ filter }: Readonly<{ filter: Filter }>) {
     <EmptyState
       illustration={<EmptyFolder />}
       title="Chưa có truyện nào"
-      description="Bắt đầu bằng cách khám phá catalog từ nguồn hoặc dán URL trực tiếp."
+      description="Bắt đầu từ catalog của một nguồn để import metadata."
       cta={{ label: 'Chọn nguồn', to: '/admin/sources' }}
     />
   );
