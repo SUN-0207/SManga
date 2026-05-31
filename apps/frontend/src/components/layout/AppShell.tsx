@@ -2,15 +2,15 @@ import { useRouterState } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { DesktopTopNav } from './DesktopTopNav';
 import { BottomTabBar } from './BottomTabBar';
-import { ContinueReadingBar } from './ContinueReadingBar';
 import { ReaderHeader } from '@/components/reader/ReaderHeader';
 
 /**
  * Reader root layout. Renders:
- *   Desktop (≥1024px):  DesktopTopNav (sticky) → ContinueReadingBar → main → footer
- *   Mobile (<1024px):   ReaderHeader (mini) → ContinueReadingBar → main → BottomTabBar
+ *   Desktop (≥1024px):  DesktopTopNav (sticky) → main → footer
+ *   Mobile (<1024px):   ReaderHeader (mini) → main → BottomTabBar
  *
  * Bottom tab bar hides on chapter reader routes (full-screen reading).
+ * Continue-reading is surfaced via the LoggedInHero on /, no global bar needed.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -24,7 +24,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="lg:hidden">
         <ReaderHeader />
       </div>
-      {!isChapter && <ContinueReadingBar />}
       <main
         className={
           !isChapter
