@@ -55,12 +55,27 @@ export class StoriesService {
     };
   }
 
-  async count(): Promise<{ total: number }> {
+  async count(genreSlug?: string): Promise<{ total: number }> {
+    if (genreSlug) {
+      const r = await this.db.execute<{ c: string }>(sql`
+        SELECT COUNT(DISTINCT s.id)::int AS c
+        FROM story s
+        INNER JOIN story_genre sg ON sg.story_id = s.id
+        INNER JOIN genre g        ON g.id = sg.genre_id AND g.slug = ${genreSlug}
+      `);
+      const arr = rowsOf<{ c: string | number }>(r);
+      return { total: Number(arr[0]?.c ?? 0) };
+    }
     const r = await this.db.select({ c: count() }).from(story);
     return { total: Number(r[0]?.c ?? 0) };
   }
 
-  async list(page = 1, limit = 48) {
+  async list(page = 1, limit = 48, genreSlug?: string) {
+    const genreJoin = genreSlug
+      ? sql`INNER JOIN story_genre sg ON sg.story_id = s.id
+            INNER JOIN genre g        ON g.id = sg.genre_id AND g.slug = ${genreSlug}`
+      : sql``;
+
     const rawRows = await this.db.execute<{
       id: string; slug: string; title: string; author: string | null;
       status: string; total_chapters: number; has_cover: boolean;
@@ -76,6 +91,7 @@ export class StoriesService {
         r.avg                  AS rating_avg,
         COALESCE(r.cnt, 0)     AS rating_count
       FROM story s
+      ${genreJoin}
       LEFT JOIN (
         SELECT story_id,
                avg(value)::numeric(3,2) AS avg,

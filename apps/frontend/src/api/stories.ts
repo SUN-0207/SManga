@@ -20,13 +20,21 @@ export interface StorySummary {
   ratingCount: number;
 }
 
-export async function listStories(page = 1, limit = 48): Promise<StorySummary[]> {
-  const res = await api.get<StorySummary[]>('/stories', { params: { page, limit } });
+export async function listStories(
+  page = 1,
+  limit = 48,
+  genre?: string,
+): Promise<StorySummary[]> {
+  const res = await api.get<StorySummary[]>('/stories', {
+    params: { page, limit, ...(genre ? { genre } : {}) },
+  });
   return res.data;
 }
 
-export async function getStoriesCount(): Promise<number> {
-  const res = await api.get<{ total: number }>('/stories/count');
+export async function getStoriesCount(genre?: string): Promise<number> {
+  const res = await api.get<{ total: number }>('/stories/count', {
+    params: genre ? { genre } : undefined,
+  });
   return res.data.total;
 }
 

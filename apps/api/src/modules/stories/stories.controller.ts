@@ -16,12 +16,12 @@ export class StoriesController {
 
   @Get()
   list(@Query() q: ListStoriesDto) {
-    return this.stories.list(q.page, q.limit);
+    return this.stories.list(q.page, q.limit, q.genre);
   }
 
   @Get('count')
-  count() {
-    return this.stories.count();
+  count(@Query('genre') genre?: string) {
+    return this.stories.count(genre);
   }
 
   @Get('storage-stats')

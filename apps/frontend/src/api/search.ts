@@ -5,6 +5,8 @@ export interface SearchResponse {
   items: (StorySummary & { rank?: number })[];
   page: number;
   limit: number;
+  /** Total matching rows (window-function count from BE, single round-trip). */
+  total: number;
 }
 
 export async function searchStories(

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { meApi } from '@/api/me';
 import { listStories, type StorySummary } from '@/api/stories';
+import { listGenres } from '@/api/genres';
 import { useAuthStore } from '@/stores/auth-store';
 import { RatingStars } from '@/components/engagement/RatingStars';
 import { ViewCount }   from '@/components/engagement/ViewCount';
@@ -324,7 +325,14 @@ function HomeStoryCard({ story }: { story: StorySummary }) {
 }
 
 function GenreSection() {
-  const genres = ['Đam mỹ', 'Xuyên không', 'Tiên hiệp', 'Kiếm hiệp', 'Ngôn tình', 'Huyền huyễn', 'Trọng sinh', 'Sủng'];
+  const genresQ = useQuery({
+    queryKey: ['genres'],
+    queryFn: listGenres,
+    staleTime: 30 * 60_000,
+  });
+  // Top 12 most-used genres on home — full list lives on /kham-pha.
+  const top = (genresQ.data ?? []).filter((g) => g.storyCount > 0).slice(0, 12);
+  if (top.length === 0) return null;
   return (
     <section>
       <div className="mb-6">
@@ -332,14 +340,15 @@ function GenreSection() {
         <h2 className="text-heading-lg">Theo thể loại</h2>
       </div>
       <div className="flex flex-wrap gap-2">
-        {genres.map((g) => (
+        {top.map((g) => (
           <Link
-            key={g}
+            key={g.slug}
             to="/kham-pha"
-            search={{ q: '', page: 1, genre: g }}
+            search={{ q: '', page: 1, genre: g.slug }}
+            title={`${g.name} · ${g.storyCount} truyện`}
             className="inline-flex items-center h-9 px-4 rounded-full border border-border hover:border-border-strong hover:bg-bg-subtle text-body-sm transition-colors duration-fast cursor-pointer"
           >
-            {g}
+            {g.name}
           </Link>
         ))}
       </div>

@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ListStoriesDto {
@@ -13,4 +13,9 @@ export class ListStoriesDto {
   @IsInt()
   @Min(1)
   limit?: number = 48;
+
+  /** Filter by genre slug (e.g. "xuyen-khong"). */
+  @IsOptional()
+  @IsString()
+  genre?: string;
 }

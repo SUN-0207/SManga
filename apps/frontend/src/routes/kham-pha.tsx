@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { getStoriesCount, listStories, type StorySummary } from '@/api/stories';
 import { searchStories } from '@/api/search';
+import { listGenres } from '@/api/genres';
 import { StoryCard } from '@/components/reader/StoryCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
@@ -16,20 +17,10 @@ export const Route = createFileRoute('/kham-pha')({
   validateSearch: (search: Record<string, unknown>) => ({
     q: typeof search.q === 'string' ? search.q : '',
     page: typeof search.page === 'number' ? search.page : 1,
+    /** Genre slug (e.g. "xuyen-khong"), not display name. */
     genre: typeof search.genre === 'string' ? search.genre : undefined,
   }),
 });
-
-const GENRES = [
-  'Đam mỹ',
-  'Xuyên không',
-  'Tiên hiệp',
-  'Kiếm hiệp',
-  'Ngôn tình',
-  'Huyền huyễn',
-  'Trọng sinh',
-  'Sủng',
-] as const;
 
 function DiscoverPage() {
   const { q, page, genre } = Route.useSearch();
@@ -37,27 +28,32 @@ function DiscoverPage() {
   const [input, setInput] = useState(q);
   const isSearching = q.trim().length > 0;
 
-  // Browse mode (no query): paginated listStories + total-count for pagination.
-  // Search mode (query present): searchStories (Vietnamese-aware ILIKE + trigram rank).
-  // Genre chip is forwarded as-is but BE expects slug; until chip→slug mapping lands
-  // the filter is a no-op on the wire (the Tất cả / chips still update URL state).
+  const genresQ = useQuery({
+    queryKey: ['genres'],
+    queryFn: listGenres,
+    staleTime: 30 * 60_000,
+  });
+  // Only render chips for genres that actually tag at least one story —
+  // otherwise the UI is full of dead filters.
+  const chips = (genresQ.data ?? []).filter((g) => g.storyCount > 0);
+
   const browseQ = useQuery({
-    queryKey: ['stories', { page, limit: PAGE_SIZE }],
-    queryFn: () => listStories(page, PAGE_SIZE),
+    queryKey: ['stories', { page, genre, limit: PAGE_SIZE }],
+    queryFn: () => listStories(page, PAGE_SIZE, genre),
     placeholderData: keepPreviousData,
     enabled: !isSearching,
   });
 
   const searchQ = useQuery({
-    queryKey: ['search', { q, page, limit: PAGE_SIZE }],
-    queryFn: () => searchStories(q, page),
+    queryKey: ['search', { q, genre, page, limit: PAGE_SIZE }],
+    queryFn: () => searchStories(q, page, genre),
     placeholderData: keepPreviousData,
     enabled: isSearching,
   });
 
   const countQ = useQuery({
-    queryKey: ['stories', 'count'],
-    queryFn: getStoriesCount,
+    queryKey: ['stories', 'count', { genre }],
+    queryFn: () => getStoriesCount(genre),
     staleTime: 5 * 60_000,
     enabled: !isSearching,
   });
@@ -82,11 +78,13 @@ function DiscoverPage() {
     : (browseQ.data ?? []);
 
   const activeQ = isSearching ? searchQ : browseQ;
-  // Search response has no total — hide pagination when searching.
-  let totalPages = 1;
-  if (!isSearching && countQ.data) {
-    totalPages = Math.max(1, Math.ceil(countQ.data / PAGE_SIZE));
-  }
+
+  // Total comes from search response (window-count) when searching,
+  // from /stories/count otherwise. Either way → real Trang X / Y display.
+  let total = 0;
+  if (isSearching) total = searchQ.data?.total ?? 0;
+  else total = countQ.data ?? 0;
+  const totalPages = total > 0 ? Math.max(1, Math.ceil(total / PAGE_SIZE)) : 1;
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -134,19 +132,20 @@ function DiscoverPage() {
         >
           Tất cả
         </Link>
-        {GENRES.map((g) => (
+        {chips.map((g) => (
           <Link
-            key={g}
+            key={g.slug}
             to="/kham-pha"
-            search={{ q, page: 1, genre: g }}
+            search={{ q, page: 1, genre: g.slug }}
             role="listitem"
+            title={`${g.name} · ${g.storyCount} truyện`}
             className={`inline-flex items-center h-8 px-3 rounded-full text-body-sm transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-              genre === g
+              genre === g.slug
                 ? 'bg-fg text-bg'
                 : 'border border-border text-fg-muted hover:bg-bg-subtle hover:text-fg'
             }`}
           >
-            {g}
+            {g.name}
           </Link>
         ))}
       </div>

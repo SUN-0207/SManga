@@ -28,6 +28,9 @@ export class SearchService {
         updatedAt: story.updatedAt,
         hasCover: sql<boolean>`${story.cover} IS NOT NULL`,
         rank: sql<number>`similarity(immutable_unaccent(lower(${story.title})), immutable_unaccent(lower(${term})))`,
+        // count(*) OVER () piggybacks the total onto every row so pagination
+        // can show "Trang X / Y" without a second round-trip.
+        total: sql<string>`count(*) OVER ()`,
       })
       .from(story);
 
@@ -51,6 +54,8 @@ export class SearchService {
       .limit(limit)
       .offset((page - 1) * limit);
 
-    return { items: rows, page, limit };
+    const total = Number(rows[0]?.total ?? 0);
+    const items = rows.map(({ total: _t, ...rest }) => rest);
+    return { items, page, limit, total };
   }
 }
