@@ -23,7 +23,7 @@
 | `ChapterContent.chapter` in `api/chapters.ts` has no `id` or `viewCount` | Task D1-3 adds both to the BE select; Task D2-1 adds to the FE type |
 | `drizzle.config.ts` schema is an explicit array (7 entries) | MUST append `./src/schema/engagement.ts` — no globs (CLAUDE.md #2) |
 | Internal imports inside `packages/db/src/schema/*.ts` use `.ts` extensions | `engagement.ts` imports `./auth.ts` and `./story.ts` with `.ts` — correct |
-| Cross-package imports from `apps/api` use `.js` extensions | `import { rating } from '@smanga/db/schema/engagement.js'` |
+| Cross-package imports from `apps/api` use the barrel import | `import { rating } from '@smanga/db/schema'` (the webpack alias maps `@smanga/db/schema` to the barrel index — per-file subpath like `@smanga/db/schema/engagement.js` has no alias and will fail at bundle time) |
 | `StorySummary` in `api/stories.ts` has no engagement fields | Add as required fields (BE always returns them after D1-3) |
 | `HomeStoryCard` is defined inline in `apps/frontend/src/routes/index.tsx` (line 289) | Edit that file; no new component file needed |
 | `LibraryCard` in `tu-sach.tsx` sourced from `bookmarksApi` (no engagement fields) | Defer; add TODO comment only |
@@ -220,7 +220,11 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
   ```ts
   import { Inject, Injectable } from '@nestjs/common';
   import { eq, and, sql } from 'drizzle-orm';
-  import { rating } from '@smanga/db/schema/engagement.js';
+  // NOTE: import from the barrel '@smanga/db/schema', NOT from a per-file subpath
+  // (e.g. NOT '@smanga/db/schema/engagement.js'). The webpack alias in apps/api/webpack.config.js
+  // maps '@smanga/db/schema' to the barrel index only — subpath imports have no alias and
+  // will fail at bundle time with module-not-found.
+  import { rating } from '@smanga/db/schema';
   import type { Database } from '@smanga/db';
   import { DRIZZLE } from '@/modules/db/db.provider';
 
@@ -293,7 +297,8 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
         .insert(rating)
         .values({ userId, storyId, value })
         .onConflictDoUpdate({
-          // MUST use Drizzle's and() for multi-column target, NOT JS &&
+          // Array of column refs is the correct Drizzle syntax for composite conflict targets.
+          // Note: Drizzle's and() applies only to .where() boolean conditions, not to conflict targets.
           target: [rating.userId, rating.storyId],
           set: { value, updatedAt: new Date() },
         });
@@ -350,7 +355,7 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 - [ ] **Step 5: Create `apps/api/src/modules/engagement/ratings.controller.ts`**
 
   ```ts
-  import { Body, Controller, Delete, Get, HttpCode, Param, Put, Request, UseGuards } from '@nestjs/common';
+  import { Body, Controller, Delete, Get, HttpCode, Param, Put, UseGuards } from '@nestjs/common';
   import { ApiTags } from '@nestjs/swagger';
   import { Throttle } from '@nestjs/throttler';
   import { EngagementService } from './engagement.service';
@@ -366,13 +371,15 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
   export class RatingsController {
     constructor(private readonly svc: EngagementService) {}
 
-    // Anonymous-friendly: mine is null when req.user is absent
+    // Anonymous-friendly: mine is null when req.user is absent.
+    // Use @CurrentUser() (consistent with rest of codebase) instead of @Request()
+    // to avoid hand-typed inline type annotations that may diverge from the JWT payload shape.
     @Get('story/:storyId')
     getRating(
       @Param('storyId') storyId: string,
-      @Request() req: { user?: { id: string } | null },
+      @CurrentUser() user: { id: string } | null,
     ) {
-      return this.svc.getRatingAggregate(storyId, req.user?.id ?? null);
+      return this.svc.getRatingAggregate(storyId, user?.id ?? null);
     }
 
     @Put('story/:storyId')
@@ -435,12 +442,14 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 
   Start the API (`pnpm dev:api`) and smoke-test:
 
+  > **Port note:** `apps/frontend/vite.config.ts` proxies `/api` → `http://localhost:3010`, which is the actual NestJS port in this project. Use that port for direct BE smoke tests (CLAUDE.md local-dev section shows 3001 but vite.config.ts is the ground truth — use whichever port the `pnpm dev:api` startup log reports).
+
   ```bash
-  # Should 204 — anonymous view increment
-  curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:3001/api/v1/views/story/<any-story-uuid>
+  # Should 204 — anonymous view increment (replace 3010 with your actual API port)
+  curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:3010/api/v1/views/story/<any-story-uuid>
 
   # Should return { avg: null, count: 0, mine: null } for a story with no ratings
-  curl http://localhost:3001/api/v1/ratings/story/<any-story-uuid>
+  curl http://localhost:3010/api/v1/ratings/story/<any-story-uuid>
   ```
 
 - [ ] **Step 9: Typecheck**
@@ -556,7 +565,9 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
   ```
 
   > If `NotFoundException` is not yet imported, add `import { NotFoundException } from '@nestjs/common';` at the top.
-  > The `FROM rating` in the raw SQL does not require a Drizzle import — it is a raw SQL string. No import change needed for `rating` unless you choose typed queries.
+  > **Ensure `sql` is imported from drizzle-orm.** If not already present in stories.service.ts, update the drizzle-orm import line to: `import { eq, sql } from 'drizzle-orm';`
+  > The `FROM rating` in the raw SQL does not require a Drizzle import in `stories.service.ts` — it is a raw SQL string. **No import of `rating` is needed in `stories.service.ts`** — it uses raw SQL strings only. In `engagement.service.ts`, the Drizzle `rating` table IS imported (from `@smanga/db/schema`) for the `insert().onConflictDoUpdate()` call in `upsertRating`.
+  > `storageStats()` at lines 27-53 already uses an inline cast pattern for rowsOf — leave it as-is or refactor to use the new helper. Both compile correctly.
 
 - [ ] **Step 3: Replace `list` in `stories.service.ts`**
 
@@ -616,6 +627,8 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
   ```
 
 - [ ] **Step 4: Extend `getChapterContent` in `chapters.service.ts`**
+
+  > **Prerequisite:** `chapter.viewCount` is available only after D1-1 completes (Task D1-1 must precede D1-3 — the column is added to the Drizzle schema in D1-1 Step 4).
 
   Read the file first to see the exact `.select({…})` map and return shape.
 
@@ -749,7 +762,7 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
   pnpm --filter @smanga/frontend typecheck
   ```
 
-  Expected: passes with 0 errors. (Some consumers of `StorySummary` that spread all fields may gain new required props — verify callers compile.)
+  Expected: passes with 0 errors. Known call sites of `listStories()` / `StorySummary` to verify: `apps/frontend/src/routes/index.tsx` (HomeStoryCard), `apps/frontend/src/routes/kham-pha.tsx` (not audited elsewhere in this plan — check it explicitly). `StoryCardProps` gains three optional fields in Task D3-3, so callers that spread `StorySummary` into `StoryCard` will compile correctly because the new fields are optional there. The three new `StorySummary` fields are **required** on the interface, so if any caller constructs a `StorySummary` literal manually it must include them.
 
 - [ ] **Step 6: Commit**
 
@@ -916,7 +929,8 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
   }
   ```
 
-  > Keyboard: `←/→` adjust the focused star value, `Enter` commits. `prefers-reduced-motion` is respected automatically — hover transitions use `duration-fast` (150ms) which is still within accessible limits; no animation-only feedback relies on motion.
+  > **Keyboard accessibility note:** The current implementation calls `onChange()` on ArrowLeft/ArrowRight but does NOT move DOM focus to the adjacent star button. The spec says `←/→ adjust focus` (W3C APG star widget pattern). A screen reader user would hear the aria-label change but focus stays on the current button. For full compliance, use a `ref` array and call `.focus()` on the target star after arrow-key adjustments. The implementation above is functional for sighted keyboard users but is a known divergence from the APG pattern — upgrade in a follow-up if screen-reader support is required.
+  > `prefers-reduced-motion` is respected automatically — hover transitions use `duration-fast` (150ms) which is still within accessible limits; no animation-only feedback relies on motion.
 
 - [ ] **Step 2: Typecheck**
 
@@ -990,11 +1004,10 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
       },
       onError: (_err, _v, ctx) => {
         qc.setQueryData(['rating', storyId], ctx?.prev);
-        window.dispatchEvent(
-          new CustomEvent('smanga:toast', {
-            detail: { message: 'Vui lòng đăng nhập lại', type: 'error' },
-          }),
-        );
+        // TODO: replace console.error with a proper toast once a toast system is wired in the app shell.
+        // There is currently no 'smanga:toast' CustomEvent listener anywhere in the FE codebase —
+        // dispatching that event would be silently ignored. Using console.error as MVP fallback.
+        console.error('Rating mutation failed — optimistic update rolled back');
       },
       onSuccess: invalidate,
     });
@@ -1011,17 +1024,23 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
       },
       onError: (_err, _v, ctx) => {
         qc.setQueryData(['rating', storyId], ctx?.prev);
-        window.dispatchEvent(
-          new CustomEvent('smanga:toast', {
-            detail: { message: 'Vui lòng đăng nhập lại', type: 'error' },
-          }),
-        );
+        // TODO: replace console.error with a proper toast once a toast system is wired in the app shell.
+        console.error('Rating delete failed — optimistic update rolled back');
       },
       onSuccess: invalidate,
     });
 
+    // Spec requirement: anonymous click on stars must fire a one-shot toast
+    // ('Đăng nhập để đánh giá') — NOT silently ignore the click.
+    // Pass handleChange to RatingStars even for anonymous users so the stars
+    // remain interactive and can trigger the toast on click.
     function handleChange(v: StarValue | null) {
-      if (!user) return; // anonymous — no-op (UI will show login prompt below)
+      if (!user) {
+        // Anonymous: show login prompt as a native alert (MVP — no toast infra yet).
+        // TODO: replace with a proper toast once a smanga:toast listener is wired in the app shell.
+        window.alert('Đăng nhập để đánh giá');
+        return;
+      }
       if (v === null) del.mutate();
       else upsert.mutate(v);
     }
@@ -1033,10 +1052,11 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
         <div
           className={`flex items-center gap-2 ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
         >
+          {/* Always pass onChange so stars are interactive for anonymous users (spec: click fires toast) */}
           <RatingStars
             value={avg}
             mine={mine}
-            onChange={user ? handleChange : undefined}
+            onChange={handleChange}
             size="md"
           />
           {count > 0 ? (
@@ -1045,7 +1065,7 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
             <span className="text-body-sm text-fg-muted">Chưa có đánh giá</span>
           )}
         </div>
-        {/* Anonymous hint — shown only when user is not logged in */}
+        {/* Anonymous hint — supplemental UX (link below stars); primary UX is the click toast above */}
         {!user && (
           <p className="text-body-sm text-fg-subtle">
             <a
@@ -1110,6 +1130,11 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
       const key = `smanga:viewed:story:${storyId}:${new Date().toISOString().slice(0, 10)}`;
       if (ls?.getItem(key)) return; // already counted today
       ls?.setItem(key, '1');
+      // NOTE: fetch() bypasses the axios api-client, so VITE_API_BASE_URL overrides
+      // (used by axios) do NOT apply here. In dev, /api/v1 is proxied by vite.config.ts
+      // to localhost:3010. In production, Vercel rewrites handle /api/* → Railway.
+      // Known limitation: non-default VITE_API_BASE_URL deployments must also update
+      // this path or extract: const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
       void fetch(`/api/v1/views/story/${storyId}`, {
         method:      'POST',
         credentials: 'include', // send cookie for auth (not required, but future-safe)
@@ -1133,6 +1158,7 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 
       const t = setTimeout(() => {
         ls?.setItem(key, '1');
+        // Same VITE_API_BASE_URL caveat as useTrackStoryView — see comment above.
         void fetch(`/api/v1/views/chapter/${chapterId}`, {
           method:      'POST',
           credentials: 'include',
@@ -1170,8 +1196,8 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 **Why this task:** The story detail page is the primary engagement surface. `RatingControl` gives logged-in users interactive stars; `ViewCount` shows the lifetime view counter; `useTrackStoryView` fires the anonymous-friendly increment once per day.
 
 - [ ] **Step 1: Read context**
-  Read `apps/frontend/src/routes/truyen/$slug/index.tsx` in full (already done — see lines 1-143 above).
-  The engagement row goes after line 88 (the author/chapters/status `<p>`) and before the genres `<div>` at line 89.
+  Re-read `apps/frontend/src/routes/truyen/$slug/index.tsx` in full before making any edits — do NOT rely on stale line numbers from the plan audit. The file may have changed since the plan was written.
+  The engagement row goes **after the closing `</p>` of the author · chapters · status paragraph** and **before the genres `<div>`** (the `{s.genres && …}` conditional block). Use these structural anchors rather than line numbers to locate the insertion point.
 
 - [ ] **Step 2: Add imports to the file**
 
@@ -1185,7 +1211,7 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 
 - [ ] **Step 3: Call `useTrackStoryView` inside `StoryDetail()`**
 
-  After both `useQuery` calls (after line 30), add:
+  After both `useQuery` calls (after the closing `}` of the `chaptersQ` useQuery call — this must be placed before any early-return guard so React hooks rules are satisfied), add:
 
   ```tsx
   // Plan D: fire view increment once per calendar day (anonymous-friendly)
@@ -1194,7 +1220,9 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 
 - [ ] **Step 4: Insert engagement row in the hero info column**
 
-  After the `<p className="mt-3 text-body text-fg-muted">` block (the author · chapters · status line, currently ending at line 88), insert:
+  After the closing `</p>` of the `<p className="mt-3 text-body text-fg-muted">` block (the author · chapters · status line), and **before** the genres `<div>` (see Step 1 structural anchor), insert:
+
+  > **Spacing note:** The engagement `<div>` uses `mt-4` and the genres `<div>` likely also has its own top margin. Verify there is no double-spacing after insertion — if the genres block already has `mt-4`, consider reducing one of the two to `mt-2` to maintain visual rhythm.
 
   ```tsx
   {/* Plan D: rating stars + view counter */}
@@ -1215,7 +1243,7 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 
   Run `pnpm dev:frontend` and open `http://localhost:3000/truyen/<any-slug>`:
   - Expect: rating stars appear below the author/status line.
-  - For anonymous: stars are read-only, "Đăng nhập để đánh giá" link shown.
+  - For anonymous: stars are **interactive** (clicking triggers an alert "Đăng nhập để đánh giá"), and the supplemental "Đăng nhập để đánh giá" link is also shown below.
   - For logged-in: stars are interactive, hover highlights.
   - F5 the page — `view_count` should NOT increment again (localStorage dedup).
 
@@ -1258,7 +1286,10 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
   After the `useQuery` call (line 27-30), add:
 
   ```tsx
-  // Plan D: fire view increment after 3s on page (chapter UUID, not index number)
+  // Plan D: fire view increment after 3s on page (chapter UUID, not index number).
+  // data?.chapter.id uses optional chaining because this hook is called BEFORE the
+  // isLoading guard — data is undefined during loading. The hook handles undefined internally
+  // (returns early when chapterId is falsy), so this is safe.
   useTrackChapterView(data?.chapter.id);
   ```
 
@@ -1318,6 +1349,8 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
   import { RatingStars } from '@/components/engagement/RatingStars';
   import { ViewCount }   from '@/components/engagement/ViewCount';
   ```
+
+  > The `StorySummary` type is already imported at line 6 of the file (`import { listStories, type StorySummary } from '@/api/stories'`) — no change needed for that type.
 
 - [ ] **Step 3: Replace `HomeStoryCard` in `apps/frontend/src/routes/index.tsx`**
 
@@ -1409,14 +1442,15 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 
 - [ ] **Step 7: Add TODO comment in `apps/frontend/src/routes/tu-sach.tsx`**
 
-  Locate the `LibraryCard` function definition. Add the comment immediately above it:
+  Locate the `LibraryCard` function definition (e.g. `function LibraryCard({ item }: { item: ShelfItem }) {`). Add the following comment on the line **immediately before** the existing function declaration — do NOT modify the function signature:
 
   ```tsx
   // TODO(plan-D+1): LibraryCard engagement — show RatingStars + ViewCount once
   // bookmarksApi.list() / readingProgressApi.list() return viewCount + ratingAvg.
   // Avoid per-card queries (N+1); extend the bookmarks list endpoint instead.
-  function LibraryCard({ … }) {
   ```
+
+  > **Note:** The spec Surface 2 section lists LibraryCard as a required engagement surface. This TODO defers it because the bookmarks endpoint does not yet return engagement fields. If LibraryCard engagement must ship in Plan D, extend `/me/bookmarks` to return `viewCount + ratingAvg/Count` and implement the display here (same pattern as HomeStoryCard in Step 3).
 
 - [ ] **Step 8: Typecheck**
 
@@ -1452,7 +1486,7 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 - [ ] **AC-5** `GET /api/v1/ratings/story/:id` returns `{ avg, count, mine }`; `mine` is `null` for anonymous and for never-rated logged-in users.
 - [ ] **AC-6** `PUT /api/v1/ratings/story/:id` with `{ value: 4 }` creates or updates the row; response shows new aggregate.
 - [ ] **AC-7** `DELETE /api/v1/ratings/story/:id` removes row; response shows new aggregate with `mine: null`.
-- [ ] **AC-8** Story detail hero renders rating stars + view count badge in light and dark theme with no contrast regression (minimum 4.5:1).
+- [ ] **AC-8** Story detail hero renders rating stars + view count badge in light and dark theme with no contrast regression (minimum 4.5:1). **Verification:** toggle the app to dark mode in browser devtools, open a story detail page, and visually confirm filled stars (`text-accent` = pink-500 `#EC4899`) and empty stars (`text-fg-subtle`) meet 4.5:1 against their background. If the design-system dark-mode token for `text-fg-subtle` is lighter than the light-mode value, re-check that empty stars still pass contrast.
 - [ ] **AC-9** Click star 4 on hero (logged-in) → optimistic UI updates < 200ms → server confirms.
 - [ ] **AC-10** Click currently-selected star → DELETE fires → stars return to empty state.
 - [ ] **AC-11** F5 on story detail same calendar day does NOT increment `view_count` (localStorage dedup active).
@@ -1462,6 +1496,14 @@ ALTER TABLE story DROP COLUMN IF EXISTS view_count;
 - [ ] **AC-15** Chapter view tracked after 3s on page; F5 same calendar day does not re-increment.
 - [ ] **AC-16** `pnpm --filter @smanga/api typecheck` passes with 0 errors.
 - [ ] **AC-17** `pnpm --filter @smanga/frontend typecheck` passes with 0 errors.
+- [ ] **AC-18 (final gate)** Before declaring Plan D complete, run **both** typechecks together in sequence to catch any regressions introduced across phases.
+
+  ```powershell
+  pnpm --filter @smanga/api typecheck
+  pnpm --filter @smanga/frontend typecheck
+  ```
+
+  Both must pass with 0 errors.
 
 ---
 
