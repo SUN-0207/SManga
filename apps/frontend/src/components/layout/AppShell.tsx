@@ -25,7 +25,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         <ReaderHeader />
       </div>
       {!isChapter && <ContinueReadingBar />}
-      <main className="flex-1">{children}</main>
+      <main
+        className={
+          !isChapter
+            ? 'flex-1 pb-[calc(env(safe-area-inset-bottom)+72px)] lg:pb-0'
+            : 'flex-1'
+        }
+      >
+        {children}
+      </main>
       {!isChapter && (
         <div className="lg:hidden">
           <BottomTabBar />
