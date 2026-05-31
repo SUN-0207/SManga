@@ -25,6 +25,11 @@ export async function listStories(page = 1, limit = 48): Promise<StorySummary[]>
   return res.data;
 }
 
+export async function getStoriesCount(): Promise<number> {
+  const res = await api.get<{ total: number }>('/stories/count');
+  return res.data.total;
+}
+
 export interface StoryDetail extends StorySummary {
   description: string;
   genres: { slug: string; name: string }[];

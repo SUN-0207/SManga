@@ -19,6 +19,11 @@ export class StoriesController {
     return this.stories.list(q.page, q.limit);
   }
 
+  @Get('count')
+  count() {
+    return this.stories.count();
+  }
+
   @Get('storage-stats')
   storageStats() {
     return this.stories.storageStats();

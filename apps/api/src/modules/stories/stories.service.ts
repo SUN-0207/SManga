@@ -55,6 +55,11 @@ export class StoriesService {
     };
   }
 
+  async count(): Promise<{ total: number }> {
+    const r = await this.db.select({ c: count() }).from(story);
+    return { total: Number(r[0]?.c ?? 0) };
+  }
+
   async list(page = 1, limit = 48) {
     const rawRows = await this.db.execute<{
       id: string; slug: string; title: string; author: string | null;

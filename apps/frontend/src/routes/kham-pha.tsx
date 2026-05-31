@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
-import { listStories, type StorySummary } from '@/api/stories';
+import { getStoriesCount, listStories, type StorySummary } from '@/api/stories';
 import { StoryCard } from '@/components/reader/StoryCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
+import { Pagination } from '@/components/ui/Pagination';
+
+const PAGE_SIZE = 24;
 
 export const Route = createFileRoute('/kham-pha')({
   component: DiscoverPage,
@@ -34,9 +37,17 @@ function DiscoverPage() {
 
   // T13: listStories doesn't yet accept q/genre — wired for BE later.
   const storiesQ = useQuery({
-    queryKey: ['stories', { q, genre, page, limit: 24 }],
-    queryFn: () => listStories(1, 24),
+    queryKey: ['stories', { q, genre, page, limit: PAGE_SIZE }],
+    queryFn: () => listStories(page, PAGE_SIZE),
+    placeholderData: keepPreviousData,
   });
+
+  const countQ = useQuery({
+    queryKey: ['stories', 'count'],
+    queryFn: getStoriesCount,
+    staleTime: 5 * 60_000,
+  });
+  const totalPages = countQ.data ? Math.max(1, Math.ceil(countQ.data / PAGE_SIZE)) : 1;
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -132,6 +143,16 @@ function DiscoverPage() {
           }
         />
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        isLoading={storiesQ.isFetching}
+        onChange={(p) => {
+          void navigate({ to: '/kham-pha', search: { q, page: p, genre } });
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
     </div>
   );
 }
