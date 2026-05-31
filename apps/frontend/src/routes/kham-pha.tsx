@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { getStoriesCount, listStories, type StorySummary } from '@/api/stories';
+import { searchStories } from '@/api/search';
 import { StoryCard } from '@/components/reader/StoryCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
@@ -34,20 +35,58 @@ function DiscoverPage() {
   const { q, page, genre } = Route.useSearch();
   const navigate = Route.useNavigate();
   const [input, setInput] = useState(q);
+  const isSearching = q.trim().length > 0;
 
-  // T13: listStories doesn't yet accept q/genre — wired for BE later.
-  const storiesQ = useQuery({
-    queryKey: ['stories', { q, genre, page, limit: PAGE_SIZE }],
+  // Browse mode (no query): paginated listStories + total-count for pagination.
+  // Search mode (query present): searchStories (Vietnamese-aware ILIKE + trigram rank).
+  // Genre chip is forwarded as-is but BE expects slug; until chip→slug mapping lands
+  // the filter is a no-op on the wire (the Tất cả / chips still update URL state).
+  const browseQ = useQuery({
+    queryKey: ['stories', { page, limit: PAGE_SIZE }],
     queryFn: () => listStories(page, PAGE_SIZE),
     placeholderData: keepPreviousData,
+    enabled: !isSearching,
+  });
+
+  const searchQ = useQuery({
+    queryKey: ['search', { q, page, limit: PAGE_SIZE }],
+    queryFn: () => searchStories(q, page),
+    placeholderData: keepPreviousData,
+    enabled: isSearching,
   });
 
   const countQ = useQuery({
     queryKey: ['stories', 'count'],
     queryFn: getStoriesCount,
     staleTime: 5 * 60_000,
+    enabled: !isSearching,
   });
-  const totalPages = countQ.data ? Math.max(1, Math.ceil(countQ.data / PAGE_SIZE)) : 1;
+
+  const items: StorySummary[] = isSearching
+    ? (searchQ.data?.items ?? []).map((it) => ({
+        id: it.id,
+        slug: it.slug,
+        title: it.title,
+        author: it.author,
+        status: it.status,
+        totalChapters: it.totalChapters,
+        hasCover: it.hasCover,
+        updatedAt: it.updatedAt,
+        discoveryStatus: it.discoveryStatus ?? 'complete',
+        discoveryError: it.discoveryError ?? null,
+        discoveredAt: it.discoveredAt ?? null,
+        viewCount: it.viewCount ?? 0,
+        ratingAvg: it.ratingAvg ?? null,
+        ratingCount: it.ratingCount ?? 0,
+      }))
+    : (browseQ.data ?? []);
+
+  const activeQ = isSearching ? searchQ : browseQ;
+  // Search response has no total — hide pagination when searching.
+  let totalPages = 1;
+  if (!isSearching && countQ.data) {
+    totalPages = Math.max(1, Math.ceil(countQ.data / PAGE_SIZE));
+  }
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -112,15 +151,15 @@ function DiscoverPage() {
         ))}
       </div>
 
-      {storiesQ.isLoading ? (
+      {activeQ.isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" aria-busy="true">
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className="aspect-[3/4] rounded-xl bg-bg-subtle animate-pulse" />
           ))}
         </div>
-      ) : storiesQ.data && storiesQ.data.length > 0 ? (
+      ) : items.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8">
-          {storiesQ.data.map((s: StorySummary) => (
+          {items.map((s) => (
             <StoryCard
               key={s.id}
               id={s.id}
@@ -147,7 +186,7 @@ function DiscoverPage() {
       <Pagination
         page={page}
         totalPages={totalPages}
-        isLoading={storiesQ.isFetching}
+        isLoading={activeQ.isFetching}
         onChange={(p) => {
           void navigate({ to: '/kham-pha', search: { q, page: p, genre } });
           window.scrollTo({ top: 0, behavior: 'smooth' });
