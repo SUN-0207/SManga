@@ -3,6 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { getStoryBySlug, listChapters } from '@/api/stories';
 import { ChapterList } from '@/components/reader/ChapterList';
 import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
+import { useTrackStoryView } from '@/hooks/use-track-view';
+import { RatingControl }     from '@/components/engagement/RatingControl';
+import { ViewCount }         from '@/components/engagement/ViewCount';
 
 export const Route = createFileRoute('/truyen/$slug/')({
   component: StoryDetail,
@@ -29,6 +32,9 @@ function StoryDetail() {
     queryKey: ['chapters', slug, page],
     queryFn: () => listChapters(slug, page),
   });
+
+  // Plan D: fire view increment once per calendar day (anonymous-friendly)
+  useTrackStoryView(storyQ.data?.id);
 
   if (storyQ.isLoading) {
     return (
@@ -86,6 +92,18 @@ function StoryDetail() {
             <p className="mt-3 text-body text-fg-muted">
               {s.author ?? 'Khuyết danh'} · {s.totalChapters} chương · {STATUS_LABEL[s.status] ?? s.status}
             </p>
+            {/* Plan D: rating stars + view counter */}
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <RatingControl
+                storyId={s.id}
+                slug={s.slug}
+                ratingAvg={s.ratingAvg ?? null}
+                ratingCount={s.ratingCount}
+              />
+              {s.viewCount > 0 && (
+                <ViewCount count={s.viewCount} label="lượt xem" />
+              )}
+            </div>
             {s.genres && s.genres.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {s.genres.map((g: any) => (
