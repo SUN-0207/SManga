@@ -14,6 +14,10 @@ export interface StorySummary {
   discoveryStatus: DiscoveryStatus;
   discoveryError: string | null;
   discoveredAt: string | null;
+  /** Plan D: engagement counters. 0 on new stories with no activity yet. */
+  viewCount: number;
+  ratingAvg: number | null;
+  ratingCount: number;
 }
 
 export async function listStories(page = 1, limit = 48): Promise<StorySummary[]> {
