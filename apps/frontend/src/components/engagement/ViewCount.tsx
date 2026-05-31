@@ -1,6 +1,7 @@
 import { Eye } from 'lucide-react';
 // Re-export for back-compat — consumers that imported formatCompact from here continue to work.
 export { formatCompact } from '@/lib/format';
+import { formatCompact } from '@/lib/format';
 
 interface ViewCountProps {
   count: number;
