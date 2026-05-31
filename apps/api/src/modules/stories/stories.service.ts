@@ -17,6 +17,9 @@ import {
 
 const BULK_IMPORT_CAP = 50;
 
+const rowsOf = <T>(r: unknown): T[] =>
+  Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
+
 @Injectable()
 export class StoriesService {
   constructor(
@@ -53,54 +56,124 @@ export class StoriesService {
   }
 
   async list(page = 1, limit = 48) {
-    const rows = await this.db
-      .select({
-        id: story.id,
-        slug: story.slug,
-        title: story.title,
-        author: story.author,
-        status: story.status,
-        totalChapters: story.totalChapters,
-        hasCover: sql<boolean>`${story.cover} IS NOT NULL`,
-        discoveryStatus: story.discoveryStatus,
-        discoveryError: story.discoveryError,
-        discoveredAt: story.discoveredAt,
-        updatedAt: story.updatedAt,
-      })
-      .from(story)
-      .orderBy(desc(story.updatedAt))
-      .limit(limit)
-      .offset((page - 1) * limit);
-    return rows;
+    const rawRows = await this.db.execute<{
+      id: string; slug: string; title: string; author: string | null;
+      status: string; total_chapters: number; has_cover: boolean;
+      discovery_status: string; discovery_error: string | null;
+      discovered_at: string | null; updated_at: string;
+      view_count: number; rating_avg: string | null; rating_count: string;
+    }>(sql`
+      SELECT
+        s.id, s.slug, s.title, s.author, s.status,
+        s.total_chapters, s.view_count, s.updated_at,
+        (s.cover IS NOT NULL)  AS has_cover,
+        s.discovery_status, s.discovery_error, s.discovered_at,
+        r.avg                  AS rating_avg,
+        COALESCE(r.cnt, 0)     AS rating_count
+      FROM story s
+      LEFT JOIN (
+        SELECT story_id,
+               avg(value)::numeric(3,2) AS avg,
+               count(*)::int            AS cnt
+        FROM rating
+        GROUP BY story_id
+      ) r ON r.story_id = s.id
+      ORDER BY s.updated_at DESC
+      LIMIT ${limit} OFFSET ${(page - 1) * limit}
+    `);
+
+    const arr = rowsOf<{
+      id: string; slug: string; title: string; author: string | null;
+      status: string; total_chapters: number; has_cover: boolean;
+      discovery_status: string; discovery_error: string | null;
+      discovered_at: string | null; updated_at: string;
+      view_count: number; rating_avg: string | null; rating_count: string;
+    }>(rawRows);
+
+    return arr.map((row) => ({
+      id:             row.id,
+      slug:           row.slug,
+      title:          row.title,
+      author:         row.author ?? null,
+      status:         row.status,
+      totalChapters:  Number(row.total_chapters),
+      hasCover:       Boolean(row.has_cover),
+      discoveryStatus: row.discovery_status,
+      discoveryError: row.discovery_error ?? null,
+      discoveredAt:   row.discovered_at ?? null,
+      updatedAt:      row.updated_at,
+      viewCount:      Number(row.view_count ?? 0),
+      ratingAvg:      row.rating_avg != null ? Number(row.rating_avg) : null,
+      ratingCount:    Number(row.rating_count ?? 0),
+    }));
   }
 
   async getBySlug(slug: string) {
-    const [s] = await this.db
-      .select({
-        id: story.id,
-        slug: story.slug,
-        title: story.title,
-        author: story.author,
-        description: story.description,
-        status: story.status,
-        totalChapters: story.totalChapters,
-        hasCover: sql<boolean>`${story.cover} IS NOT NULL`,
-        discoveryStatus: story.discoveryStatus,
-        discoveryError: story.discoveryError,
-        discoveredAt: story.discoveredAt,
-      })
-      .from(story)
-      .where(eq(story.slug, slug))
-      .limit(1);
-    if (!s) throw new NotFoundException();
+    const rawRows = await this.db.execute<{
+      id: string; slug: string; title: string; author: string | null;
+      description: string; status: string; total_chapters: number;
+      has_cover: boolean; discovery_status: string; discovery_error: string | null;
+      discovered_at: string | null; view_count: number;
+      rating_avg: string | null; rating_count: string;
+    }>(sql`
+      SELECT
+        s.id, s.slug, s.title, s.author, s.description, s.status,
+        s.total_chapters, s.view_count,
+        (s.cover IS NOT NULL)  AS has_cover,
+        s.discovery_status, s.discovery_error, s.discovered_at,
+        r.avg                  AS rating_avg,
+        COALESCE(r.cnt, 0)     AS rating_count
+      FROM story s
+      LEFT JOIN (
+        SELECT story_id,
+               avg(value)::numeric(3,2) AS avg,
+               count(*)::int            AS cnt
+        FROM rating
+        GROUP BY story_id
+      ) r ON r.story_id = s.id
+      WHERE s.slug = ${slug}
+      LIMIT 1
+    `);
 
+    const arr = rowsOf<{
+      id: string; slug: string; title: string; author: string | null;
+      description: string; status: string; total_chapters: number;
+      has_cover: boolean; discovery_status: string; discovery_error: string | null;
+      discovered_at: string | null; view_count: number;
+      rating_avg: string | null; rating_count: string;
+    }>(rawRows);
+    if (arr.length === 0) throw new NotFoundException();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const row = arr[0]!;
+
+    const s = {
+      id:             row.id,
+      slug:           row.slug,
+      title:          row.title,
+      author:         row.author ?? null,
+      description:    row.description,
+      status:         row.status,
+      totalChapters:  Number(row.total_chapters),
+      hasCover:       Boolean(row.has_cover),
+      discoveryStatus: row.discovery_status,
+      discoveryError: row.discovery_error ?? null,
+      discoveredAt:   row.discovered_at ?? null,
+      viewCount:      Number(row.view_count ?? 0),
+      ratingAvg:      row.rating_avg != null ? Number(row.rating_avg) : null,
+      ratingCount:    Number(row.rating_count ?? 0),
+    };
+
+    // Genres + sources — keep existing typed selects
     const genres = await this.db
       .select({ slug: genre.slug, name: genre.name })
       .from(storyGenre)
       .innerJoin(genre, eq(storyGenre.genreId, genre.id))
       .where(eq(storyGenre.storyId, s.id));
 
-    const sources = await this.db.select().from(storySource).where(eq(storySource.storyId, s.id));
+    const sources = await this.db
+      .select()
+      .from(storySource)
+      .where(eq(storySource.storyId, s.id));
 
     return { ...s, genres, sources };
   }

@@ -31,6 +31,8 @@ export class ChaptersService {
         storySlug: story.slug,
         storyTitle: story.title,
         storyTotalChapters: story.totalChapters,
+        chapterId: chapter.id,
+        chapterViewCount: chapter.viewCount,
       })
       .from(chapter)
       .innerJoin(story, eq(chapter.storyId, story.id))
@@ -69,10 +71,12 @@ export class ChaptersService {
         totalChapters: row.storyTotalChapters,
       },
       chapter: {
-        index: Number(row.index),
-        title: row.title,
-        content: text,
+        id:        row.chapterId,          // UUID string — used by useTrackChapterView
+        index:     Number(row.index),
+        title:     row.title,
+        content:   text,
         isCrawled: row.status === 'crawled' && text !== null,
+        viewCount: Number(row.chapterViewCount ?? 0),
       },
       prev: prev ? { index: Number(prev.index), title: prev.title } : null,
       next: next ? { index: Number(next.index), title: next.title } : null,
