@@ -35,7 +35,9 @@ export interface RankPage {
 }
 
 // Internal raw row shapes returned by Postgres
-interface HotRow {
+// Index signature `[key: string]: unknown` is required by drizzle's db.execute<T> constraint.
+type HotRow = {
+  [key: string]: unknown;
   id: string;
   slug: string;
   title: string;
@@ -46,9 +48,10 @@ interface HotRow {
   has_cover: boolean;
   updated_at: string;
   weekly_readers: string;
-}
+};
 
-interface ViewsRow {
+type ViewsRow = {
+  [key: string]: unknown;
   id: string;
   slug: string;
   title: string;
@@ -60,9 +63,10 @@ interface ViewsRow {
   updated_at: string;
   rating_avg: string | null;
   rating_count: string;
-}
+};
 
-interface RatingRow {
+type RatingRow = {
+  [key: string]: unknown;
   id: string;
   slug: string;
   title: string;
@@ -74,9 +78,10 @@ interface RatingRow {
   updated_at: string;
   rating_avg: string;
   rating_count: string;
-}
+};
 
-interface CompletedRow {
+type CompletedRow = {
+  [key: string]: unknown;
   id: string;
   slug: string;
   title: string;
@@ -88,11 +93,12 @@ interface CompletedRow {
   updated_at: string;
   rating_avg: string | null;
   rating_count: string;
-}
+};
 
-interface CountRow {
+type CountRow = {
+  [key: string]: unknown;
   cnt: string;
-}
+};
 
 @Injectable()
 export class RankingsService {
