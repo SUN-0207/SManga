@@ -8,6 +8,7 @@ import { listGenres } from '@/api/genres';
 import { useAuthStore } from '@/stores/auth-store';
 import { RatingStars } from '@/components/engagement/RatingStars';
 import { ViewCount }   from '@/components/engagement/ViewCount';
+import { HomeRankingsSection } from '@/components/rankings/HomeRankingsSection';
 
 export const Route = createFileRoute('/')({ component: HomePage });
 
@@ -25,6 +26,7 @@ function HomePage() {
     <div className="container py-8 lg:py-12 space-y-12 lg:space-y-16">
       <FeaturedSlider stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
       {user && <LoggedInHero />}
+      <HomeRankingsSection />
       <UpdatedSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
       <GenreSection />
     </div>
