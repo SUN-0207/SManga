@@ -128,6 +128,9 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
   );
 }
 
+// TODO(plan-D+1): LibraryCard engagement — show RatingStars + ViewCount once
+// bookmarksApi.list() / readingProgressApi.list() return viewCount + ratingAvg.
+// Avoid per-card queries (N+1); extend the bookmarks list endpoint instead.
 function LibraryCard({ item }: { item: ShelfItem }) {
   return (
     <Link

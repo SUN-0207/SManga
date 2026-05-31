@@ -1,5 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { BookText } from 'lucide-react';
+import { RatingStars } from '@/components/engagement/RatingStars';
+import { ViewCount }   from '@/components/engagement/ViewCount';
 
 export interface StoryCardProps {
   id: string;
@@ -9,6 +11,10 @@ export interface StoryCardProps {
   status: 'ongoing' | 'completed' | 'dropped' | 'unknown';
   totalChapters: number;
   hasCover: boolean;
+  /** Plan D: optional — zero/absent on cards passed from callers not yet updated */
+  ratingAvg?:    number | null;
+  ratingCount?:  number;
+  viewCount?:    number;
 }
 
 const STATUS_LABEL: Record<StoryCardProps['status'], string> = {
@@ -61,6 +67,17 @@ export function StoryCard(props: StoryCardProps) {
         </h3>
         <p className="text-body-sm text-fg-muted">{props.author ?? 'Khuyết danh'}</p>
         <p className="text-body-sm text-fg-subtle">{props.totalChapters} chương</p>
+        {/* Plan D: micro engagement — render only when at least one signal is non-zero */}
+        {((props.ratingCount ?? 0) > 0 || (props.viewCount ?? 0) > 0) && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {(props.ratingCount ?? 0) > 0 && (
+              <RatingStars value={props.ratingAvg ?? null} size="sm" />
+            )}
+            {(props.viewCount ?? 0) > 0 && (
+              <ViewCount count={props.viewCount!} />
+            )}
+          </div>
+        )}
       </div>
     </Link>
   );

@@ -5,6 +5,8 @@ import { ArrowRight, BookOpen } from 'lucide-react';
 import { meApi } from '@/api/me';
 import { listStories, type StorySummary } from '@/api/stories';
 import { useAuthStore } from '@/stores/auth-store';
+import { RatingStars } from '@/components/engagement/RatingStars';
+import { ViewCount }   from '@/components/engagement/ViewCount';
 
 export const Route = createFileRoute('/')({ component: HomePage });
 
@@ -306,6 +308,17 @@ function HomeStoryCard({ story }: { story: StorySummary }) {
       </div>
       <h3 className="mt-3 text-heading-md line-clamp-2">{story.title}</h3>
       <p className="mt-1 text-body-sm text-fg-muted truncate">{story.author ?? 'Khuyết danh'}</p>
+      {/* Plan D: micro engagement — render only when at least one signal is non-zero */}
+      {(story.ratingCount > 0 || story.viewCount > 0) && (
+        <div className="mt-1 flex items-center gap-2 flex-wrap">
+          {story.ratingCount > 0 && (
+            <RatingStars value={story.ratingAvg} size="sm" />
+          )}
+          {story.viewCount > 0 && (
+            <ViewCount count={story.viewCount} />
+          )}
+        </div>
+      )}
     </Link>
   );
 }
