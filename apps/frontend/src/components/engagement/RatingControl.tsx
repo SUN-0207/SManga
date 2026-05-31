@@ -1,22 +1,46 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { engagementApi } from '@/api/engagement';
 import { RatingStars } from './RatingStars';
 
 type StarValue = 1 | 2 | 3 | 4 | 5;
 
+/** Minimal non-blocking inline toast — bridges the gap until Sonner/react-hot-toast lands in the app shell. */
+function useInlineToast() {
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!message) return;
+    const id = setTimeout(() => setMessage(null), 3000);
+    return () => clearTimeout(id);
+  }, [message]);
+
+  return { message, show: setMessage } as const;
+}
+
+/** Extract HTTP status from an axios-style error object. */
+function httpStatus(err: unknown): number | null {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const r = (err as { response?: { status?: unknown } }).response;
+    return typeof r?.status === 'number' ? r.status : null;
+  }
+  return null;
+}
+
 interface RatingControlProps {
-  storyId:     string;
+  readonly storyId:     string;
   /** TanStack Query key for the story query — invalidated on successful mutation. */
-  slug:        string;
+  readonly slug:        string;
   /** Initial avg from story query — displayed before the dedicated rating query resolves. */
-  ratingAvg:   number | null;
-  ratingCount: number;
+  readonly ratingAvg:   number | null;
+  readonly ratingCount: number;
 }
 
 export function RatingControl({ storyId, slug, ratingAvg, ratingCount }: RatingControlProps) {
-  const user = useAuthStore((s) => s.user);
-  const qc   = useQueryClient();
+  const user  = useAuthStore((s) => s.user);
+  const qc    = useQueryClient();
+  const toast = useInlineToast();
 
   // Only fire the rating point-lookup when the user is logged in.
   // This keeps GET /stories/by-slug/:slug cacheable for anonymous users.
@@ -31,8 +55,8 @@ export function RatingControl({ storyId, slug, ratingAvg, ratingCount }: RatingC
   const count = ratingQ.data?.count ?? ratingCount;
 
   const invalidate = () => {
-    void qc.invalidateQueries({ queryKey: ['rating', storyId] });
-    void qc.invalidateQueries({ queryKey: ['story',  slug] });
+    qc.invalidateQueries({ queryKey: ['rating', storyId] }).catch(() => undefined);
+    qc.invalidateQueries({ queryKey: ['story',  slug] }).catch(() => undefined);
   };
 
   const upsert = useMutation({
@@ -46,12 +70,12 @@ export function RatingControl({ storyId, slug, ratingAvg, ratingCount }: RatingC
       );
       return { prev };
     },
-    onError: (_err, _v, ctx) => {
+    onError: (err, _v, ctx) => {
       qc.setQueryData(['rating', storyId], ctx?.prev);
-      // TODO: replace console.error with a proper toast once a toast system is wired in the app shell.
-      // There is currently no 'smanga:toast' CustomEvent listener anywhere in the FE codebase —
-      // dispatching that event would be silently ignored. Using console.error as MVP fallback.
-      console.error('Rating mutation failed — optimistic update rolled back');
+      if (httpStatus(err) === 401) {
+        toast.show('Vui lòng đăng nhập lại');
+      }
+      // Silent rollback for other errors — toast infra pending
     },
     onSuccess: invalidate,
   });
@@ -66,23 +90,21 @@ export function RatingControl({ storyId, slug, ratingAvg, ratingCount }: RatingC
       );
       return { prev };
     },
-    onError: (_err, _v, ctx) => {
+    onError: (err, _v, ctx) => {
       qc.setQueryData(['rating', storyId], ctx?.prev);
-      // TODO: replace console.error with a proper toast once a toast system is wired in the app shell.
-      console.error('Rating delete failed — optimistic update rolled back');
+      if (httpStatus(err) === 401) {
+        toast.show('Vui lòng đăng nhập lại');
+      }
+      // Silent rollback for other errors — toast infra pending
     },
     onSuccess: invalidate,
   });
 
-  // Spec requirement: anonymous click on stars must fire a one-shot toast
-  // ('Đăng nhập để đánh giá') — NOT silently ignore the click.
-  // Pass handleChange to RatingStars even for anonymous users so the stars
-  // remain interactive and can trigger the toast on click.
+  // Spec requirement: anonymous click on stars fires a one-shot inline toast
+  // ('Đăng nhập để đánh giá'). Stars remain interactive for anonymous users.
   function handleChange(v: StarValue | null) {
     if (!user) {
-      // Anonymous: show login prompt as a native alert (MVP — no toast infra yet).
-      // TODO: replace with a proper toast once a smanga:toast listener is wired in the app shell.
-      window.alert('Đăng nhập để đánh giá');
+      toast.show('Đăng nhập để đánh giá');
       return;
     }
     if (v === null) del.mutate();
@@ -109,6 +131,18 @@ export function RatingControl({ storyId, slug, ratingAvg, ratingCount }: RatingC
           <span className="text-body-sm text-fg-muted">Chưa có đánh giá</span>
         )}
       </div>
+
+      {/* Inline toast — replaces window.alert(); auto-dismisses after 3 s */}
+      {toast.message && (
+        <p
+          role="status"
+          aria-live="polite"
+          className="text-body-sm text-accent font-medium animate-fade-in"
+        >
+          {toast.message}
+        </p>
+      )}
+
       {/* Anonymous hint — supplemental UX (link below stars); primary UX is the click toast above */}
       {!user && (
         <p className="text-body-sm text-fg-subtle">
