@@ -8,6 +8,10 @@ export interface BookmarkRow {
   status: string;
   totalChapters: number;
   createdAt: string;
+  /** Plan D: engagement — always present after bookmarks list endpoint extension */
+  viewCount: number;
+  ratingAvg: number | null;
+  ratingCount: number;
 }
 
 export const bookmarksApi = {

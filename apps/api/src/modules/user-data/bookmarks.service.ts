@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq } from 'drizzle-orm';
-import { bookmark, story } from '@smanga/db/schema';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { bookmark, rating, story } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 
@@ -9,6 +9,18 @@ export class BookmarksService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   async list(userId: string) {
+    // Subquery: rating aggregate per story, joined as lateral equivalent via CTE-style join.
+    // Drizzle sq() lets us define it inline.
+    const ratingAgg = this.db
+      .select({
+        storyId: rating.storyId,
+        ratingAvg: sql<number | null>`avg(${rating.value})::numeric(3,2)`.as('rating_avg'),
+        ratingCount: count(rating.storyId).as('rating_count'),
+      })
+      .from(rating)
+      .groupBy(rating.storyId)
+      .as('rating_agg');
+
     return this.db
       .select({
         storyId: bookmark.storyId,
@@ -18,9 +30,13 @@ export class BookmarksService {
         author: story.author,
         status: story.status,
         totalChapters: story.totalChapters,
+        viewCount: story.viewCount,
+        ratingAvg: ratingAgg.ratingAvg,
+        ratingCount: sql<number>`coalesce(${ratingAgg.ratingCount}, 0)`,
       })
       .from(bookmark)
       .innerJoin(story, eq(story.id, bookmark.storyId))
+      .leftJoin(ratingAgg, eq(ratingAgg.storyId, bookmark.storyId))
       .where(eq(bookmark.userId, userId))
       .orderBy(desc(bookmark.createdAt));
   }

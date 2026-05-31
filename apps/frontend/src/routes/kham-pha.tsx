@@ -119,6 +119,9 @@ function DiscoverPage() {
               status={s.status}
               totalChapters={s.totalChapters}
               hasCover={s.hasCover}
+              ratingAvg={s.ratingAvg}
+              ratingCount={s.ratingCount}
+              viewCount={s.viewCount}
             />
           ))}
         </div>

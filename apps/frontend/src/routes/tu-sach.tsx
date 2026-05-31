@@ -6,6 +6,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { bookmarksApi, type BookmarkRow } from '@/api/bookmarks';
 import { readingProgressApi, type ReadingProgressRow } from '@/api/reading-progress';
 import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
+import { RatingStars } from '@/components/engagement/RatingStars';
+import { ViewCount } from '@/components/engagement/ViewCount';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EmptyBookshelf } from '@/components/ui/illustrations/EmptyBookshelf';
 import { EmptyFolder } from '@/components/ui/illustrations/EmptyFolder';
@@ -29,6 +31,10 @@ interface ShelfItem {
   totalChapters: number;
   chapterIndex?: number;
   progress?: number;
+  /** Plan D: engagement — present for bookmark-sourced items */
+  viewCount?: number;
+  ratingAvg?: number | null;
+  ratingCount?: number;
 }
 
 function LibraryPage() {
@@ -64,6 +70,9 @@ function LibraryPage() {
       title: b.title,
       author: b.author,
       totalChapters: b.totalChapters,
+      viewCount: b.viewCount,
+      ratingAvg: b.ratingAvg,
+      ratingCount: b.ratingCount,
     }));
 
     return { reading: readingItems, saved: savedItems, completed: completedItems };
@@ -128,10 +137,10 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
   );
 }
 
-// TODO(plan-D+1): LibraryCard engagement — show RatingStars + ViewCount once
-// bookmarksApi.list() / readingProgressApi.list() return viewCount + ratingAvg.
-// Avoid per-card queries (N+1); extend the bookmarks list endpoint instead.
 function LibraryCard({ item }: { item: ShelfItem }) {
+  const hasRating = (item.ratingCount ?? 0) > 0;
+  const hasViews  = (item.viewCount ?? 0) > 0;
+
   return (
     <Link
       to="/truyen/$slug"
@@ -157,6 +166,12 @@ function LibraryCard({ item }: { item: ShelfItem }) {
       </div>
       <h3 className="mt-3 text-heading-md line-clamp-2">{item.title}</h3>
       <p className="mt-1 text-body-sm text-fg-muted truncate">{item.author ?? 'Khuyết danh'}</p>
+      {(hasRating || hasViews) && (
+        <div className="mt-1 flex items-center gap-2 flex-wrap">
+          {hasRating && <RatingStars value={item.ratingAvg ?? null} size="sm" />}
+          {hasViews  && <ViewCount count={item.viewCount!} />}
+        </div>
+      )}
     </Link>
   );
 }
