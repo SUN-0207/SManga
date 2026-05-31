@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { getChapterContent } from '@/api/chapters';
 import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
+import { useTrackChapterView } from '@/hooks/use-track-view';
 
 export const Route = createFileRoute('/truyen/$slug/chuong/$index')({
   component: ChapterReader,
@@ -28,6 +29,12 @@ function ChapterReader() {
     queryKey: ['chapter', slug, index],
     queryFn: () => getChapterContent(slug, index),
   });
+
+  // Plan D: fire view increment after 3s on page (chapter UUID, not index number).
+  // data?.chapter.id uses optional chaining because this hook is called BEFORE the
+  // isLoading guard — data is undefined during loading. The hook handles undefined internally
+  // (returns early when chapterId is falsy), so this is safe.
+  useTrackChapterView(data?.chapter.id);
 
   // Auto-hide chrome on scroll-down, show on scroll-up / mouse-move / touch
   useEffect(() => {
@@ -205,6 +212,7 @@ function ChapterReader() {
         </h1>
         <p className="text-label text-fg-subtle mb-9">
           CHƯƠNG {chapter.index} · {readingMinutes} PHÚT ĐỌC
+          {chapter.viewCount > 0 && ` · ${chapter.viewCount.toLocaleString('vi-VN')} LƯỢT XEM`}
         </p>
 
         {chapter.isCrawled && chapter.content ? (
