@@ -16,6 +16,7 @@ import { SearchModule } from './modules/search/search.module';
 import { UserDataModule } from './modules/user-data/user-data.module';
 import { UsersModule } from './modules/users/users.module';
 import { AppSettingsModule } from './modules/app-settings/app-settings.module';
+import { EngagementModule } from './modules/engagement/engagement.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
@@ -49,6 +50,7 @@ import { HealthModule } from './modules/health/health.module';
     UserDataModule,
     UsersModule,
     AppSettingsModule,
+    EngagementModule,
     HealthModule,
   ],
 })
