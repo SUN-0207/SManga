@@ -40,6 +40,7 @@ export const story = pgTable(
     autoRefresh: boolean('auto_refresh').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    viewCount: integer('view_count').notNull().default(0),
   },
   (t) => ({
     searchIdx: index('story_search_idx').using(

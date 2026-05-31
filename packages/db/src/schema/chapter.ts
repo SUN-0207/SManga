@@ -28,6 +28,7 @@ export const chapter = pgTable(
     status: chapterStatusEnum('status').notNull().default('pending'),
     lastError: text('last_error'),
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    viewCount: integer('view_count').notNull().default(0),
   },
   (t) => ({
     uniqStoryIndex: uniqueIndex('chapter_story_index_uniq').on(t.storyId, t.index),
