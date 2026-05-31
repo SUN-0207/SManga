@@ -19,9 +19,9 @@ CREATE TABLE IF NOT EXISTS "rating" (
 	CONSTRAINT "rating_value_range" CHECK ("rating"."value" BETWEEN 1 AND 5)
 );
 --> statement-breakpoint
-ALTER TABLE "story" ADD COLUMN "auto_refresh" boolean DEFAULT true NOT NULL;--> statement-breakpoint
-ALTER TABLE "story" ADD COLUMN "view_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
-ALTER TABLE "chapter" ADD COLUMN "view_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "story" ADD COLUMN IF NOT EXISTS "auto_refresh" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+ALTER TABLE "story" ADD COLUMN IF NOT EXISTS "view_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "chapter" ADD COLUMN IF NOT EXISTS "view_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "rating" ADD CONSTRAINT "rating_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
