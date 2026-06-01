@@ -6,9 +6,13 @@ import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { getChapterContent } from '@/api/chapters';
 import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
 import { useTrackChapterView } from '@/hooks/use-track-view';
+import { CommentSection } from '@/components/comments/CommentSection';
 
 export const Route = createFileRoute('/truyen/$slug/chuong/$index')({
   component: ChapterReader,
+  validateSearch: (s: Record<string, unknown>) => ({
+    commentsPage: Number(s.commentsPage) || 1,
+  }),
 });
 
 function ChapterReader() {
@@ -170,7 +174,7 @@ function ChapterReader() {
           <button
             type="button"
             onClick={() =>
-              navigate({ to: '/truyen/$slug', params: { slug }, search: { page: 1 } })
+              navigate({ to: '/truyen/$slug', params: { slug }, search: { page: 1, commentsPage: 1 } })
             }
             aria-label="Quay lại trang truyện"
             className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-bg-subtle transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -187,7 +191,7 @@ function ChapterReader() {
             <Link
               to="/truyen/$slug"
               params={{ slug }}
-              search={{ page: Math.max(1, Math.ceil(Number(chapter.index) / 50)) }}
+              search={{ page: Math.max(1, Math.ceil(Number(chapter.index) / 50)), commentsPage: 1 }}
               aria-label="Mục lục chương"
               className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-bg-subtle transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
@@ -227,12 +231,20 @@ function ChapterReader() {
         )}
       </article>
 
+      <CommentSection
+        targetType="chapter"
+        targetId={chapter.id}
+        slug={slug}
+        chapterIndex={index}
+      />
+
       {/* Floating prev/next pill — always visible, thumb-zone */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex gap-2 bg-bg/80 backdrop-blur-md p-1.5 rounded-full border border-border shadow-elev">
         {prev ? (
           <Link
             to="/truyen/$slug/chuong/$index"
             params={{ slug, index: String(prev.index) }}
+            search={{ commentsPage: 1 }}
             className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-bg-subtle text-body-sm text-fg-muted hover:text-fg transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             ← Ch.{prev.index}
@@ -246,6 +258,7 @@ function ChapterReader() {
           <Link
             to="/truyen/$slug/chuong/$index"
             params={{ slug, index: String(next.index) }}
+            search={{ commentsPage: 1 }}
             className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-accent-gradient text-white text-body-sm font-semibold shadow-glow-pink-soft hover:shadow-glow-pink transition-shadow duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Ch.{next.index} →
