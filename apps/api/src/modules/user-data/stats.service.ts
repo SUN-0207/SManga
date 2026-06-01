@@ -136,21 +136,21 @@ export class StatsService {
    * Compute user reading speed using a heuristic of 1500 words per chapter.
    * Requires at least 60 cumulative seconds and 1 chapter read to return a
    * meaningful estimate; otherwise wordsPerMinute = 0 (insufficient data).
+   *
+   * Uses a single aggregated query (COUNT + SUM in one round-trip) rather
+   * than two separate queries against the same table and WHERE clause.
    */
   async getReadingSpeed(userId: string): Promise<ReadingSpeed> {
-    const [chaptersRow, secondsRow] = await Promise.all([
-      this.db
-        .select({ value: count() })
-        .from(readingProgress)
-        .where(eq(readingProgress.userId, userId)),
-      this.db
-        .select({ total: sum(readingProgress.sessionSeconds) })
-        .from(readingProgress)
-        .where(eq(readingProgress.userId, userId)),
-    ]);
+    const [row] = await this.db
+      .select({
+        chapters: count(),
+        totalSeconds: sum(readingProgress.sessionSeconds),
+      })
+      .from(readingProgress)
+      .where(eq(readingProgress.userId, userId));
 
-    const chaptersRead = Number(chaptersRow[0]?.value ?? 0);
-    const totalReadingSeconds = Number(secondsRow[0]?.total ?? 0);
+    const chaptersRead = Number(row?.chapters ?? 0);
+    const totalReadingSeconds = Number(row?.totalSeconds ?? 0);
 
     if (totalReadingSeconds < 60 || chaptersRead < 1) {
       return { wordsPerMinute: 0, chaptersRead, totalReadingSeconds, sampleSize: chaptersRead };

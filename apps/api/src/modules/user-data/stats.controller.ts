@@ -29,7 +29,8 @@ export class StatsController {
   /**
    * GET /api/v1/me/stats/reading-eta?storyId=:uuid
    * Returns estimated minutes to finish a story for the authenticated user.
-   * Returns null (204) when user has no progress or story is already finished.
+   * Returns HTTP 200 with null body when user has no progress or story is
+   * already finished (not 204 — NestJS serializes returned null as 200+null).
    */
   @Get('reading-eta')
   async readingEta(@CurrentUser() u: { id: string }, @Query() q: ReadingEtaDto) {
