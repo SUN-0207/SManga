@@ -4,6 +4,7 @@ import { Search as SearchIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { AvatarMenu } from '@/components/reader/AvatarMenu';
 import { ReaderSettingsDrawer } from '@/components/reader/ReaderSettingsDrawer';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const NAV = [
   { to: '/' as const, label: 'Đọc', match: (p: string) => p === '/' },
@@ -55,6 +56,7 @@ export function DesktopTopNav() {
             >
               <SearchIcon className="h-4 w-4" />
             </Link>
+            <NotificationBell />
             {user ? (
               <AvatarMenu user={user} />
             ) : (
