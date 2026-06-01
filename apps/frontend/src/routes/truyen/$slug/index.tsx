@@ -8,7 +8,6 @@ import { useTrackStoryView } from '@/hooks/use-track-view';
 import { RatingControl }     from '@/components/engagement/RatingControl';
 import { ViewCount }         from '@/components/engagement/ViewCount';
 import { CommentSection } from '@/components/comments/CommentSection';
-import { useAuthStore } from '@/stores/auth-store';
 
 export const Route = createFileRoute('/truyen/$slug/')({
   component: StoryDetail,
@@ -28,7 +27,6 @@ const STATUS_LABEL: Record<string, string> = {
 function StoryDetail() {
   const { slug } = Route.useParams();
   const { page } = Route.useSearch();
-  const user = useAuthStore((s) => s.user);
 
   const storyQ = useQuery({
     queryKey: ['story', slug],
@@ -133,11 +131,14 @@ function StoryDetail() {
               {/* "Đọc tiếp Chương N" pink CTA — wired by Plan C when reading_progress exists */}
               <BookmarkToggle storyId={s.id} />
             </div>
-            {/* Reading insights — shown only when logged in and user has progress on this story */}
-            <ReadingInsights storyId={s.id} hasProgress={!!user} />
           </div>
         </div>
       </section>
+
+      {/* Reading insights — shown only when logged in and user has reading progress on this story */}
+      <div className="container pt-4">
+        <ReadingInsights storyId={s.id} />
+      </div>
 
       {/* Chapter list */}
       <section id="muc-luc" className="container pb-20 scroll-mt-24">
