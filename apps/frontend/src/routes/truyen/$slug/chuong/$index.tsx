@@ -6,6 +6,7 @@ import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { getChapterContent } from '@/api/chapters';
 import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
 import { useTrackChapterView } from '@/hooks/use-track-view';
+import { useReadingSessionTracker } from '@/hooks/use-reading-session-tracker';
 import { CommentSection } from '@/components/comments/CommentSection';
 
 export const Route = createFileRoute('/truyen/$slug/chuong/$index')({
@@ -39,6 +40,11 @@ function ChapterReader() {
   // isLoading guard — data is undefined during loading. The hook handles undefined internally
   // (returns early when chapterId is falsy), so this is safe.
   useTrackChapterView(data?.chapter.id);
+
+  // Plan C: accumulate session seconds for weeklyHours stats. Called before the
+  // isLoading guard — hook returns early when storyId is undefined. `index` is
+  // the route param string (always defined once the route matches).
+  useReadingSessionTracker(data?.story.id, data ? index : undefined);
 
   // Auto-hide chrome on scroll-down, show on scroll-up / mouse-move / touch
   useEffect(() => {
