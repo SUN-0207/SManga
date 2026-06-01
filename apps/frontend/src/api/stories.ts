@@ -18,17 +18,29 @@ export interface StorySummary {
   viewCount: number;
   ratingAvg: number | null;
   ratingCount: number;
+  /** Feature #2: admin-curated featured flag. */
+  featured: boolean;
 }
 
 export async function listStories(
   page = 1,
   limit = 48,
   genre?: string,
+  featured?: boolean,
 ): Promise<StorySummary[]> {
   const res = await api.get<StorySummary[]>('/stories', {
-    params: { page, limit, ...(genre ? { genre } : {}) },
+    params: {
+      page,
+      limit,
+      ...(genre ? { genre } : {}),
+      ...(featured === undefined ? {} : { featured: String(featured) }),
+    },
   });
   return res.data;
+}
+
+export async function setFeatured(storyId: string, featured: boolean): Promise<void> {
+  await api.patch(`/stories/${storyId}/featured`, { featured });
 }
 
 export async function getStoriesCount(genre?: string): Promise<number> {
