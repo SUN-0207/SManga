@@ -7,5 +7,6 @@ import { QueueModule } from '@/modules/queue/queue.module';
   imports: [QueueModule],
   controllers: [StoriesController],
   providers: [StoriesService],
+  exports: [StoriesService],
 })
 export class StoriesModule {}
