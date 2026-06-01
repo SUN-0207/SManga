@@ -1,5 +1,4 @@
 import {
-  AnyPgColumn,
   check,
   index,
   pgTable,
@@ -8,6 +7,7 @@ import {
   text,
   timestamp,
   uuid,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 // Internal cross-schema imports MUST use .ts extensions (CLAUDE.md workaround #1)
