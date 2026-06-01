@@ -70,11 +70,13 @@ export class StoriesService {
     return { total: Number(r[0]?.c ?? 0) };
   }
 
-  async list(page = 1, limit = 48, genreSlug?: string) {
+  async list(page = 1, limit = 48, genreSlug?: string, featuredOnly?: boolean) {
     const genreJoin = genreSlug
       ? sql`INNER JOIN story_genre sg ON sg.story_id = s.id
             INNER JOIN genre g        ON g.id = sg.genre_id AND g.slug = ${genreSlug}`
       : sql``;
+
+    const featuredFilter = featuredOnly ? sql`AND s.featured = true` : sql``;
 
     const rawRows = await this.db.execute<{
       id: string; slug: string; title: string; author: string | null;
@@ -82,12 +84,14 @@ export class StoriesService {
       discovery_status: string; discovery_error: string | null;
       discovered_at: string | null; updated_at: string;
       view_count: number; rating_avg: string | null; rating_count: string;
+      featured: boolean;
     }>(sql`
       SELECT
         s.id, s.slug, s.title, s.author, s.status,
         s.total_chapters, s.view_count, s.updated_at,
         (s.cover IS NOT NULL)  AS has_cover,
         s.discovery_status, s.discovery_error, s.discovered_at,
+        s.featured,
         r.avg                  AS rating_avg,
         COALESCE(r.cnt, 0)     AS rating_count
       FROM story s
@@ -99,6 +103,7 @@ export class StoriesService {
         FROM rating
         GROUP BY story_id
       ) r ON r.story_id = s.id
+      WHERE 1=1 ${featuredFilter}
       ORDER BY s.updated_at DESC
       LIMIT ${limit} OFFSET ${(page - 1) * limit}
     `);
@@ -109,6 +114,7 @@ export class StoriesService {
       discovery_status: string; discovery_error: string | null;
       discovered_at: string | null; updated_at: string;
       view_count: number; rating_avg: string | null; rating_count: string;
+      featured: boolean;
     }>(rawRows);
 
     return arr.map((row) => ({
@@ -126,6 +132,7 @@ export class StoriesService {
       viewCount:      Number(row.view_count ?? 0),
       ratingAvg:      row.rating_avg != null ? Number(row.rating_avg) : null,
       ratingCount:    Number(row.rating_count ?? 0),
+      featured:       Boolean(row.featured),
     }));
   }
 
@@ -212,6 +219,17 @@ export class StoriesService {
       .set({ autoRefresh })
       .where(eq(story.id, id))
       .returning({ id: story.id, autoRefresh: story.autoRefresh });
+    if (!updated) throw new NotFoundException();
+    return updated;
+  }
+
+  /** Mark or unmark a story as featured for the homepage slider. */
+  async setFeatured(id: string, featured: boolean) {
+    const [updated] = await this.db
+      .update(story)
+      .set({ featured })
+      .where(eq(story.id, id))
+      .returning({ id: story.id, featured: story.featured });
     if (!updated) throw new NotFoundException();
     return updated;
   }

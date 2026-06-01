@@ -4,6 +4,7 @@ import { StoriesService } from './stories.service';
 import { BulkActionDto } from './dto/bulk-action.dto';
 import { ImportStoryBulkDto, ImportStoryDto } from './dto/import-story.dto';
 import { SetAutoRefreshDto } from './dto/set-auto-refresh.dto';
+import { SetFeaturedDto } from './dto/set-featured.dto';
 import { ListStoriesDto } from './dto/list-stories.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -16,7 +17,7 @@ export class StoriesController {
 
   @Get()
   list(@Query() q: ListStoriesDto) {
-    return this.stories.list(q.page, q.limit, q.genre);
+    return this.stories.list(q.page, q.limit, q.genre, q.featured);
   }
 
   @Get('count')
@@ -107,5 +108,12 @@ export class StoriesController {
   @Roles(['admin'])
   setAutoRefresh(@Param('id') id: string, @Body() dto: SetAutoRefreshDto) {
     return this.stories.setAutoRefresh(id, dto.autoRefresh);
+  }
+
+  @Patch(':id/featured')
+  @UseGuards(JwtAuthGuard)
+  @Roles(['admin'])
+  setFeatured(@Param('id') id: string, @Body() dto: SetFeaturedDto) {
+    return this.stories.setFeatured(id, dto.featured);
   }
 }

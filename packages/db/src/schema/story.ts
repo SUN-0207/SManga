@@ -38,6 +38,8 @@ export const story = pgTable(
     discoveredAt: timestamp('discovered_at', { withTimezone: true }),
     /** If false, scheduled refresh skips this story (operator opt-out per-row). */
     autoRefresh: boolean('auto_refresh').notNull().default(true),
+    /** If true, this story is highlighted in the featured slider on the homepage. */
+    featured: boolean('featured').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     viewCount: integer('view_count').notNull().default(0),
