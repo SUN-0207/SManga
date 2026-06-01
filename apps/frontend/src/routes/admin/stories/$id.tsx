@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, ArrowLeft, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Clock, RefreshCw, Star } from 'lucide-react';
 import { api } from '@/lib/api-client';
+import { setFeatured } from '@/api/stories';
 import { ChapterCrawlPanel } from '@/components/admin/ChapterCrawlPanel';
 import { StubBadge } from '@/components/admin/StubBadge';
 import type { DiscoveryStatus } from '@/api/discover';
@@ -21,6 +22,7 @@ interface StoryRow {
   discoveryError: string | null;
   discoveredAt: string | null;
   autoRefresh: boolean;
+  featured: boolean;
 }
 
 interface ChapterRow {
@@ -113,6 +115,7 @@ function AdminStoryDetail() {
       <ChapterCrawlPanel storyId={id} discoveryStatus={story.discoveryStatus} />
 
       {!isStub && <AutoRefreshToggle id={id} autoRefresh={story.autoRefresh} />}
+      {!isStub && <FeaturedToggle id={id} featured={story.featured} />}
 
       {!isStub && (
         <div className="rounded-xl border border-border bg-bg overflow-hidden">
@@ -208,6 +211,42 @@ function AutoRefreshToggle({ id, autoRefresh }: { id: string; autoRefresh: boole
         />
         <span className="w-10 h-5 bg-bg-subtle peer-checked:bg-[var(--accent)] rounded-full relative transition-colors duration-200 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-bg after:h-4 after:w-4 after:rounded-full after:transition-transform after:duration-200 peer-checked:after:translate-x-5" />
       </label>
+    </div>
+  );
+}
+
+function FeaturedToggle({ id, featured }: { id: string; featured: boolean }) {
+  const qc = useQueryClient();
+  const mut = useMutation({
+    mutationFn: (next: boolean) => setFeatured(id, next),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'story', id] }),
+  });
+  return (
+    <div className="rounded-xl border border-border bg-bg p-4 flex items-start gap-3">
+      <Star
+        className={`h-4 w-4 mt-0.5 shrink-0 ${featured ? 'text-amber-400 fill-amber-400' : 'text-fg-muted'}`}
+        aria-hidden
+      />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">Truyện nổi bật</p>
+        <p className="text-xs text-fg-muted mt-0.5">
+          Truyện được đánh dấu nổi bật sẽ xuất hiện ưu tiên trong slider trang chủ thay vì danh
+          sách cập nhật gần đây.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => mut.mutate(!featured)}
+        disabled={mut.isPending}
+        className={`shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold border transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-50 disabled:cursor-not-allowed ${
+          featured
+            ? 'border-amber-400/60 bg-amber-400/10 text-amber-700 hover:bg-amber-400/20'
+            : 'border-border-strong bg-bg hover:bg-bg-subtle text-fg'
+        }`}
+      >
+        <Star className={`h-3 w-3 ${featured ? 'fill-amber-400 text-amber-400' : ''}`} aria-hidden />
+        {featured ? 'Đang nổi bật' : 'Đánh dấu nổi bật'}
+      </button>
     </div>
   );
 }
