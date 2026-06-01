@@ -11,6 +11,7 @@ export default defineConfig({
     './src/schema/user-data.ts',
     './src/schema/app-setting.ts',
     './src/schema/engagement.ts',   // Plan D: rating table
+    './src/schema/comment.ts',      // Plan E: comments + reactions + notifications
   ],
   out: './src/migrations',
   dbCredentials: {

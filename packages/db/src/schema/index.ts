@@ -6,3 +6,4 @@ export * from './auth.ts';
 export * from './user-data.ts';
 export * from './app-setting.ts';
 export * from './engagement.ts';
+export * from './comment.ts';

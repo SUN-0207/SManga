@@ -26,3 +26,5 @@ export const storyDiscoveryStatusEnum = pgEnum('story_discovery_status', [
   'complete',
   'failed',
 ]);
+
+export const commentTargetTypeEnum = pgEnum('comment_target_type', ['story', 'chapter']);
