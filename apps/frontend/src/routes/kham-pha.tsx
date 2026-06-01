@@ -74,6 +74,7 @@ function DiscoverPage() {
         viewCount: it.viewCount ?? 0,
         ratingAvg: it.ratingAvg ?? null,
         ratingCount: it.ratingCount ?? 0,
+        featured: it.featured ?? false,
       }))
     : (browseQ.data ?? []);
 

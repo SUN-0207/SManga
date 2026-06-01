@@ -21,10 +21,19 @@ function HomePage() {
     queryKey: ['stories', { page: 1, limit: 12 }],
     queryFn: () => listStories(1, 12),
   });
+  const featuredQ = useQuery({
+    queryKey: ['stories', { featured: true, limit: 10 }],
+    queryFn: () => listStories(1, 10, undefined, true),
+    staleTime: 5 * 60_000,
+  });
 
   return (
     <div className="container py-8 lg:py-12 space-y-12 lg:space-y-16">
-      <FeaturedSlider stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
+      <FeaturedSlider
+        stories={storiesQ.data ?? []}
+        featuredStories={featuredQ.data ?? []}
+        isLoading={storiesQ.isLoading || featuredQ.isLoading}
+      />
       {user && <LoggedInHero />}
       <HomeRankingsSection />
       <UpdatedSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
@@ -35,12 +44,16 @@ function HomePage() {
 
 function FeaturedSlider({
   stories,
+  featuredStories,
   isLoading,
 }: {
   stories: StorySummary[];
+  featuredStories: StorySummary[];
   isLoading: boolean;
 }) {
-  const slides = stories.slice(0, SLIDE_COUNT);
+  const fromFeaturedPool = featuredStories.length > 0;
+  const pool = fromFeaturedPool ? featuredStories : stories;
+  const slides = pool.slice(0, SLIDE_COUNT);
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -131,7 +144,7 @@ function FeaturedSlider({
               )}
               <div className="relative max-w-[58%]">
                 <p className="text-label text-fg-muted uppercase tracking-[0.18em]">
-                  TRUYỆN NỔI BẬT
+                  {fromFeaturedPool ? 'TRUYỆN NỔI BẬT' : 'MỚI CẬP NHẬT'}
                 </p>
                 <h3 className="mt-2 text-heading-lg lg:text-display-sm font-prose font-bold line-clamp-2">
                   {story.title}
