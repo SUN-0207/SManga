@@ -1,4 +1,4 @@
-import { numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { integer, numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { user } from './auth.ts';
 
 export const bookmark = pgTable(
@@ -21,6 +21,7 @@ export const readingProgress = pgTable(
       .references(() => user.id, { onDelete: 'cascade' }),
     storyId: uuid('story_id').notNull(),
     chapterIndex: numeric('chapter_index', { precision: 10, scale: 2 }).notNull(),
+    sessionSeconds: integer('session_seconds').notNull().default(0),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.userId, t.storyId] }) }),
