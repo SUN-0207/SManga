@@ -78,6 +78,13 @@
       "when": 1748822400000,
       "tag": "0010_session_seconds",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1748908800000,
+      "tag": "0011_featured",
+      "breakpoints": true
     }
   ]
 }
