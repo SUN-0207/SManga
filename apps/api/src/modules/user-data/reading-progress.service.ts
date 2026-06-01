@@ -3,6 +3,7 @@ import { desc, eq, sql } from 'drizzle-orm';
 import { readingProgress, story } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
+import type { SessionSecondsDto } from './dto/session-seconds.dto';
 
 @Injectable()
 export class ReadingProgressService {
@@ -20,6 +21,27 @@ export class ReadingProgressService {
       .onConflictDoUpdate({
         target: [readingProgress.userId, readingProgress.storyId],
         set: { chapterIndex: String(chapterIndex), updatedAt: new Date() },
+      });
+    return { ok: true };
+  }
+
+  async addSession(userId: string, dto: SessionSecondsDto) {
+    await this.db
+      .insert(readingProgress)
+      .values({
+        userId,
+        storyId: dto.storyId,
+        chapterIndex: String(dto.chapterIndex),
+        sessionSeconds: dto.seconds,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [readingProgress.userId, readingProgress.storyId],
+        set: {
+          sessionSeconds: sql`${readingProgress.sessionSeconds} + ${dto.seconds}`,
+          chapterIndex: sql`GREATEST(${readingProgress.chapterIndex}, ${String(dto.chapterIndex)}::numeric)`,
+          updatedAt: new Date(),
+        },
       });
     return { ok: true };
   }

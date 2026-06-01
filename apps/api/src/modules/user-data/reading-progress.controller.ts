@@ -1,8 +1,10 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Put, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { ReadingProgressService } from './reading-progress.service';
 import { ReadingProgressDto } from './dto/reading-progress.dto';
+import { SessionSecondsDto } from './dto/session-seconds.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 
@@ -33,5 +35,12 @@ export class ReadingProgressController {
   @Put()
   upsert(@CurrentUser() u: { id: string }, @Body() dto: ReadingProgressDto) {
     return this.svc.upsert(u.id, dto.storyId, dto.chapterIndex);
+  }
+
+  @Post('session')
+  @HttpCode(204)
+  @Throttle({ default: { limit: 120, ttl: 60_000 } })
+  addSession(@CurrentUser() u: { id: string }, @Body() dto: SessionSecondsDto) {
+    return this.svc.addSession(u.id, dto);
   }
 }
