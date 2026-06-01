@@ -158,11 +158,7 @@ function DiscoverPage() {
           onSuccess={(msg) => {
             setShowImportAll(false);
             setImportAllToast({ type: 'success', message: msg });
-            void globalNavigate({ to: '/admin/jobs' });
-          }}
-          onConflict={(msg) => {
-            setShowImportAll(false);
-            setImportAllToast({ type: 'conflict', message: msg });
+            setTimeout(() => void globalNavigate({ to: '/admin/jobs' }), 800);
           }}
           onError={(msg) => {
             setShowImportAll(false);
@@ -180,7 +176,6 @@ function ImportAllConfirm({
   feedLabel,
   onCancel,
   onSuccess,
-  onConflict,
   onError,
 }: {
   sourceId: string;
@@ -188,7 +183,6 @@ function ImportAllConfirm({
   feedLabel: string;
   onCancel: () => void;
   onSuccess: (msg: string) => void;
-  onConflict: (msg: string) => void;
   onError: (msg: string) => void;
 }) {
   const [autoCrawl, setAutoCrawl] = useState(false);
@@ -207,7 +201,7 @@ function ImportAllConfirm({
       const raw = axiosErr.response?.data?.message;
       const msg = Array.isArray(raw) ? raw.join(', ') : (typeof raw === 'string' ? raw : (err as Error).message ?? 'Lỗi không xác định');
       if (status === 409) {
-        onConflict('Job đang chạy. Mở trang Jobs để xem.');
+        setError('Job đang chạy. Mở trang Jobs để xem.');
       } else {
         onError(msg);
       }
