@@ -6,10 +6,14 @@ import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
 import { useTrackStoryView } from '@/hooks/use-track-view';
 import { RatingControl }     from '@/components/engagement/RatingControl';
 import { ViewCount }         from '@/components/engagement/ViewCount';
+import { CommentSection } from '@/components/comments/CommentSection';
 
 export const Route = createFileRoute('/truyen/$slug/')({
   component: StoryDetail,
-  validateSearch: (s: Record<string, unknown>) => ({ page: Number(s.page) || 1 }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    page: Number(s.page) || 1,
+    commentsPage: Number(s.commentsPage) || 1,
+  }),
 });
 
 const STATUS_LABEL: Record<string, string> = {
@@ -118,6 +122,7 @@ function StoryDetail() {
               <Link
                 to="/truyen/$slug/chuong/$index"
                 params={{ slug: s.slug, index: '1' }}
+                search={{ commentsPage: 1 }}
                 className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-border-strong hover:bg-bg-subtle text-body font-semibold transition-colors duration-fast"
               >
                 Đọc từ đầu
@@ -156,6 +161,12 @@ function StoryDetail() {
           />
         </div>
       </section>
+
+      <CommentSection
+        targetType="story"
+        targetId={s.id}
+        slug={s.slug}
+      />
     </div>
   );
 }

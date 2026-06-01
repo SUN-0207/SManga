@@ -40,7 +40,7 @@ export function RankRow({ item, metricFormatter, compact = false }: RankRowProps
     <Link
       to="/truyen/$slug"
       params={{ slug: item.slug }}
-      search={{ page: 1 }}
+      search={{ page: 1, commentsPage: 1 }}
       className="flex items-center gap-3 py-3 border-b border-border/60 hover:bg-bg-subtle/60 transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
     >
       {/* Rank number */}

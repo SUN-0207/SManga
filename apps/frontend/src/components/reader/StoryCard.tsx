@@ -38,7 +38,7 @@ export function StoryCard(props: StoryCardProps) {
     <Link
       to="/truyen/$slug"
       params={{ slug: props.slug }}
-      search={{ page: 1 }}
+      search={{ page: 1, commentsPage: 1 }}
       className="group flex flex-col gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-bg-subtle shadow-elev transition-shadow duration-fast group-hover:shadow-glow-pink-soft">

@@ -31,6 +31,7 @@ export function ChapterList({ slug, chapters, currentPage, totalPages }: Chapter
               <Link
                 to="/truyen/$slug/chuong/$index"
                 params={{ slug, index: String(c.index) }}
+                search={{ commentsPage: 1 }}
                 className="group flex items-baseline gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
               >
                 <span className="font-heading font-semibold text-sm text-muted-foreground/70 tabular-nums w-[5.25rem] shrink-0 group-hover:text-foreground transition-colors duration-200">
@@ -91,7 +92,7 @@ function Pagination({
         <Link
           to="/truyen/$slug"
           params={{ slug }}
-          search={{ page: currentPage - 1 }}
+          search={{ page: currentPage - 1, commentsPage: 1 }}
           className={`${baseLink} border-border hover:border-foreground/40 hover:bg-muted/60`}
           aria-label="Trang trước"
         >
@@ -103,7 +104,7 @@ function Pagination({
           <Link
             to="/truyen/$slug"
             params={{ slug }}
-            search={{ page: 1 }}
+            search={{ page: 1, commentsPage: 1 }}
             className={`${baseLink} border-border hover:border-foreground/40 hover:bg-muted/60`}
           >
             1
@@ -116,7 +117,7 @@ function Pagination({
           key={p}
           to="/truyen/$slug"
           params={{ slug }}
-          search={{ page: p }}
+          search={{ page: p, commentsPage: 1 }}
           aria-current={p === currentPage ? 'page' : undefined}
           className={
             p === currentPage
@@ -135,7 +136,7 @@ function Pagination({
           <Link
             to="/truyen/$slug"
             params={{ slug }}
-            search={{ page: totalPages }}
+            search={{ page: totalPages, commentsPage: 1 }}
             className={`${baseLink} border-border hover:border-foreground/40 hover:bg-muted/60`}
           >
             {totalPages}
@@ -146,7 +147,7 @@ function Pagination({
         <Link
           to="/truyen/$slug"
           params={{ slug }}
-          search={{ page: currentPage + 1 }}
+          search={{ page: currentPage + 1, commentsPage: 1 }}
           className={`${baseLink} border-border hover:border-foreground/40 hover:bg-muted/60`}
           aria-label="Trang sau"
         >

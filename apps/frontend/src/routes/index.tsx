@@ -114,7 +114,7 @@ function FeaturedSlider({
               key={story.id}
               to="/truyen/$slug"
               params={{ slug: story.slug }}
-              search={{ page: 1 }}
+              search={{ page: 1, commentsPage: 1 }}
               aria-hidden={i !== active}
               tabIndex={i === active ? 0 : -1}
               className={`absolute inset-0 flex items-end p-8 sm:p-10 lg:p-12 group transition-opacity duration-500 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset ${
@@ -239,6 +239,7 @@ function LoggedInHero() {
             <Link
               to="/truyen/$slug/chuong/$index"
               params={{ slug: cr.storySlug, index: String(chapter) }}
+              search={{ commentsPage: 1 }}
               className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-accent-gradient text-white text-body font-semibold shadow-glow-pink-soft hover:shadow-glow-pink transition-shadow duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
             >
               Tiếp tục đọc <ArrowRight className="h-4 w-4" aria-hidden />
@@ -246,7 +247,7 @@ function LoggedInHero() {
             <Link
               to="/truyen/$slug"
               params={{ slug: cr.storySlug }}
-              search={{ page: 1 }}
+              search={{ page: 1, commentsPage: 1 }}
               className="inline-flex items-center h-11 px-5 rounded-md border border-border-strong hover:bg-bg-subtle text-body font-semibold transition-colors duration-fast cursor-pointer"
             >
               Xem truyện
@@ -296,7 +297,7 @@ function HomeStoryCard({ story }: { story: StorySummary }) {
     <Link
       to="/truyen/$slug"
       params={{ slug: story.slug }}
-      search={{ page: 1 }}
+      search={{ page: 1, commentsPage: 1 }}
       className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">

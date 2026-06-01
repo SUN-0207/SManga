@@ -20,6 +20,7 @@ export function ChapterNav({ slug, prev, next, current, totalChapters }: Chapter
           <Link
             to="/truyen/$slug/chuong/$index"
             params={{ slug, index: String(prev.index) }}
+            search={{ commentsPage: 1 }}
             className="group inline-flex items-center gap-2 h-10 pl-3 pr-4 rounded-full border border-border hover:border-foreground/40 hover:bg-muted/60 text-sm transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary max-w-full"
           >
             <ChevronLeft className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:-translate-x-0.5" />
@@ -33,7 +34,7 @@ export function ChapterNav({ slug, prev, next, current, totalChapters }: Chapter
       <Link
         to="/truyen/$slug"
         params={{ slug }}
-        search={{ page: 1 }}
+        search={{ page: 1, commentsPage: 1 }}
         className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full border border-border hover:border-foreground/40 hover:bg-muted/60 text-sm transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <List className="h-4 w-4" />
@@ -49,6 +50,7 @@ export function ChapterNav({ slug, prev, next, current, totalChapters }: Chapter
           <Link
             to="/truyen/$slug/chuong/$index"
             params={{ slug, index: String(next.index) }}
+            search={{ commentsPage: 1 }}
             className="group inline-flex items-center gap-2 h-10 pl-4 pr-3 rounded-full bg-foreground text-background hover:opacity-90 text-sm font-medium transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 max-w-full"
           >
             <span className="shrink-0">Chương {next.index}</span>
