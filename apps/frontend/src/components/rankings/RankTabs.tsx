@@ -53,7 +53,7 @@ export function RankTabs({ activeTab, onTabChange }: RankTabsProps) {
     <div
       role="tablist"
       aria-label="Loại bảng xếp hạng"
-      className="flex gap-1 border-b border-border overflow-x-auto"
+      className="flex gap-1 border-b border-border overflow-x-auto overflow-y-hidden"
     >
       {TABS.map((t) => (
         <TabButton key={t.key} active={activeTab === t.key} onClick={() => onTabChange(t.key)}>
