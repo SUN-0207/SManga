@@ -20,6 +20,7 @@ import { EngagementModule } from './modules/engagement/engagement.module';
 import { GenresModule } from './modules/genres/genres.module';
 import { HealthModule } from './modules/health/health.module';
 import { RankingsModule } from './modules/rankings/rankings.module';
+import { CommentsModule } from './modules/comments/comments.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { RankingsModule } from './modules/rankings/rankings.module';
     GenresModule,
     HealthModule,
     RankingsModule,
+    CommentsModule,
   ],
 })
 export class AppModule {}
