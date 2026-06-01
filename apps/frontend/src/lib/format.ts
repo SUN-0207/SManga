@@ -22,7 +22,11 @@ const rtf = new Intl.RelativeTimeFormat('vi', { numeric: 'auto' });
 
 export function formatRelativeTime(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  const diffMs = d.getTime() - Date.now();
+  // Clamp future timestamps to "now" so server clock-drift (NTP skew, or the
+  // fresh row's server-side now() arriving a few ms ahead of client Date.now())
+  // never renders "sau N giây nữa" for a just-created comment. We only display
+  // past tense; anything in the future is shown as "vừa xong".
+  const diffMs = Math.min(0, d.getTime() - Date.now());
   const diffSec = Math.round(diffMs / 1000);
   const diffMin = Math.round(diffSec / 60);
   const diffHr  = Math.round(diffMin / 60);
