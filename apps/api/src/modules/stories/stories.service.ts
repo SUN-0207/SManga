@@ -140,13 +140,13 @@ export class StoriesService {
     const rawRows = await this.db.execute<{
       id: string; slug: string; title: string; author: string | null;
       description: string; status: string; total_chapters: number;
-      has_cover: boolean; discovery_status: string; discovery_error: string | null;
+      has_cover: boolean; featured: boolean; discovery_status: string; discovery_error: string | null;
       discovered_at: string | null; view_count: number;
       rating_avg: string | null; rating_count: string;
     }>(sql`
       SELECT
         s.id, s.slug, s.title, s.author, s.description, s.status,
-        s.total_chapters, s.view_count,
+        s.total_chapters, s.view_count, s.featured,
         (s.cover IS NOT NULL)  AS has_cover,
         s.discovery_status, s.discovery_error, s.discovered_at,
         r.avg                  AS rating_avg,
@@ -166,7 +166,7 @@ export class StoriesService {
     const arr = rowsOf<{
       id: string; slug: string; title: string; author: string | null;
       description: string; status: string; total_chapters: number;
-      has_cover: boolean; discovery_status: string; discovery_error: string | null;
+      has_cover: boolean; featured: boolean; discovery_status: string; discovery_error: string | null;
       discovered_at: string | null; view_count: number;
       rating_avg: string | null; rating_count: string;
     }>(rawRows);
@@ -183,6 +183,7 @@ export class StoriesService {
       status:         row.status,
       totalChapters:  Number(row.total_chapters),
       hasCover:       Boolean(row.has_cover),
+      featured:       Boolean(row.featured),
       discoveryStatus: row.discovery_status,
       discoveryError: row.discovery_error ?? null,
       discoveredAt:   row.discovered_at ?? null,

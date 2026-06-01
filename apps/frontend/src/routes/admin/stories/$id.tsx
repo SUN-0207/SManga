@@ -219,7 +219,12 @@ function FeaturedToggle({ id, featured }: { id: string; featured: boolean }) {
   const qc = useQueryClient();
   const mut = useMutation({
     mutationFn: (next: boolean) => setFeatured(id, next),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'story', id] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'story', id] });
+      // Invalidate the home page featured slider query so the change is reflected immediately
+      // without waiting for the 5-minute staleTime to expire.
+      qc.invalidateQueries({ queryKey: ['stories', { featured: true, limit: 10 }] });
+    },
   });
   return (
     <div className="rounded-xl border border-border bg-bg p-4 flex items-start gap-3">
