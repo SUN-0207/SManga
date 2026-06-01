@@ -13,4 +13,6 @@ export const sourcesApi = {
   create: (body: { id: string; name: string; baseUrl: string; rateLimitRps: number }) =>
     api.post('/sources', body).then((r) => r.data),
   remove: (id: string) => api.delete(`/sources/${id}`).then((r) => r.data),
+  discoverAll: (sourceId: string, feed: string, autoCrawl: boolean): Promise<{ jobId: string }> =>
+    api.post<{ jobId: string }>(`/sources/${sourceId}/discover-all`, { feed, autoCrawl }).then((r) => r.data),
 };

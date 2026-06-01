@@ -145,16 +145,11 @@ export class SourcesService {
 
     const payload: DiscoverAllSourceJobData = { sourceId, feedId, autoCrawl, requestedBy };
 
-    try {
-      const job = await this.queue.add(JOB_DISCOVER_ALL_SOURCE, payload, {
-        jobId,
-        removeOnComplete: true,
-        removeOnFail: false,
-      });
-      return { jobId: String(job.id) };
-    } catch (err) {
-      // Fallback catch for any unexpected Bull errors during add
-      throw err;
-    }
+    const job = await this.queue.add(JOB_DISCOVER_ALL_SOURCE, payload, {
+      jobId,
+      removeOnComplete: true,
+      removeOnFail: false,
+    });
+    return { jobId: String(job.id) };
   }
 }

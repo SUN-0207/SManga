@@ -44,7 +44,7 @@ export class DiscoverAllSourceProcessor {
 
       for (const item of browse.items) {
         try {
-          await this.stories.enqueueImport(item.externalUrl, requestedBy);
+          await this.stories.enqueueImport(item.externalUrl, requestedBy, autoCrawl);
           totalQueued++;
         } catch (err) {
           // Note on dedup: slug-uniqueness is enforced at the DB layer inside

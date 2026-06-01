@@ -255,13 +255,13 @@ export class StoriesService {
       .orderBy(asc(chapter.index));
   }
 
-  async enqueueImport(url: string, requestedBy: string | null) {
+  async enqueueImport(url: string, requestedBy: string | null, autoCrawl = false) {
     try {
       resolveAdapterForUrl(url);
     } catch {
       throw new BadRequestException('no adapter registered for that hostname');
     }
-    const payload: ImportStoryJobData = { url, requestedBy };
+    const payload: ImportStoryJobData = { url, requestedBy, autoCrawl };
     const job = await this.queue.add(JOB_IMPORT_STORY, payload);
     return { jobId: String(job.id) };
   }
