@@ -60,11 +60,11 @@ function AdminJobsPage() {
     <div className="space-y-8">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-fg-muted font-medium mb-2">
             Hàng đợi
           </p>
-          <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">Jobs</h1>
-          <p className="text-sm text-muted-foreground mt-2">
+          <h1 className="font-sans font-bold text-3xl sm:text-4xl tracking-tight">Jobs</h1>
+          <p className="text-sm text-fg-muted mt-2">
             Theo dõi và retry job crawl. Tự động cập nhật mỗi 5 giây.
           </p>
         </div>
@@ -74,7 +74,7 @@ function AdminJobsPage() {
             void statsQ.refetch();
             void jobsQ.refetch();
           }}
-          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-border hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-border hover:border-fg/40 hover:bg-bg-subtle/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <RefreshCw className="h-4 w-4" />
           Làm mới
@@ -88,20 +88,20 @@ function AdminJobsPage() {
           const Icon = meta.icon;
           const valueClass =
             meta.tone === 'warning' && count > 0
-              ? 'text-[hsl(var(--color-cta))]'
-              : 'text-foreground';
+              ? 'text-[var(--accent)]'
+              : 'text-fg';
           return (
             <div
               key={state}
-              className="rounded-xl border border-border bg-background p-4"
+              className="rounded-xl border border-border bg-bg p-4"
             >
-              <div className="flex items-center gap-1.5 text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-fg-muted">
                 <Icon className="h-3.5 w-3.5" />
                 <p className="text-[10px] uppercase tracking-[0.18em] font-medium">
                   {meta.label}
                 </p>
               </div>
-              <div className={`mt-2 font-heading font-bold text-2xl tabular-nums ${valueClass}`}>
+              <div className={`mt-2 font-sans font-bold text-2xl tabular-nums ${valueClass}`}>
                 {count.toLocaleString('vi-VN')}
               </div>
             </div>
@@ -109,13 +109,13 @@ function AdminJobsPage() {
         })}
       </div>
 
-      <div className="rounded-xl border border-border bg-background overflow-hidden">
+      <div className="rounded-xl border border-border bg-bg overflow-hidden">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-          <h2 className="font-heading font-semibold text-base">Job gần đây</h2>
-          <span className="text-xs text-muted-foreground tabular-nums">{jobs.length}</span>
+          <h2 className="font-sans font-semibold text-base">Job gần đây</h2>
+          <span className="text-xs text-fg-muted tabular-nums">{jobs.length}</span>
         </div>
         {jobsQ.isLoading ? (
-          <p className="text-sm text-muted-foreground p-8 text-center">Đang tải...</p>
+          <p className="text-sm text-fg-muted p-8 text-center">Đang tải...</p>
         ) : jobs.length === 0 ? (
           <EmptyState
             illustration={<EmptyQueue />}

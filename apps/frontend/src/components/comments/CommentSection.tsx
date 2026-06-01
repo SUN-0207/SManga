@@ -67,7 +67,7 @@ export function CommentSection({ targetType, targetId, slug: _slug, chapterIndex
 
   return (
     <section className="container max-w-3xl mx-auto py-12">
-      <h2 className="font-heading font-bold text-heading-lg tracking-tight mb-6">
+      <h2 className="font-sans font-bold text-heading-lg tracking-tight mb-6">
         Bình luận{data?.total != null && data.total > 0 ? ` (${data.total})` : ''}
       </h2>
 

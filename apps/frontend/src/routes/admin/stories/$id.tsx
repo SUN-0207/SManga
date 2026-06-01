@@ -35,11 +35,11 @@ interface ChapterRow {
 
 const STATUS_META: Record<string, { tone: string; icon: typeof CheckCircle2 }> = {
   crawled: { tone: 'text-emerald-600', icon: CheckCircle2 },
-  pending: { tone: 'text-muted-foreground', icon: Clock },
+  pending: { tone: 'text-fg-muted', icon: Clock },
   failed: { tone: 'text-destructive', icon: AlertCircle },
 };
 
-const STATUS_FALLBACK = { tone: 'text-muted-foreground', icon: Clock };
+const STATUS_FALLBACK = { tone: 'text-fg-muted', icon: Clock };
 
 function AdminStoryDetail() {
   const { id } = Route.useParams();
@@ -62,7 +62,7 @@ function AdminStoryDetail() {
   const chapters = chaptersQ.data ?? [];
 
   if (storyQ.isLoading)
-    return <p className="text-sm text-muted-foreground">Đang tải...</p>;
+    return <p className="text-sm text-fg-muted">Đang tải...</p>;
   if (!story)
     return <p className="text-sm text-destructive">Không tìm thấy truyện.</p>;
 
@@ -76,24 +76,24 @@ function AdminStoryDetail() {
       <div>
         <Link
           to="/admin/stories"
-          className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer mb-3"
+          className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] text-fg-muted hover:text-fg transition-colors duration-200 cursor-pointer mb-3"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Truyện
         </Link>
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight">
+          <h1 className="font-sans font-bold text-3xl sm:text-4xl tracking-tight">
             {story.title}
           </h1>
           <StubBadge status={story.discoveryStatus} />
         </div>
-        <p className="text-sm text-muted-foreground mt-2">
+        <p className="text-sm text-fg-muted mt-2">
           {story.author ?? 'Khuyết danh'}
           {!isStub && ` · ${story.totalChapters} chapter`}
           {' · '}
           <a
             href={`/truyen/${story.slug}`}
-            className="hover:text-foreground transition-colors duration-200 underline-offset-4 hover:underline cursor-pointer"
+            className="hover:text-fg transition-colors duration-200 underline-offset-4 hover:underline cursor-pointer"
           >
             /truyen/{story.slug}
           </a>
@@ -115,33 +115,33 @@ function AdminStoryDetail() {
       {!isStub && <AutoRefreshToggle id={id} autoRefresh={story.autoRefresh} />}
 
       {!isStub && (
-        <div className="rounded-xl border border-border bg-background overflow-hidden">
+        <div className="rounded-xl border border-border bg-bg overflow-hidden">
           <div className="px-5 py-3 border-b border-border flex items-center justify-between">
-            <h2 className="font-heading font-semibold text-base">Danh sách chapter</h2>
-            <span className="text-xs text-muted-foreground tabular-nums">{chapters.length}</span>
+            <h2 className="font-sans font-semibold text-base">Danh sách chapter</h2>
+            <span className="text-xs text-fg-muted tabular-nums">{chapters.length}</span>
           </div>
           {chaptersQ.isLoading ? (
-            <p className="text-sm text-muted-foreground p-8 text-center">Đang tải...</p>
+            <p className="text-sm text-fg-muted p-8 text-center">Đang tải...</p>
           ) : chapters.length === 0 ? (
-            <p className="text-sm text-muted-foreground p-8 text-center">Chưa có chapter.</p>
+            <p className="text-sm text-fg-muted p-8 text-center">Chưa có chapter.</p>
           ) : (
             <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-background z-10">
+                <thead className="sticky top-0 bg-bg z-10">
                   <tr className="border-b border-border text-left">
-                    <th className="px-5 py-2.5 w-16 text-[11px] uppercase tracking-wider font-medium text-muted-foreground tabular-nums">
+                    <th className="px-5 py-2.5 w-16 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums">
                       #
                     </th>
-                    <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                    <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                       Tiêu đề
                     </th>
-                    <th className="px-5 py-2.5 w-28 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                    <th className="px-5 py-2.5 w-28 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                       Trạng thái
                     </th>
-                    <th className="px-5 py-2.5 w-24 text-[11px] uppercase tracking-wider font-medium text-muted-foreground tabular-nums">
+                    <th className="px-5 py-2.5 w-24 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums">
                       Bytes
                     </th>
-                    <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-muted-foreground">
+                    <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                       Lỗi
                     </th>
                   </tr>
@@ -152,7 +152,7 @@ function AdminStoryDetail() {
                     const Icon = meta.icon;
                     return (
                       <tr key={c.id} className="border-b border-border/60 last:border-0">
-                        <td className="px-5 py-2 font-mono text-xs text-muted-foreground tabular-nums">
+                        <td className="px-5 py-2 font-mono text-xs text-fg-muted tabular-nums">
                           {c.index}
                         </td>
                         <td className="px-5 py-2 text-sm">{c.title}</td>
@@ -162,7 +162,7 @@ function AdminStoryDetail() {
                             {c.status}
                           </span>
                         </td>
-                        <td className="px-5 py-2 text-xs text-muted-foreground tabular-nums">
+                        <td className="px-5 py-2 text-xs text-fg-muted tabular-nums">
                           {c.size ?? '—'}
                         </td>
                         <td className="px-5 py-2 text-xs text-destructive truncate max-w-xs">
@@ -189,11 +189,11 @@ function AutoRefreshToggle({ id, autoRefresh }: { id: string; autoRefresh: boole
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'story', id] }),
   });
   return (
-    <div className="rounded-xl border border-border bg-background p-4 flex items-start gap-3">
-      <RefreshCw className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" aria-hidden />
+    <div className="rounded-xl border border-border bg-bg p-4 flex items-start gap-3">
+      <RefreshCw className="h-4 w-4 text-fg-muted mt-0.5 shrink-0" aria-hidden />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">Auto-refresh chương mới</p>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs text-fg-muted mt-0.5">
           Khi cron tự động quét chạy, truyện này có nằm trong danh sách quét hay không. Tắt nếu
           truyện đã dropped / không còn chương mới để tiết kiệm rate-limit cho nguồn.
         </p>
@@ -206,7 +206,7 @@ function AutoRefreshToggle({ id, autoRefresh }: { id: string; autoRefresh: boole
           disabled={mut.isPending}
           className="sr-only peer"
         />
-        <span className="w-10 h-5 bg-muted peer-checked:bg-[hsl(var(--color-cta))] rounded-full relative transition-colors duration-200 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-background after:h-4 after:w-4 after:rounded-full after:transition-transform after:duration-200 peer-checked:after:translate-x-5" />
+        <span className="w-10 h-5 bg-bg-subtle peer-checked:bg-[var(--accent)] rounded-full relative transition-colors duration-200 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-bg after:h-4 after:w-4 after:rounded-full after:transition-transform after:duration-200 peer-checked:after:translate-x-5" />
       </label>
     </div>
   );
@@ -262,15 +262,15 @@ function Stat({
 }) {
   const valueClass =
     tone === 'warning' && value > 0
-      ? 'text-[hsl(var(--color-cta))]'
-      : 'text-foreground';
+      ? 'text-[var(--accent)]'
+      : 'text-fg';
   return (
-    <div className="rounded-xl border border-border bg-background p-4">
-      <div className="flex items-center gap-2 text-muted-foreground">
+    <div className="rounded-xl border border-border bg-bg p-4">
+      <div className="flex items-center gap-2 text-fg-muted">
         <Icon className="h-4 w-4" />
         <p className="text-xs uppercase tracking-[0.18em] font-medium">{label}</p>
       </div>
-      <div className={`mt-2 font-heading font-bold text-2xl tabular-nums ${valueClass}`}>
+      <div className={`mt-2 font-sans font-bold text-2xl tabular-nums ${valueClass}`}>
         {value.toLocaleString('vi-VN')}
       </div>
     </div>

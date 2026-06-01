@@ -17,7 +17,7 @@ export interface ChapterListProps {
 export function ChapterList({ slug, chapters, currentPage, totalPages }: ChapterListProps) {
   if (chapters.length === 0) {
     return (
-      <p className="text-center text-sm text-muted-foreground py-12">
+      <p className="text-center text-sm text-fg-muted py-12">
         Trang này chưa có chương nào.
       </p>
     );
@@ -32,21 +32,21 @@ export function ChapterList({ slug, chapters, currentPage, totalPages }: Chapter
                 to="/truyen/$slug/chuong/$index"
                 params={{ slug, index: String(c.index) }}
                 search={{ commentsPage: 1 }}
-                className="group flex items-baseline gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                className="group flex items-baseline gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
               >
-                <span className="font-heading font-semibold text-sm text-muted-foreground/70 tabular-nums w-[5.25rem] shrink-0 group-hover:text-foreground transition-colors duration-200">
+                <span className="font-sans font-semibold text-sm text-fg-muted/70 tabular-nums w-[5.25rem] shrink-0 group-hover:text-fg transition-colors duration-200">
                   Chương {c.index}
                 </span>
-                <span className="text-sm leading-snug line-clamp-1 group-hover:underline underline-offset-[3px] decoration-foreground/40 transition-all duration-200">
+                <span className="text-sm leading-snug line-clamp-1 group-hover:underline underline-offset-[3px] decoration-fg/40 transition-all duration-200">
                   {c.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '')}
                 </span>
               </Link>
             ) : (
               <span
-                className="flex items-baseline gap-3 text-muted-foreground/60"
+                className="flex items-baseline gap-3 text-fg-muted/60"
                 title="Chưa crawl"
               >
-                <span className="font-heading font-semibold text-sm tabular-nums w-[5.25rem] shrink-0">
+                <span className="font-sans font-semibold text-sm tabular-nums w-[5.25rem] shrink-0">
                   Chương {c.index}
                 </span>
                 <span className="text-sm leading-snug line-clamp-1 flex items-center gap-1.5">
@@ -81,7 +81,7 @@ function Pagination({
   for (let p = start; p <= end; p += 1) pages.push(p);
 
   const baseLink =
-    'inline-flex items-center justify-center min-w-9 h-9 px-3 rounded-full text-sm border transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
+    'inline-flex items-center justify-center min-w-9 h-9 px-3 rounded-full text-sm border transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 
   return (
     <nav
@@ -93,7 +93,7 @@ function Pagination({
           to="/truyen/$slug"
           params={{ slug }}
           search={{ page: currentPage - 1, commentsPage: 1 }}
-          className={`${baseLink} border-border hover:border-foreground/40 hover:bg-muted/60`}
+          className={`${baseLink} border-border hover:border-fg/40 hover:bg-bg-subtle/60`}
           aria-label="Trang trước"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -105,11 +105,11 @@ function Pagination({
             to="/truyen/$slug"
             params={{ slug }}
             search={{ page: 1, commentsPage: 1 }}
-            className={`${baseLink} border-border hover:border-foreground/40 hover:bg-muted/60`}
+            className={`${baseLink} border-border hover:border-fg/40 hover:bg-bg-subtle/60`}
           >
             1
           </Link>
-          {start > 2 && <span className="px-1 text-muted-foreground text-xs">…</span>}
+          {start > 2 && <span className="px-1 text-fg-muted text-xs">…</span>}
         </>
       )}
       {pages.map((p) => (
@@ -121,8 +121,8 @@ function Pagination({
           aria-current={p === currentPage ? 'page' : undefined}
           className={
             p === currentPage
-              ? `${baseLink} border-foreground bg-foreground text-background`
-              : `${baseLink} border-border hover:border-foreground/40 hover:bg-muted/60`
+              ? `${baseLink} border-fg bg-fg text-bg`
+              : `${baseLink} border-border hover:border-fg/40 hover:bg-bg-subtle/60`
           }
         >
           {p}
@@ -131,13 +131,13 @@ function Pagination({
       {end < totalPages && (
         <>
           {end < totalPages - 1 && (
-            <span className="px-1 text-muted-foreground text-xs">…</span>
+            <span className="px-1 text-fg-muted text-xs">…</span>
           )}
           <Link
             to="/truyen/$slug"
             params={{ slug }}
             search={{ page: totalPages, commentsPage: 1 }}
-            className={`${baseLink} border-border hover:border-foreground/40 hover:bg-muted/60`}
+            className={`${baseLink} border-border hover:border-fg/40 hover:bg-bg-subtle/60`}
           >
             {totalPages}
           </Link>
@@ -148,7 +148,7 @@ function Pagination({
           to="/truyen/$slug"
           params={{ slug }}
           search={{ page: currentPage + 1, commentsPage: 1 }}
-          className={`${baseLink} border-border hover:border-foreground/40 hover:bg-muted/60`}
+          className={`${baseLink} border-border hover:border-fg/40 hover:bg-bg-subtle/60`}
           aria-label="Trang sau"
         >
           <ChevronRight className="h-4 w-4" />
