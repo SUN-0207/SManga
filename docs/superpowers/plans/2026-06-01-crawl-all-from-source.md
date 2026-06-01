@@ -89,9 +89,9 @@ Create the file with the following complete content:
 ```typescript
 // apps/api/src/modules/crawler-jobs/discover-all-source.processor.ts
 
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { ConflictException, Logger } from '@nestjs/common';
-import type { Job, Queue } from 'bull';
+import { Process, Processor } from '@nestjs/bull';
+import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
+import type { Job } from 'bull';
 import { browseCatalog, getAdapter } from '@smanga/crawler';
 import { Inject } from '@nestjs/common';
 import type { Database } from '@smanga/db';
@@ -113,7 +113,6 @@ export class DiscoverAllSourceProcessor {
 
   constructor(
     @Inject(DRIZZLE) private readonly db: Database,
-    @InjectQueue(QUEUE_CRAWLER) private readonly queue: Queue,
     private readonly stories: StoriesService,
   ) {}
 
@@ -138,12 +137,20 @@ export class DiscoverAllSourceProcessor {
           await this.stories.enqueueImport(item.url, requestedBy);
           totalQueued++;
         } catch (err) {
-          // ConflictException = story already exists or slug collision — skip silently.
-          // Any other error (adapter failure, DB down, etc.) surfaces as job failure.
-          if (err instanceof ConflictException) {
-            this.logger.log(`discover-all-source skip (already exists) url=${item.url}`);
+          // Note on dedup: slug-uniqueness is enforced at the DB layer inside
+          // `importStory` (Drizzle unique constraint), not via NestJS ConflictException.
+          // The `enqueueImport` call itself does not throw ConflictException for
+          // duplicates — it simply enqueues a Bull job, and the importStory processor
+          // handles existing stories internally (idempotent). So the ConflictException
+          // branch below is defensive and may never trigger via the dedup path.
+          //
+          // BadRequestException = hostname not registered in adapter registry — skip this
+          // story URL silently rather than failing the whole job.
+          if (err instanceof ConflictException || err instanceof BadRequestException) {
+            this.logger.log(`discover-all-source skip url=${item.url} reason=${(err as Error).message}`);
             continue;
           }
+          // Any other error (DB down, network failure, etc.) surfaces as job failure.
           this.logger.error(
             `discover-all-source enqueueImport failed url=${item.url}: ${(err as Error).message}`,
           );
@@ -169,9 +176,9 @@ export class DiscoverAllSourceProcessor {
 }
 ```
 
-**Why `autoCrawl` is not passed to `enqueueImport`:** The existing `enqueueImport` signature is `(url: string, requestedBy: string | null): Promise<{ jobId: string }>` — it does NOT accept an `autoCrawl` parameter (that flag only exists on `enqueueImportBulk`). The processor calls the full-path import (not `skipDiscovery`) which already runs chapter discovery inline. If the operator wants autoCrawl behaviour on the individual stories they can trigger it from `/admin/stories` after metadata is available. This matches the spec's note that `enqueueImport` is the existing single-story importer and chapter-discovery chaining comes for free.
+**Why `autoCrawl` is not passed to `enqueueImport`:** The existing `enqueueImport` signature is `(url: string, requestedBy: string | null): Promise<{ jobId: string }>` — it does NOT accept an `autoCrawl` parameter (that flag only exists on `enqueueImportBulk`). The `autoCrawl` field on `DiscoverAllSourceJobData` is stored in the job payload but **silently dropped** at the processor level — it has no effect on how stories are imported. The autoCrawl checkbox in the modal (AC-9) therefore has no backend effect in this implementation. This is an intentional deferral, not an oversight.
 
-> **Note on autoCrawl future work:** If a later spec requires autoCrawl to chain chapter fetches, modify `enqueueImport` in stories.service.ts to accept an optional `autoCrawl` parameter (mirroring `enqueueImportBulk`) and pass it through the `ImportStoryJobData`. Do NOT do this in this task — it changes the existing API surface.
+> **Note on autoCrawl future work:** If a later spec requires autoCrawl to chain chapter fetches, extend `enqueueImport` in `stories.service.ts` to accept an optional third parameter `autoCrawl?: boolean` (mirroring `enqueueImportBulk`) and pass it through `ImportStoryJobData`. Then update this processor to forward `autoCrawl` from the job data. Do NOT do this in this task — it changes the existing API surface and should be a separate plan. Until then, the autoCrawl checkbox is present in the UI for forward-compatibility but has no effect.
 
 **Verify:**
 ```powershell
@@ -191,7 +198,6 @@ feat(crawler): DiscoverAllSourceProcessor — page-loop + idempotent enqueue per
 **Files:**
 - Modify `apps/api/src/modules/crawler-jobs/crawler-jobs.module.ts`
 - Modify `apps/api/src/modules/stories/stories.module.ts` (add `exports`)
-- Modify `apps/api/src/modules/sources/sources.module.ts` (import `StoriesModule`)
 
 **Why:** NestJS DI requires the processor to be listed in `providers` of the module that owns it. `StoriesService` must be exported from `StoriesModule` so it can be injected into `DiscoverAllSourceProcessor` inside `CrawlerJobsModule`. `CrawlerJobsModule` already imports `QueueModule`; we add `StoriesModule` to its imports.
 
@@ -269,48 +275,10 @@ feat(crawler): register DiscoverAllSourceProcessor in CrawlerJobsModule
 
 **4a. Append `DiscoverAllSourceDto` to the existing DTO file:**
 
+> **IMPORTANT:** The block below shows ONLY the lines to **append** at the bottom of `create-source.dto.ts`. Do NOT replace the full file — `CreateSourceDto` and `UpdateSourceDto` already exist. Adding duplicate class declarations or re-adding existing imports will cause a compile error.
+
 ```typescript
-// Append to apps/api/src/modules/sources/dto/create-source.dto.ts
-
-import { IsBoolean, IsNumber, IsOptional, IsString, IsUrl, Min } from 'class-validator';
-import { Type } from 'class-transformer';
-
-export class CreateSourceDto {
-  @IsString()
-  id!: string;
-
-  @IsString()
-  name!: string;
-
-  @IsUrl()
-  baseUrl!: string;
-
-  @IsNumber()
-  @Type(() => Number)
-  @Min(0.1)
-  @IsOptional()
-  rateLimitRps?: number;
-}
-
-export class UpdateSourceDto {
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @IsOptional()
-  @IsUrl()
-  baseUrl?: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0.1)
-  rateLimitRps?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
-}
+// APPEND ONLY — add at the bottom of apps/api/src/modules/sources/dto/create-source.dto.ts
 
 // NEW — Plan crawl-all
 export class DiscoverAllSourceDto {
@@ -323,10 +291,14 @@ export class DiscoverAllSourceDto {
 }
 ```
 
+`IsBoolean`, `IsOptional`, and `IsString` are already imported at the top of the file. No new imports are needed.
+
 **4b. Update `SourcesService` — inject queue + add `enqueueDiscoverAll`:**
 
+> **IMPORTANT:** The block below is a **full-file replacement** of `sources.service.ts`. It includes all existing methods plus the new `enqueueDiscoverAll`. New additions are the `InjectQueue`/`Queue` import, the `queue` constructor param, and the `enqueueDiscoverAll` method. If other changes have been made to this file since the plan was written, merge them manually rather than doing a blind replacement.
+
 ```typescript
-// apps/api/src/modules/sources/sources.service.ts
+// apps/api/src/modules/sources/sources.service.ts (full replacement)
 
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
@@ -454,6 +426,25 @@ export class SourcesService {
     const jobId = `discover-all:${sourceId}:${feedId}`;
     const payload: DiscoverAllSourceJobData = { sourceId, feedId, autoCrawl, requestedBy };
 
+    // 3b. Explicit dedup check before enqueuing.
+    //
+    // NOTE: Relying solely on Bull's duplicate-jobId error is fragile — the exact
+    // error message ("Job with id already exists") is not part of Bull's stable
+    // public API and may change between versions. Additionally, Bull only rejects
+    // duplicate jobIds for `waiting`/`delayed` states, not for `active` jobs in
+    // some versions. Use an explicit getJob + getState check (same pattern as
+    // `enqueueDiscoverChapters`) for reliable 409 dedup:
+    const existingJob = await this.queue.getJob(jobId);
+    if (existingJob) {
+      const state = await existingJob.getState();
+      if (['waiting', 'active', 'delayed'].includes(state)) {
+        throw new ConflictException(
+          `A discover-all job for source "${sourceId}" feed "${feedId}" is already ${state}. ` +
+            `Monitor progress at /admin/jobs (jobId: ${jobId}).`,
+        );
+      }
+    }
+
     try {
       const job = await this.queue.add(JOB_DISCOVER_ALL_SOURCE, payload, {
         jobId,
@@ -462,14 +453,7 @@ export class SourcesService {
       });
       return { jobId: String(job.id) };
     } catch (err) {
-      // Bull throws "Job with id already exists" when jobId is taken
-      const message = (err as Error).message ?? '';
-      if (message.toLowerCase().includes('already exists')) {
-        throw new ConflictException(
-          `A discover-all job for source "${sourceId}" feed "${feedId}" is already running. ` +
-            `Monitor progress at /admin/jobs (jobId: ${jobId}).`,
-        );
-      }
+      // Fallback catch for any unexpected Bull errors during add
       throw err;
     }
   }
@@ -720,7 +704,7 @@ function CrawlAllModal({
           />
           <span className="text-body-sm text-fg-muted">
             Tự động crawl chapter content{' '}
-            <span className="text-fg-subtle">(chạy ngay sau khi metadata sẵn sàng)</span>
+            <span className="text-fg-subtle">(tính năng sẽ có hiệu lực sau khi enqueueImport được mở rộng)</span>
           </span>
         </label>
 
@@ -761,16 +745,7 @@ function CrawlAllModal({
 }
 ```
 
-**Verify:**
-```powershell
-pnpm --filter @smanga/frontend typecheck
-```
-Expected: 0 errors.
-
-**Commit:**
-```
-feat(admin): CrawlAllModal sub-component — confirm dialog for crawl-all feed action
-```
+> **IMPORTANT — Tasks 7 and 8 are merged into a single file rewrite in Task 8.** Do NOT run a standalone typecheck or commit after adding just the `CrawlAllModal` component — it uses `Loader2` from `lucide-react`, which is imported in the Task 8 full-file rewrite. A Task 7-only partial edit will produce a TypeScript compile error. Execute Task 8 immediately after Task 7 and commit both together using the Task 8 commit message.
 
 ---
 
@@ -1040,7 +1015,7 @@ function CrawlAllModal({
           />
           <span className="text-body-sm text-fg-muted">
             Tự động crawl chapter content{' '}
-            <span className="text-fg-subtle">(chạy ngay sau khi metadata sẵn sàng)</span>
+            <span className="text-fg-subtle">(tính năng sẽ có hiệu lực sau khi enqueueImport được mở rộng)</span>
           </span>
         </label>
 
@@ -1102,14 +1077,14 @@ feat(admin): wire crawl-all button + modal + navigation into discover page
 | AC-2: Second call returns 409 | T4 (idempotent jobId dedup) |
 | AC-3: Invalid feed returns 400 listing valid feeds | T4 |
 | AC-4: Job iterates pages + sleeps 1s between pages | T2 |
-| AC-5: Each story enqueued; duplicates skipped silently | T2 |
+| AC-5: Each story enqueued; duplicates skipped silently (via idempotent importStory engine — ConflictException/BadRequestException caught per-item); **note:** autoCrawl checkbox has no backend effect until enqueueImport is extended | T2 |
 | AC-6: `job.progress()` reports `{ page, totalQueued, hasNextPage }` | T2 |
 | AC-7: Job returns `{ totalQueued, pagesCrawled }` | T2 |
 | AC-8: Button renders with `bg-accent-gradient` + `shadow-glow-pink-soft` | T8 |
-| AC-9: Click opens confirm modal with feed name + autoCrawl checkbox | T7, T8 |
+| AC-9: Click opens confirm modal with feed name + autoCrawl checkbox (checkbox is UI-only; no backend effect until enqueueImport is extended) | T7, T8 |
 | AC-10: Confirm disables button + shows spinner while POSTing | T8 |
-| AC-11: 202 success → info message + navigate to `/admin/jobs` | T8 |
-| AC-12: 409 → inline error message, no navigation | T8 |
+| AC-11: 202 success → inline message "Đã queue. Đang chuyển tới Jobs…" appears AND user is navigated to `/admin/jobs` after ~800ms (no external toast library — uses local `setInfo` state rendered as `<p>`) | T8 |
+| AC-12: 409 → inline error message appears in modal (`setModalError` rendered as `<p role="alert">`), no navigation (no external toast library used) | T8 |
 | AC-13: Both typechecks pass | T5 (BE), T8 (FE) |
 
 ---
@@ -1120,7 +1095,7 @@ Run in order. Each task ends with a commit. Do not push.
 
 - [ ] T1: queue.constants.ts — add constant + interface
 - [ ] T2: discover-all-source.processor.ts — create file
-- [ ] T3: crawler-jobs.module.ts + stories.module.ts + sources.module.ts — module wiring
+- [ ] T3: crawler-jobs.module.ts + stories.module.ts — module wiring (sources.module.ts is modified in T4, not T3)
 - [ ] T4: create-source.dto.ts + sources.service.ts + sources.module.ts — DTO + service method
 - [ ] T5: sources.controller.ts — POST endpoint
 - [ ] T6: api/sources.ts — discoverAll client method
