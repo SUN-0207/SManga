@@ -1,14 +1,24 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bull';
+import type { Queue } from 'bull';
 import { asc, eq } from 'drizzle-orm';
 import { browseCatalog, getAdapter, listAdapters, searchCatalog } from '@smanga/crawler';
 import { source } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
+import {
+  JOB_DISCOVER_ALL_SOURCE,
+  QUEUE_CRAWLER,
+  type DiscoverAllSourceJobData,
+} from '@/modules/queue/queue.constants';
 import type { CreateSourceDto, UpdateSourceDto } from './dto/create-source.dto';
 
 @Injectable()
 export class SourcesService {
-  constructor(@Inject(DRIZZLE) private readonly db: Database) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
+    @InjectQueue(QUEUE_CRAWLER) private readonly queue: Queue,
+  ) {}
 
   list() {
     return this.db.select().from(source).orderBy(asc(source.id));
@@ -84,5 +94,67 @@ export class SourcesService {
       throw new BadRequestException('either feed or q is required');
     }
     return browseCatalog(this.db, sourceId, feedId, page);
+  }
+
+  /**
+   * Plan crawl-all: enqueue a discover-all-source job for the given feed.
+   * Idempotent: jobId = `discover-all:{sourceId}:{feedId}` so Bull rejects a
+   * second call while the first is still active (409 Conflict).
+   */
+  async enqueueDiscoverAll(
+    sourceId: string,
+    feedId: string,
+    autoCrawl: boolean,
+    requestedBy: string | null,
+  ): Promise<{ jobId: string }> {
+    // 1. Validate adapter exists
+    let adapter;
+    try {
+      adapter = getAdapter(sourceId);
+    } catch {
+      throw new NotFoundException(`no adapter for source ${sourceId}`);
+    }
+
+    // 2. Validate feedId is declared by the adapter
+    const validFeedIds = adapter.catalogFeeds.map((f) => f.id);
+    if (!validFeedIds.includes(feedId)) {
+      throw new BadRequestException(
+        `feed "${feedId}" not found. Valid feeds: ${validFeedIds.join(', ')}`,
+      );
+    }
+
+    // 3. Idempotent jobId — explicit dedup check before enqueuing.
+    //
+    // NOTE: Relying solely on Bull's duplicate-jobId error is fragile — the exact
+    // error message ("Job with id already exists") is not part of Bull's stable
+    // public API and may change between versions. Additionally, Bull only rejects
+    // duplicate jobIds for `waiting`/`delayed` states, not for `active` jobs in
+    // some versions. Use an explicit getJob + getState check (same pattern as
+    // `enqueueDiscoverChapters`) for reliable 409 dedup:
+    const jobId = `discover-all:${sourceId}:${feedId}`;
+    const existingJob = await this.queue.getJob(jobId);
+    if (existingJob) {
+      const state = await existingJob.getState();
+      if (['waiting', 'active', 'delayed'].includes(state)) {
+        throw new ConflictException(
+          `A discover-all job for source "${sourceId}" feed "${feedId}" is already ${state}. ` +
+            `Monitor progress at /admin/jobs (jobId: ${jobId}).`,
+        );
+      }
+    }
+
+    const payload: DiscoverAllSourceJobData = { sourceId, feedId, autoCrawl, requestedBy };
+
+    try {
+      const job = await this.queue.add(JOB_DISCOVER_ALL_SOURCE, payload, {
+        jobId,
+        removeOnComplete: true,
+        removeOnFail: false,
+      });
+      return { jobId: String(job.id) };
+    } catch (err) {
+      // Fallback catch for any unexpected Bull errors during add
+      throw err;
+    }
   }
 }

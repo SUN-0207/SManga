@@ -37,3 +37,13 @@ export class UpdateSourceDto {
   @IsBoolean()
   isActive?: boolean;
 }
+
+// NEW — Plan crawl-all
+export class DiscoverAllSourceDto {
+  @IsString()
+  feed!: string;
+
+  @IsBoolean()
+  @IsOptional()
+  autoCrawl?: boolean;
+}
