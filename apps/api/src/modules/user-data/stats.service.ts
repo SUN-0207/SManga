@@ -4,6 +4,11 @@ import { bookmark, readingProgress, story } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 
+/** Average words per Vietnamese web-novel chapter (heuristic). */
+const WORDS_PER_CHAPTER = 1500;
+/** Global fallback WPM when user has insufficient reading data. */
+const FALLBACK_WPM = 250;
+
 /**
  * postgres-js's `db.execute()` returns the row array directly (a postgres.RowList),
  * NOT `{ rows: T[] }` like the node-postgres adapter does. See
@@ -12,6 +17,21 @@ import { DRIZZLE } from '@/modules/db/db.provider';
  */
 const rowsOf = <T>(r: unknown): T[] =>
   Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
+
+export interface ReadingSpeed {
+  wordsPerMinute: number;
+  chaptersRead: number;
+  totalReadingSeconds: number;
+  sampleSize: number;
+}
+
+export interface ReadingEta {
+  remainingChapters: number;
+  currentChapter: number;
+  totalChapters: number;
+  estimatedMinutes: number;
+  wpmUsed: number;
+}
 
 export interface UserStats {
   totalChaptersRead: number;
@@ -110,6 +130,79 @@ export class StatsService {
       streakDays,
       dailyChaptersLast7,
     };
+  }
+
+  /**
+   * Compute user reading speed using a heuristic of 1500 words per chapter.
+   * Requires at least 60 cumulative seconds and 1 chapter read to return a
+   * meaningful estimate; otherwise wordsPerMinute = 0 (insufficient data).
+   */
+  async getReadingSpeed(userId: string): Promise<ReadingSpeed> {
+    const [chaptersRow, secondsRow] = await Promise.all([
+      this.db
+        .select({ value: count() })
+        .from(readingProgress)
+        .where(eq(readingProgress.userId, userId)),
+      this.db
+        .select({ total: sum(readingProgress.sessionSeconds) })
+        .from(readingProgress)
+        .where(eq(readingProgress.userId, userId)),
+    ]);
+
+    const chaptersRead = Number(chaptersRow[0]?.value ?? 0);
+    const totalReadingSeconds = Number(secondsRow[0]?.total ?? 0);
+
+    if (totalReadingSeconds < 60 || chaptersRead < 1) {
+      return { wordsPerMinute: 0, chaptersRead, totalReadingSeconds, sampleSize: chaptersRead };
+    }
+
+    const totalMinutes = totalReadingSeconds / 60;
+    const totalWords = chaptersRead * WORDS_PER_CHAPTER;
+    const wordsPerMinute = Math.round(totalWords / totalMinutes);
+
+    return { wordsPerMinute, chaptersRead, totalReadingSeconds, sampleSize: chaptersRead };
+  }
+
+  /**
+   * Estimate reading time remaining for a user to finish a story.
+   * Returns null when the user has no progress on the story or has already
+   * reached the last chapter.
+   */
+  async getReadingEta(userId: string, storyId: string): Promise<ReadingEta | null> {
+    const [storyRow, progressRow] = await Promise.all([
+      this.db
+        .select({ totalChapters: story.totalChapters })
+        .from(story)
+        .where(eq(story.id, storyId))
+        .limit(1),
+      this.db
+        .select({ chapterIndex: readingProgress.chapterIndex })
+        .from(readingProgress)
+        .where(and(eq(readingProgress.userId, userId), eq(readingProgress.storyId, storyId)))
+        .limit(1),
+    ]);
+
+    const storyData = storyRow[0];
+    if (!storyData) return null;
+
+    const totalChapters = storyData.totalChapters;
+    const progress = progressRow[0];
+
+    // No progress on this story → hide ETA
+    if (!progress) return null;
+
+    const currentChapter = Math.floor(Number(progress.chapterIndex));
+    const remainingChapters = totalChapters - currentChapter;
+
+    // Already at or past the last chapter
+    if (remainingChapters <= 0) return null;
+
+    const speed = await this.getReadingSpeed(userId);
+    const wpmUsed = speed.wordsPerMinute > 0 ? speed.wordsPerMinute : FALLBACK_WPM;
+
+    const estimatedMinutes = Math.ceil((remainingChapters * WORDS_PER_CHAPTER) / wpmUsed);
+
+    return { remainingChapters, currentChapter, totalChapters, estimatedMinutes, wpmUsed };
   }
 
   private async computeStreak(userId: string): Promise<number> {
