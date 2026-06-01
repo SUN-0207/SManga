@@ -1,9 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { SourcesService } from './sources.service';
-import { CreateSourceDto, UpdateSourceDto } from './dto/create-source.dto';
+import { CreateSourceDto, DiscoverAllSourceDto, UpdateSourceDto } from './dto/create-source.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('sources')
 @Controller({ path: 'sources', version: '1' })
@@ -46,5 +59,20 @@ export class SourcesController {
   ) {
     const pageNum = Math.max(1, Number(page) || 1);
     return this.sources.discover(id, feed, pageNum, q);
+  }
+
+  /**
+   * Plan crawl-all — queue a full-feed import for the given source.
+   * Returns 202 Accepted with { jobId }.
+   * Returns 409 if the same (sourceId, feedId) job is already active.
+   */
+  @Post(':id/discover-all')
+  @HttpCode(HttpStatus.ACCEPTED)
+  discoverAll(
+    @Param('id') id: string,
+    @Body() dto: DiscoverAllSourceDto,
+    @CurrentUser() u: { id: string },
+  ) {
+    return this.sources.enqueueDiscoverAll(id, dto.feed, dto.autoCrawl ?? false, u.id);
   }
 }
