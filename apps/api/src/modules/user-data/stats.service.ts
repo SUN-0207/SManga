@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, count, eq, gt, sql } from 'drizzle-orm';
+import { and, count, eq, gt, sql, sum } from 'drizzle-orm';
 import { bookmark, readingProgress, story } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
@@ -33,6 +33,7 @@ export class StatsService {
       libraryCountRows,
       completedCountRows,
       weeklyChaptersRows,
+      weeklySecondsRows,
       dailyRows,
       streakDays,
     ] = await Promise.all([
@@ -64,6 +65,15 @@ export class StatsService {
             sql`${readingProgress.updatedAt} > now() - interval '7 days'`,
           ),
         ),
+      this.db
+        .select({ total: sum(readingProgress.sessionSeconds) })
+        .from(readingProgress)
+        .where(
+          and(
+            eq(readingProgress.userId, userId),
+            sql`${readingProgress.updatedAt} > now() - interval '7 days'`,
+          ),
+        ),
       this.db.execute<{ day: string; chapters: number }>(sql`
         WITH days AS (
           SELECT generate_series(
@@ -88,8 +98,8 @@ export class StatsService {
     const dailyChaptersLast7 = rowsOf<{ day: string; chapters: number }>(dailyRows)
       .map((r) => Number(r.chapters));
 
-    // weeklyHours: zero until migration 0008 lights up session_seconds.
-    const weeklyHours = 0;
+    const totalSeconds = Number(weeklySecondsRows[0]?.total ?? 0);
+    const weeklyHours = Math.round((totalSeconds / 3600) * 10) / 10;
 
     return {
       totalChaptersRead: Number(totalChaptersReadRows[0]?.value ?? 0),
