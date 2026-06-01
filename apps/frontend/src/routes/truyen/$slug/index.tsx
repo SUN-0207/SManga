@@ -92,7 +92,11 @@ function StoryDetail() {
           </div>
           {/* Info */}
           <div>
-            <p className="text-label text-fg-muted uppercase mb-3">TRUYỆN NỔI BẬT</p>
+            {s.featured && (
+              <p className="text-label text-accent uppercase mb-3 inline-flex items-center gap-1.5">
+                <span aria-hidden>★</span>{' '}TRUYỆN NỔI BẬT
+              </p>
+            )}
             <h1 className="text-display-sm lg:text-display-md font-prose font-semibold tracking-tight">{s.title}</h1>
             <p className="mt-3 text-body text-fg-muted">
               {s.author ?? 'Khuyết danh'} · {s.totalChapters} chương · {STATUS_LABEL[s.status] ?? s.status}
@@ -111,7 +115,7 @@ function StoryDetail() {
             </div>
             {s.genres && s.genres.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-1.5">
-                {s.genres.map((g: any) => (
+                {s.genres.map((g) => (
                   <span key={g.slug} className="inline-flex items-center h-7 px-3 rounded-full text-body-sm bg-bg-subtle border border-border">
                     {g.name}
                   </span>
