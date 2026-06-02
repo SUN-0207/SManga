@@ -21,6 +21,7 @@ import { GenresModule } from './modules/genres/genres.module';
 import { HealthModule } from './modules/health/health.module';
 import { RankingsModule } from './modules/rankings/rankings.module';
 import { CommentsModule } from './modules/comments/comments.module';
+import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { CommentsModule } from './modules/comments/comments.module';
     HealthModule,
     RankingsModule,
     CommentsModule,
+    RecommendationsModule,
   ],
 })
 export class AppModule {}
