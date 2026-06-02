@@ -1,7 +1,14 @@
 -- pgcrypto (gen_random_uuid) already enabled in migration 0001.
 -- Enum must be created BEFORE the table that references it.
 
-CREATE TYPE IF NOT EXISTS comment_target_type AS ENUM ('story', 'chapter');
+-- Postgres does NOT support `CREATE TYPE IF NOT EXISTS`. The DO-block guard
+-- below catches the duplicate_object exception so this migration is safe to
+-- re-run against a DB that already has the enum.
+DO $$ BEGIN
+  CREATE TYPE comment_target_type AS ENUM ('story', 'chapter');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 CREATE TABLE IF NOT EXISTS "comment" (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
