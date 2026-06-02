@@ -8,6 +8,7 @@ import { useTrackStoryView } from '@/hooks/use-track-view';
 import { RatingControl }     from '@/components/engagement/RatingControl';
 import { ViewCount }         from '@/components/engagement/ViewCount';
 import { CommentSection } from '@/components/comments/CommentSection';
+import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
 
 export const Route = createFileRoute('/truyen/$slug/')({
   component: StoryDetail,
@@ -171,6 +172,8 @@ function StoryDetail() {
           />
         </div>
       </section>
+
+      <RecommendationSection kind="similar" storyId={s.id} />
 
       <CommentSection
         targetType="story"

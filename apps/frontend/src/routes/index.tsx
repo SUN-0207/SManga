@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { RatingStars } from '@/components/engagement/RatingStars';
 import { ViewCount }   from '@/components/engagement/ViewCount';
 import { HomeRankingsSection } from '@/components/rankings/HomeRankingsSection';
+import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
 
 export const Route = createFileRoute('/')({ component: HomePage });
 
@@ -36,6 +37,7 @@ function HomePage() {
       />
       {user && <LoggedInHero />}
       <HomeRankingsSection />
+      <RecommendationSection kind="forYou" />
       <UpdatedSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
       <GenreSection />
     </div>
