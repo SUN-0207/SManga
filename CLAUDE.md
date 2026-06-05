@@ -8,7 +8,7 @@ Vietnamese novel reader. Crawls from `truyenfull.today` (multi-source-capable vi
 - **Plan 4 (NestJS rework) complete.** `apps/api` (NestJS 11) + `apps/frontend` (Vite+React) replace the legacy `apps/web` + `services/crawler-worker` (both deleted in Task 13).
 - All plans live in `docs/superpowers/plans/`. Read the relevant plan file in full before touching code in its scope.
 - Test count: 23 unit tests pass (5 db + 16 crawler + 2 shared). E2E specs written but last verified manually by user.
-- **Plan 9 (Laptop self-host) — Phase A+H scaffolded 2026-06-05.** Repo files for laptop deploy ready: `deploy/laptop/` (compose + Caddy + cloudflared template + backup script + systemd units), `apps/frontend/Dockerfile` + `nginx.conf`, `.github/workflows/build-images.yml`, `docs/laptop-runbook.md`. Phase B-G require user's laptop hardware + Cloudflare dashboard access; NOT executed.
+- **Plan 9 (Laptop self-host) — Phase A+H scaffolded 2026-06-05.** Repo files for laptop deploy ready: `deploy/home/` (compose + Caddy + cloudflared template + backup script + systemd units), `apps/frontend/Dockerfile` + `nginx.conf`, `.github/workflows/build-images.yml`, `docs/home-runbook.md`. Phase B-G require user's laptop hardware + Cloudflare dashboard access; NOT executed.
 
 ## Monorepo layout
 

@@ -121,7 +121,7 @@ UUID=<hdd-uuid>  /mnt/hdd  ext4  defaults,noatime,nofail  0  2
 
 ## Software stack
 
-### `deploy/laptop/docker-compose.prod.yml`
+### `deploy/home/docker-compose.prod.yml`
 
 Reuses Plan 8 structure with two changes: (1) caddy listens on `localhost:8080` only (no public 80/443), (2) adds `watchtower` with label-based filtering.
 
@@ -205,7 +205,7 @@ volumes:
   redis-data:
 ```
 
-### `deploy/laptop/Caddyfile`
+### `deploy/home/Caddyfile`
 
 No SSL (cloudflared terminates), no port 80/443 (cloudflared owns public ingress).
 
@@ -233,11 +233,11 @@ No SSL (cloudflared terminates), no port 80/443 (cloudflared owns public ingress
 }
 ```
 
-### `deploy/laptop/init-db.sh`
+### `deploy/home/init-db.sh`
 
 Same as Plan 8 — enables `unaccent` + `pg_trgm` extensions on first postgres boot.
 
-### `deploy/laptop/.env`
+### `deploy/home/.env`
 
 ```env
 POSTGRES_PASSWORD=<openssl rand -base64 32>
@@ -416,7 +416,7 @@ The api image entrypoint runs `pnpm db:migrate` before starting NestJS. Drizzle 
 
 1. Ubuntu install + BIOS + autologin (Hardware section).
 2. Install Docker + cloudflared (do NOT run `route dns` yet).
-3. Copy `deploy/laptop/` skeleton + create `.env` with secrets.
+3. Copy `deploy/home/` skeleton + create `.env` with secrets.
 4. `docker compose up -d` → verify `curl localhost:8080/api/v1/health` returns 200.
 5. Bootstrap admin user: register via API, then `UPDATE "user" SET role='admin' WHERE email='cuthanhson27@gmail.com'`.
 
@@ -515,7 +515,7 @@ deploy/
       smanga-backup.timer
       cloudflared-override.conf     wait for network-online
 docs/
-  laptop-runbook.md                 SSH local, restart, restore, BIOS recovery, Cloudflare DNS surgery
+  home-runbook.md                 SSH local, restart, restore, BIOS recovery, Cloudflare DNS surgery
 ```
 
 ## Out of scope (explicitly deferred)

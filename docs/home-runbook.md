@@ -15,13 +15,13 @@ The laptop has no public SSH port — only Cloudflare Tunnel for HTTPS ingress. 
 **Single service:**
 
 ```bash
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml restart api
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml restart api
 ```
 
 **Full stack:**
 
 ```bash
-cd ~/smanga/deploy/laptop
+cd ~/smanga/deploy/home
 docker compose -f docker-compose.prod.yml down
 docker compose -f docker-compose.prod.yml up -d
 ```
@@ -34,9 +34,9 @@ Docker daemon starts automatically (`restart: unless-stopped` on every service b
 
 ```bash
 # Last 100 lines of each service
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml logs --tail=100 api
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml logs --tail=100 frontend
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml logs --tail=100 caddy
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml logs --tail=100 api
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml logs --tail=100 frontend
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml logs --tail=100 caddy
 
 # Cloudflared
 sudo journalctl -u cloudflared -n 100 --no-pager
@@ -55,16 +55,16 @@ LATEST=$(rclone lsf r2:smanga-backups/ | sort | tail -1)
 rclone copy "r2:smanga-backups/$LATEST" /tmp/
 
 # Stop api so migrations don't race
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml stop api
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml stop api
 
 # Restore into running postgres container
 gunzip "/tmp/$LATEST"
 DUMP="${LATEST%.gz}"
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml exec -T postgres \
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml exec -T postgres \
   pg_restore -U smanga -d smanga --clean --if-exists < "/tmp/$DUMP"
 
 # Restart api
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml start api
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml start api
 ```
 
 ## Rollback to Vercel-Railway-Neon
@@ -128,7 +128,7 @@ Don't manually `docker compose pull` — Watchtower handles it within 5 min of a
 For emergency manual deploy (e.g. Watchtower-down or specific SHA):
 
 ```bash
-cd ~/smanga/deploy/laptop
+cd ~/smanga/deploy/home
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```

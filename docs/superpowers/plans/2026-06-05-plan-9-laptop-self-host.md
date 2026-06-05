@@ -16,7 +16,7 @@
 - **Tasks tagged `[HUMAN]`** require physical access or external dashboards (BIOS, SSH local LAN, Cloudflare DNS, Google OAuth Console, R2 token, laptop hardware). An agent cannot perform these remotely — the agent's job is to produce exact commands the human runs.
 - **Tasks tagged `[AGENT]`** are pure repo-file work runnable by a subagent with no laptop access.
 - **Tasks tagged `[HYBRID]`** mix: agent generates artifacts, human executes on laptop.
-- **Reuse Plan 8 file patterns verbatim** for `deploy/laptop/docker-compose.prod.yml`, `Caddyfile`, `init-db.sh`, `.github/workflows/build-images.yml`, frontend Dockerfile. Adapt only the laptop-specific bits called out in the spec (no port 80/443, cloudflared not in compose, label-based Watchtower filtering).
+- **Reuse Plan 8 file patterns verbatim** for `deploy/home/docker-compose.prod.yml`, `Caddyfile`, `init-db.sh`, `.github/workflows/build-images.yml`, frontend Dockerfile. Adapt only the laptop-specific bits called out in the spec (no port 80/443, cloudflared not in compose, label-based Watchtower filtering).
 
 ---
 
@@ -32,7 +32,7 @@ apps/frontend/
 .github/workflows/
   build-images.yml                          NEW — GHCR build on push to main
 
-deploy/laptop/
+deploy/home/
   docker-compose.prod.yml                   NEW — postgres + redis + api + frontend + caddy + watchtower
   Caddyfile                                 NEW — reverse-proxy localhost:8080 only
   init-db.sh                                NEW — pg_trgm + unaccent extension on first boot
@@ -47,7 +47,7 @@ deploy/laptop/
     cloudflared-override.conf               NEW — wait for network-online.target
 
 docs/
-  laptop-runbook.md                         NEW — operational runbook for the laptop deploy
+  home-runbook.md                         NEW — operational runbook for the laptop deploy
 ```
 
 ### Modified by this plan
@@ -74,7 +74,7 @@ docs/
 
 ## Phase A — Repo file scaffolding (5 tasks, AGENT)
 
-These tasks produce the deploy/laptop/ tree and CI workflow in the current workspace. No laptop access needed.
+These tasks produce the deploy/home/ tree and CI workflow in the current workspace. No laptop access needed.
 
 ### Task 1: Frontend Dockerfile + nginx config
 
@@ -261,12 +261,12 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 **Type:** `[AGENT]`
 
 **Files:**
-- Create: `deploy/laptop/docker-compose.prod.yml`
-- Create: `deploy/laptop/Caddyfile`
-- Create: `deploy/laptop/init-db.sh`
-- Create: `deploy/laptop/.env.example`
+- Create: `deploy/home/docker-compose.prod.yml`
+- Create: `deploy/home/Caddyfile`
+- Create: `deploy/home/init-db.sh`
+- Create: `deploy/home/.env.example`
 
-- [ ] **Step 1: Write `deploy/laptop/docker-compose.prod.yml`**
+- [ ] **Step 1: Write `deploy/home/docker-compose.prod.yml`**
 
 ```yaml
 services:
@@ -354,7 +354,7 @@ volumes:
   redis-data:
 ```
 
-- [ ] **Step 2: Write `deploy/laptop/Caddyfile`**
+- [ ] **Step 2: Write `deploy/home/Caddyfile`**
 
 ```caddy
 {
@@ -380,7 +380,7 @@ volumes:
 }
 ```
 
-- [ ] **Step 3: Write `deploy/laptop/init-db.sh`**
+- [ ] **Step 3: Write `deploy/home/init-db.sh`**
 
 ```bash
 #!/bin/bash
@@ -396,10 +396,10 @@ Make executable in the same step:
 
 ```powershell
 # On Windows; bit set on the file is irrelevant — Linux receives it on copy.
-# If the file is ever edited from Linux, run: chmod +x deploy/laptop/init-db.sh
+# If the file is ever edited from Linux, run: chmod +x deploy/home/init-db.sh
 ```
 
-- [ ] **Step 4: Write `deploy/laptop/.env.example`**
+- [ ] **Step 4: Write `deploy/home/.env.example`**
 
 ```env
 # Owner of GHCR packages (your GitHub username or org)
@@ -419,7 +419,7 @@ AUTH_GOOGLE_SECRET=
 - [ ] **Step 5: Validate compose syntax**
 
 ```powershell
-cd deploy/laptop
+cd deploy/home
 $env:GHCR_OWNER="sun-0207"; $env:POSTGRES_PASSWORD="x"; $env:JWT_SECRET="x"; $env:AUTH_GOOGLE_ID="x"; $env:AUTH_GOOGLE_SECRET="x"
 docker compose -f docker-compose.prod.yml config > $null
 ```
@@ -429,8 +429,8 @@ Expected: no error, exit code 0.
 - [ ] **Step 6: Commit**
 
 ```powershell
-git add deploy/laptop/docker-compose.prod.yml deploy/laptop/Caddyfile deploy/laptop/init-db.sh deploy/laptop/.env.example
-git commit -m "feat(deploy/laptop): docker-compose stack + Caddyfile + init-db
+git add deploy/home/docker-compose.prod.yml deploy/home/Caddyfile deploy/home/init-db.sh deploy/home/.env.example
+git commit -m "feat(deploy/home): docker-compose stack + Caddyfile + init-db
 
 Plan 9 — laptop self-host stack. Caddy listens on 127.0.0.1:8080 only;
 public ingress comes through native cloudflared (Task 5). Watchtower
@@ -449,10 +449,10 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 **Type:** `[AGENT]`
 
 **Files:**
-- Create: `deploy/laptop/cloudflared/config.yml.example`
-- Create: `deploy/laptop/systemd/cloudflared-override.conf`
+- Create: `deploy/home/cloudflared/config.yml.example`
+- Create: `deploy/home/systemd/cloudflared-override.conf`
 
-- [ ] **Step 1: Write `deploy/laptop/cloudflared/config.yml.example`**
+- [ ] **Step 1: Write `deploy/home/cloudflared/config.yml.example`**
 
 ```yaml
 # Place at /etc/cloudflared/config.yml after `cloudflared tunnel create smanga-prod`.
@@ -480,7 +480,7 @@ retries: 5
 grace-period: 30s
 ```
 
-- [ ] **Step 2: Write `deploy/laptop/systemd/cloudflared-override.conf`**
+- [ ] **Step 2: Write `deploy/home/systemd/cloudflared-override.conf`**
 
 ```ini
 # Drop-in for /etc/systemd/system/cloudflared.service.d/override.conf
@@ -494,8 +494,8 @@ After=network-online.target NetworkManager-wait-online.service
 - [ ] **Step 3: Commit**
 
 ```powershell
-git add deploy/laptop/cloudflared/config.yml.example deploy/laptop/systemd/cloudflared-override.conf
-git commit -m "feat(deploy/laptop): cloudflared tunnel config + systemd override
+git add deploy/home/cloudflared/config.yml.example deploy/home/systemd/cloudflared-override.conf
+git commit -m "feat(deploy/home): cloudflared tunnel config + systemd override
 
 Template config.yml routes smanga.shop (or test.smanga.shop during
 cutover Phase 1) to the caddy container on localhost:8080. systemd
@@ -513,11 +513,11 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 **Type:** `[AGENT]`
 
 **Files:**
-- Create: `deploy/laptop/scripts/backup.sh`
-- Create: `deploy/laptop/systemd/smanga-backup.service`
-- Create: `deploy/laptop/systemd/smanga-backup.timer`
+- Create: `deploy/home/scripts/backup.sh`
+- Create: `deploy/home/systemd/smanga-backup.service`
+- Create: `deploy/home/systemd/smanga-backup.timer`
 
-- [ ] **Step 1: Write `deploy/laptop/scripts/backup.sh`**
+- [ ] **Step 1: Write `deploy/home/scripts/backup.sh`**
 
 ```bash
 #!/bin/bash
@@ -553,7 +553,7 @@ rclone delete "$R2_REMOTE" --min-age 14d --quiet
 echo "[$(date)] backup OK — HDD: $(stat -c %s "$DUMP")B, R2 uploaded"
 ```
 
-- [ ] **Step 2: Write `deploy/laptop/systemd/smanga-backup.service`**
+- [ ] **Step 2: Write `deploy/home/systemd/smanga-backup.service`**
 
 ```ini
 # Install to /etc/systemd/system/smanga-backup.service
@@ -570,7 +570,7 @@ StandardOutput=journal
 StandardError=journal
 ```
 
-- [ ] **Step 3: Write `deploy/laptop/systemd/smanga-backup.timer`**
+- [ ] **Step 3: Write `deploy/home/systemd/smanga-backup.timer`**
 
 ```ini
 # Install to /etc/systemd/system/smanga-backup.timer
@@ -591,8 +591,8 @@ WantedBy=timers.target
 ```powershell
 # Optional if shellcheck installed locally. At minimum:
 # Verify shebang + set -euo pipefail present.
-Select-String -Pattern "^#!/bin/bash$" deploy/laptop/scripts/backup.sh
-Select-String -Pattern "^set -euo pipefail$" deploy/laptop/scripts/backup.sh
+Select-String -Pattern "^#!/bin/bash$" deploy/home/scripts/backup.sh
+Select-String -Pattern "^set -euo pipefail$" deploy/home/scripts/backup.sh
 ```
 
 Expected: both lines found.
@@ -600,8 +600,8 @@ Expected: both lines found.
 - [ ] **Step 5: Commit**
 
 ```powershell
-git add deploy/laptop/scripts/backup.sh deploy/laptop/systemd/smanga-backup.service deploy/laptop/systemd/smanga-backup.timer
-git commit -m "feat(deploy/laptop): nightly pg_dump → HDD + R2 backup
+git add deploy/home/scripts/backup.sh deploy/home/systemd/smanga-backup.service deploy/home/systemd/smanga-backup.timer
+git commit -m "feat(deploy/home): nightly pg_dump → HDD + R2 backup
 
 Dual-tier backup script (30d HDD + 14d R2) wired through a systemd
 timer firing at 02:30 local. Refuses to run if /mnt/hdd is not mounted
@@ -778,7 +778,7 @@ Expected: image pulls, container runs, prints the "Hello from Docker!" message.
 
 **Type:** `[HUMAN]`
 
-**Files:** uses `deploy/laptop/cloudflared/config.yml.example` from Task 4.
+**Files:** uses `deploy/home/cloudflared/config.yml.example` from Task 4.
 
 - [ ] **Step 1: Install cloudflared from official apt repo**
 
@@ -816,7 +816,7 @@ sudo chown root:root /etc/cloudflared/*
 
 # Pull config template from the repo (you'll clone the repo on the laptop in Task 11
 # or scp the file from your workstation — either works)
-sudo cp <path-to-checkout>/deploy/laptop/cloudflared/config.yml.example /etc/cloudflared/config.yml
+sudo cp <path-to-checkout>/deploy/home/cloudflared/config.yml.example /etc/cloudflared/config.yml
 sudo sed -i "s/<UUID>/<your tunnel UUID>/g" /etc/cloudflared/config.yml
 ```
 
@@ -841,7 +841,7 @@ Expected: `Validating rules from /etc/cloudflared/config.yml` … `OK`.
 
 **Type:** `[HUMAN]`
 
-**Files:** uses `deploy/laptop/systemd/cloudflared-override.conf` from Task 4.
+**Files:** uses `deploy/home/systemd/cloudflared-override.conf` from Task 4.
 
 - [ ] **Step 1: Route DNS for the test subdomain**
 
@@ -864,7 +864,7 @@ This generates `/etc/systemd/system/cloudflared.service` pointing at `/etc/cloud
 - [ ] **Step 3: Apply the network-online drop-in**
 
 ```bash
-sudo install -D -m 0644 <path-to-checkout>/deploy/laptop/systemd/cloudflared-override.conf \
+sudo install -D -m 0644 <path-to-checkout>/deploy/home/systemd/cloudflared-override.conf \
   /etc/systemd/system/cloudflared.service.d/override.conf
 
 sudo systemctl daemon-reload
@@ -891,7 +891,7 @@ Expected: HTTP **502** or **530** (origin not running yet — app stack comes up
 
 ## Phase D — Bring app stack up (2 tasks, HUMAN)
 
-### Task 11: Copy deploy/laptop/, configure .env, first compose up
+### Task 11: Copy deploy/home/, configure .env, first compose up
 
 **Type:** `[HUMAN]`
 
@@ -903,14 +903,14 @@ Expected: HTTP **502** or **530** (origin not running yet — app stack comes up
 mkdir -p ~/smanga
 cd ~/smanga
 git clone https://github.com/sun-0207/smanga.git .
-# OR: scp -r the deploy/laptop tree from the workstation:
-# scp -r deploy/laptop smanga@<laptop-ip>:~/smanga/
+# OR: scp -r the deploy/home tree from the workstation:
+# scp -r deploy/home smanga@<laptop-ip>:~/smanga/
 ```
 
 - [ ] **Step 2: Copy template + populate .env**
 
 ```bash
-cd ~/smanga/deploy/laptop
+cd ~/smanga/deploy/home
 cp .env.example .env
 
 # Generate strong secrets
@@ -929,13 +929,13 @@ chmod 600 .env
 - [ ] **Step 3: Make init-db.sh executable**
 
 ```bash
-chmod +x ~/smanga/deploy/laptop/init-db.sh
+chmod +x ~/smanga/deploy/home/init-db.sh
 ```
 
 - [ ] **Step 4: First pull + up**
 
 ```bash
-cd ~/smanga/deploy/laptop
+cd ~/smanga/deploy/home
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml ps
@@ -995,7 +995,7 @@ Expected: `{"accessToken":"..."}` or similar success body.
 - [ ] **Step 2: Promote to admin role**
 
 ```bash
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml exec postgres \
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml exec postgres \
   psql -U smanga -d smanga -c "UPDATE \"user\" SET role='admin' WHERE email='cuthanhson27@gmail.com';"
 ```
 
@@ -1079,21 +1079,21 @@ Expected: lists buckets (one of which is `smanga-backups`), then an empty bucket
 
 **Type:** `[HUMAN]`
 
-**Files:** uses `deploy/laptop/scripts/backup.sh` + the two systemd units from Task 5.
+**Files:** uses `deploy/home/scripts/backup.sh` + the two systemd units from Task 5.
 
 - [ ] **Step 1: Install the script**
 
 ```bash
 mkdir -p ~/scripts
-cp ~/smanga/deploy/laptop/scripts/backup.sh ~/scripts/backup.sh
+cp ~/smanga/deploy/home/scripts/backup.sh ~/scripts/backup.sh
 chmod +x ~/scripts/backup.sh
 ```
 
 - [ ] **Step 2: Install systemd units**
 
 ```bash
-sudo install -D -m 0644 ~/smanga/deploy/laptop/systemd/smanga-backup.service /etc/systemd/system/smanga-backup.service
-sudo install -D -m 0644 ~/smanga/deploy/laptop/systemd/smanga-backup.timer   /etc/systemd/system/smanga-backup.timer
+sudo install -D -m 0644 ~/smanga/deploy/home/systemd/smanga-backup.service /etc/systemd/system/smanga-backup.service
+sudo install -D -m 0644 ~/smanga/deploy/home/systemd/smanga-backup.timer   /etc/systemd/system/smanga-backup.timer
 sudo systemctl daemon-reload
 ```
 
@@ -1206,8 +1206,8 @@ Creating /smanga-deploy-laptop-api-1 ...
 After restart, verify the new container exists:
 
 ```bash
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml ps api
-docker inspect --format='{{.Image}}' $(docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml ps -q api)
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml ps api
+docker inspect --format='{{.Image}}' $(docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml ps -q api)
 ```
 
 - [ ] **Step 5: Smoke after restart**
@@ -1249,7 +1249,7 @@ Leave the laptop running, plugged in, lid closed (optional). Periodically check:
 # Laptop didn't sleep (battery survived)
 uptime    # should show >24h
 # No service restarts due to crash
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml ps
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml ps
 # Cloudflared journal clean
 sudo journalctl -u cloudflared --since "24 hours ago" | grep -iE 'error|fail' | wc -l
 # Backup ran overnight
@@ -1372,12 +1372,12 @@ The staging URL is now the de facto QA env. Record it so future sessions know wh
 
 ## Phase H — Documentation (2 tasks, AGENT)
 
-### Task 19: Write `docs/laptop-runbook.md`
+### Task 19: Write `docs/home-runbook.md`
 
 **Type:** `[AGENT]`
 
 **Files:**
-- Create: `docs/laptop-runbook.md`
+- Create: `docs/home-runbook.md`
 
 - [ ] **Step 1: Write the runbook**
 
@@ -1399,13 +1399,13 @@ The laptop has no public SSH port — only Cloudflare Tunnel for HTTPS ingress. 
 **Single service:**
 
 ```bash
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml restart api
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml restart api
 ```
 
 **Full stack:**
 
 ```bash
-cd ~/smanga/deploy/laptop
+cd ~/smanga/deploy/home
 docker compose -f docker-compose.prod.yml down
 docker compose -f docker-compose.prod.yml up -d
 ```
@@ -1418,9 +1418,9 @@ Docker daemon starts automatically (`restart: unless-stopped` on every service b
 
 ```bash
 # Last 100 lines of each service
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml logs --tail=100 api
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml logs --tail=100 frontend
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml logs --tail=100 caddy
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml logs --tail=100 api
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml logs --tail=100 frontend
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml logs --tail=100 caddy
 
 # Cloudflared
 sudo journalctl -u cloudflared -n 100 --no-pager
@@ -1437,16 +1437,16 @@ LATEST=$(rclone lsf r2:smanga-backups/ | sort | tail -1)
 rclone copy "r2:smanga-backups/$LATEST" /tmp/
 
 # Stop api so migrations don't race
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml stop api
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml stop api
 
 # Restore into running postgres container
 gunzip "/tmp/$LATEST"
 DUMP="${LATEST%.gz}"
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml exec -T postgres \
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml exec -T postgres \
   pg_restore -U smanga -d smanga --clean --if-exists < "/tmp/$DUMP"
 
 # Restart api
-docker compose -f ~/smanga/deploy/laptop/docker-compose.prod.yml start api
+docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml start api
 ```
 
 ## Rollback to Vercel-Railway-Neon
@@ -1510,7 +1510,7 @@ Don't manually `docker compose pull` — Watchtower handles it within 5 min of a
 For emergency manual deploy (e.g. Watchtower-down or specific SHA):
 
 ```bash
-cd ~/smanga/deploy/laptop
+cd ~/smanga/deploy/home
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
@@ -1521,7 +1521,7 @@ For rollback to a specific SHA without pushing new code: edit `docker-compose.pr
 - [ ] **Step 2: Commit**
 
 ```powershell
-git add docs/laptop-runbook.md
+git add docs/home-runbook.md
 git commit -m "docs(plan9): laptop self-host operational runbook
 
 Quick-reference doc for the laptop deploy: SSH, restart procedures, log
