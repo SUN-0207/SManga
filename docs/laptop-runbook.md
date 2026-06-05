@@ -47,6 +47,8 @@ sudo journalctl -u smanga-backup.service -n 50 --no-pager
 
 ## Restore from R2 backup
 
+> ⚠️ **Destructive.** `pg_restore --clean --if-exists` drops every object in the target database before recreating it. Double-check `-d smanga` matches the container you intend to restore *into*, and that you have a current backup on HDD before running this against prod.
+
 ```bash
 # Pull latest
 LATEST=$(rclone lsf r2:smanga-backups/ | sort | tail -1)
