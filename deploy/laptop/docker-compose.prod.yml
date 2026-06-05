@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: smanga
+      POSTGRES_USER: smanga
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smanga -d smanga"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+
+  api:
+    image: ghcr.io/${GHCR_OWNER}/smanga-api:latest
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      DATABASE_URL: postgres://smanga:${POSTGRES_PASSWORD}@postgres:5432/smanga
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_BASE_URL: https://smanga.shop
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET}
+      AUTH_GOOGLE_CALLBACK_URL: https://smanga.shop/api/v1/auth/google/callback
+    command: ["sh", "-c", "pnpm --filter @smanga/db migrate && node apps/api/dist/main.js"]
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+
+  frontend:
+    image: ghcr.io/${GHCR_OWNER}/smanga-frontend:latest
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [api, frontend]
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_POLL_INTERVAL: "300"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_INCLUDE_RESTARTING: "true"
+
+volumes:
+  postgres-data:
+  redis-data:

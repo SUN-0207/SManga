@@ -1,0 +1,21 @@
+{
+  admin off
+  auto_https off
+}
+
+:80 {
+  encode zstd gzip
+
+  handle /api/* {
+    reverse_proxy api:3001
+  }
+
+  handle {
+    reverse_proxy frontend:80
+  }
+
+  log {
+    output stdout
+    format console
+  }
+}
