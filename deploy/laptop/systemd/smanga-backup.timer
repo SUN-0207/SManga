@@ -1,0 +1,11 @@
+# Install to /etc/systemd/system/smanga-backup.timer
+# Enable: sudo systemctl enable --now smanga-backup.timer
+[Unit]
+Description=Run smanga-backup nightly at 02:30
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
