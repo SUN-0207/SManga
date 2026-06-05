@@ -14,9 +14,12 @@ COMPOSE_FILE=/home/smanga/smanga/docker-compose.prod.yml
 mountpoint -q /mnt/hdd || { echo "FATAL: /mnt/hdd not mounted, aborting"; exit 1; }
 mkdir -p "$HDD_DIR"
 
-# Tier 1: HDD pg_dump (custom format, parallel-restorable, lvl-6 compress)
+# Clean up partial dump on any failure after this point
+trap 'rm -f "$DUMP"' ERR
+
+# Tier 1: HDD pg_dump (custom format, parallel-restorable)
 docker compose -f "$COMPOSE_FILE" exec -T postgres \
-  pg_dump -U smanga -d smanga --format=custom --compress=6 --no-owner --no-acl \
+  pg_dump -U smanga -d smanga --format=custom --no-owner --no-acl \
   > "$DUMP"
 
 # Tier 1 retention
@@ -26,6 +29,6 @@ find "$HDD_DIR" -name 'smanga-*.dump' -mtime +30 -delete
 gzip -c "$DUMP" | rclone rcat "${R2_REMOTE}/smanga-${STAMP}.dump.gz" --quiet
 
 # Tier 2 retention
-rclone delete "$R2_REMOTE" --min-age 14d --quiet
+rclone delete "$R2_REMOTE" --min-age 14d --include 'smanga-*.dump.gz' --quiet
 
 echo "[$(date)] backup OK — HDD: $(stat -c %s "$DUMP")B, R2 uploaded"
