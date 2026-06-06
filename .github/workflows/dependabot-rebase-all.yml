@@ -1,0 +1,39 @@
+name: Dependabot rebase all open PRs
+
+# Fires whenever THIS file changes. Re-trigger manually by editing
+# (e.g. bumping a comment) and pushing — saves needing repo-admin
+# rights that Enterprise-Managed-User tokens lack for workflow_dispatch.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dependabot-rebase-all.yml'
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const targets = prs.filter((pr) => pr.user.login === 'dependabot[bot]');
+            core.info(`Found ${targets.length} open dependabot PR(s) to rebase`);
+            for (const pr of targets) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: '@dependabot rebase',
+              });
+              core.info(`Commented on PR #${pr.number}: ${pr.title}`);
+            }
