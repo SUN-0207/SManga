@@ -16,11 +16,7 @@ export interface ChapterListProps {
 
 export function ChapterList({ slug, chapters, currentPage, totalPages }: ChapterListProps) {
   if (chapters.length === 0) {
-    return (
-      <p className="text-center text-sm text-fg-muted py-12">
-        Trang này chưa có chương nào.
-      </p>
-    );
+    return <p className="text-center text-sm text-fg-muted py-12">Trang này chưa có chương nào.</p>;
   }
   return (
     <div className="space-y-6">
@@ -42,10 +38,7 @@ export function ChapterList({ slug, chapters, currentPage, totalPages }: Chapter
                 </span>
               </Link>
             ) : (
-              <span
-                className="flex items-baseline gap-3 text-fg-muted/60"
-                title="Chưa crawl"
-              >
+              <span className="flex items-baseline gap-3 text-fg-muted/60" title="Chưa crawl">
                 <span className="font-sans font-semibold text-sm tabular-nums w-[5.25rem] shrink-0">
                   Chương {c.index}
                 </span>
@@ -130,9 +123,7 @@ function Pagination({
       ))}
       {end < totalPages && (
         <>
-          {end < totalPages - 1 && (
-            <span className="px-1 text-fg-muted text-xs">…</span>
-          )}
+          {end < totalPages - 1 && <span className="px-1 text-fg-muted text-xs">…</span>}
           <Link
             to="/truyen/$slug"
             params={{ slug }}

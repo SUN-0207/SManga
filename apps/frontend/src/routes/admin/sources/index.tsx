@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Compass, Trash2, ExternalLink } from 'lucide-react';
 import { sourcesApi } from '@/api/sources';
 import { SourceForm } from '@/components/admin/SourceForm';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, createFileRoute } from '@tanstack/react-router';
+import { Compass, ExternalLink, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 export const Route = createFileRoute('/admin/sources/')({
   component: AdminSourcesPage,
@@ -36,9 +36,11 @@ function AdminSourcesPage() {
         </p>
         <h1 className="font-sans font-bold text-3xl sm:text-4xl tracking-tight text-fg">Sources</h1>
         <p className="text-body-sm text-fg-muted mt-2 max-w-xl">
-          Các nguồn (adapter) được đăng ký để crawl truyện. ID phải khớp với folder
-          adapter trong{' '}
-          <code className="text-[11px] px-1.5 py-0.5 rounded bg-bg-subtle text-fg-muted">packages/crawler/src/sources/</code>.
+          Các nguồn (adapter) được đăng ký để crawl truyện. ID phải khớp với folder adapter trong{' '}
+          <code className="text-[11px] px-1.5 py-0.5 rounded bg-bg-subtle text-fg-muted">
+            packages/crawler/src/sources/
+          </code>
+          .
         </p>
       </div>
 
@@ -81,7 +83,10 @@ function AdminSourcesPage() {
               </thead>
               <tbody>
                 {sources.map((r) => (
-                  <tr key={r.id} className="border-b border-border/60 last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60">
+                  <tr
+                    key={r.id}
+                    className="border-b border-border/60 last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60"
+                  >
                     <td className="px-5 py-3 font-mono text-[11px] text-fg-muted">{r.id}</td>
                     <td className="px-5 py-3 font-medium text-fg">{r.name}</td>
                     <td className="px-5 py-3">
@@ -95,7 +100,9 @@ function AdminSourcesPage() {
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </td>
-                    <td className="px-5 py-3 tabular-nums text-body-sm text-fg">{r.rateLimitRps}</td>
+                    <td className="px-5 py-3 tabular-nums text-body-sm text-fg">
+                      {r.rateLimitRps}
+                    </td>
                     <td className="px-5 py-3">
                       <StatusDot enabled={r.isActive} />
                     </td>
@@ -135,9 +142,7 @@ function AdminSourcesPage() {
 function StatusDot({ enabled }: { enabled: boolean }) {
   return (
     <span
-      className={`inline-block h-2 w-2 rounded-full ${
-        enabled ? 'bg-positive' : 'bg-bg-subtle'
-      }`}
+      className={`inline-block h-2 w-2 rounded-full ${enabled ? 'bg-positive' : 'bg-bg-subtle'}`}
       aria-label={enabled ? 'Đang bật' : 'Đã tắt'}
     />
   );

@@ -1,5 +1,5 @@
-import { Eye } from 'lucide-react';
 import { formatCompact } from '@/lib/format';
+import { Eye } from 'lucide-react';
 // Re-export for back-compat — consumers that imported formatCompact from here continue to work.
 export { formatCompact } from '@/lib/format';
 

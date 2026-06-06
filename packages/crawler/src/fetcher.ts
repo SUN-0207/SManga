@@ -1,5 +1,5 @@
-import { request } from 'undici';
 import { FetchError, RateLimitError } from '@smanga/shared';
+import { request } from 'undici';
 import { logger } from './logger.ts';
 
 export interface FetchOptions {
@@ -19,7 +19,7 @@ export async function fetchHtml(url: string, opts: FetchOptions = {}): Promise<s
   const timeoutMs = opts.timeoutMs ?? 15_000;
   logger.debug({ url }, 'fetching html');
 
-  let res;
+  let res: Awaited<ReturnType<typeof request>>;
   try {
     res = await request(url, {
       method: 'GET',
@@ -40,10 +40,13 @@ export async function fetchHtml(url: string, opts: FetchOptions = {}): Promise<s
   return await res.body.text();
 }
 
-export async function fetchBytes(url: string, opts: FetchOptions = {}): Promise<{ bytes: Buffer; contentType: string }> {
+export async function fetchBytes(
+  url: string,
+  opts: FetchOptions = {},
+): Promise<{ bytes: Buffer; contentType: string }> {
   const ua = opts.userAgent ?? DEFAULT_UA;
   const timeoutMs = opts.timeoutMs ?? 15_000;
-  let res;
+  let res: Awaited<ReturnType<typeof request>>;
   try {
     res = await request(url, {
       method: 'GET',

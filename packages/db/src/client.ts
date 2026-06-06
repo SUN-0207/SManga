@@ -8,4 +8,3 @@ export function createDb(connectionString: string) {
   const queryClient = postgres(connectionString, { max: 10 });
   return drizzle(queryClient, { schema });
 }
-

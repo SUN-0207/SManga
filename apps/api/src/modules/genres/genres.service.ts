@@ -1,7 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { sql } from 'drizzle-orm';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Database } from '@smanga/db';
+import { sql } from 'drizzle-orm';
 
 const rowsOf = <T>(r: unknown): T[] =>
   Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);

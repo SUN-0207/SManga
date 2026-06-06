@@ -21,7 +21,10 @@ const config: Config = {
         'accent-strong': 'var(--accent-strong)',
         border: 'var(--border)',
         'border-strong': 'var(--border-strong)',
-        destructive: { DEFAULT: 'var(--destructive)', foreground: 'var(--destructive-foreground, #FFFFFF)' },
+        destructive: {
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground, #FFFFFF)',
+        },
         positive: 'var(--positive)',
         // shadcn aliases preserved
         background: 'var(--bg)',

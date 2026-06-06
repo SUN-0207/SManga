@@ -1,12 +1,12 @@
-import * as cheerio from 'cheerio';
 import {
-  ParserError,
   type CatalogPage,
   type ChapterContent,
   type ChapterRef,
+  ParserError,
   type StoryListItem,
   type StoryMetadata,
 } from '@smanga/shared';
+import * as cheerio from 'cheerio';
 
 function extractSlug(url: string): string {
   const u = new URL(url);
@@ -154,11 +154,7 @@ export function parseChapterListHtml(
  * `<div class="row" itemtype="schema.org/Book">` rows under
  * `.list-truyen` / `#list-page`.
  */
-export function parseCatalogListingHtml(
-  html: string,
-  baseUrl: string,
-  page: number,
-): CatalogPage {
+export function parseCatalogListingHtml(html: string, baseUrl: string, page: number): CatalogPage {
   const $ = cheerio.load(html);
   const items: StoryListItem[] = [];
 
@@ -179,8 +175,7 @@ export function parseCatalogListingHtml(
 
     // Cover: lazyimg div carries thumb in data-image (small) + data-desk-image (larger)
     const lazy = row.find('div.lazyimg').first();
-    const rawCover =
-      lazy.attr('data-desk-image') ?? lazy.attr('data-image') ?? null;
+    const rawCover = lazy.attr('data-desk-image') ?? lazy.attr('data-image') ?? null;
     const coverThumbUrl = rawCover ? new URL(rawCover, baseUrl).toString() : null;
 
     // Status badge: <span class="label-title label-new"> etc.

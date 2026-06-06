@@ -1,16 +1,16 @@
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { Inject, Logger } from '@nestjs/common';
-import type { Job, Queue } from 'bull';
-import { importStory, importStoryMetadata } from '@smanga/crawler';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import {
+  type DiscoverChaptersJobData,
+  type ImportStoryJobData,
   JOB_DISCOVER_CHAPTERS,
   JOB_IMPORT_STORY,
   QUEUE_CRAWLER,
-  type DiscoverChaptersJobData,
-  type ImportStoryJobData,
 } from '@/modules/queue/queue.constants';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Inject, Logger } from '@nestjs/common';
+import { importStory, importStoryMetadata } from '@smanga/crawler';
+import type { Database } from '@smanga/db';
+import type { Job, Queue } from 'bull';
 
 @Processor(QUEUE_CRAWLER)
 export class ImportStoryProcessor {

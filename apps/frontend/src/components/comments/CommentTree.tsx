@@ -35,11 +35,7 @@ export function CommentTree({ comment: c, participants, onMutated }: Props) {
         </DeletedCommentItem>
       ) : (
         <>
-          <CommentItem
-            comment={c}
-            participants={participants}
-            onMutated={onMutated}
-          />
+          <CommentItem comment={c} participants={participants} onMutated={onMutated} />
           {c.replies.length > 0 && (
             <div className={`space-y-4 border-l-2 border-border/40 ${indentClass(c.depth + 1)}`}>
               {c.replies.map((reply) => (

@@ -1,9 +1,9 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { StatsService } from './stats.service';
-import { ReadingEtaDto } from './dto/reading-eta.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { ReadingEtaDto } from './dto/reading-eta.dto';
+import type { StatsService } from './stats.service';
 
 @ApiTags('stats')
 @Controller({ path: 'me/stats', version: '1' })

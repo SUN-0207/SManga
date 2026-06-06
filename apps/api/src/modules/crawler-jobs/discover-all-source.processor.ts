@@ -1,17 +1,17 @@
 // apps/api/src/modules/crawler-jobs/discover-all-source.processor.ts
 
-import { Process, Processor } from '@nestjs/bull';
-import { BadRequestException, ConflictException, Inject, Logger } from '@nestjs/common';
-import type { Job } from 'bull';
-import { browseCatalog, getAdapter } from '@smanga/crawler';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import {
+  type DiscoverAllSourceJobData,
   JOB_DISCOVER_ALL_SOURCE,
   QUEUE_CRAWLER,
-  type DiscoverAllSourceJobData,
 } from '@/modules/queue/queue.constants';
-import { StoriesService } from '@/modules/stories/stories.service';
+import type { StoriesService } from '@/modules/stories/stories.service';
+import { Process, Processor } from '@nestjs/bull';
+import { BadRequestException, ConflictException, Inject, Logger } from '@nestjs/common';
+import { browseCatalog, getAdapter } from '@smanga/crawler';
+import type { Database } from '@smanga/db';
+import type { Job } from 'bull';
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -27,7 +27,9 @@ export class DiscoverAllSourceProcessor {
   ) {}
 
   @Process(JOB_DISCOVER_ALL_SOURCE)
-  async handle(job: Job<DiscoverAllSourceJobData>): Promise<{ totalQueued: number; pagesCrawled: number }> {
+  async handle(
+    job: Job<DiscoverAllSourceJobData>,
+  ): Promise<{ totalQueued: number; pagesCrawled: number }> {
     const { sourceId, feedId, autoCrawl, requestedBy } = job.data;
     this.logger.log(
       `discover-all-source start ${job.id} source=${sourceId} feed=${feedId} autoCrawl=${autoCrawl}`,
@@ -57,7 +59,9 @@ export class DiscoverAllSourceProcessor {
           // BadRequestException = hostname not registered in adapter registry — skip this
           // story URL silently rather than failing the whole job.
           if (err instanceof ConflictException || err instanceof BadRequestException) {
-            this.logger.log(`discover-all-source skip url=${item.externalUrl} reason=${(err as Error).message}`);
+            this.logger.log(
+              `discover-all-source skip url=${item.externalUrl} reason=${(err as Error).message}`,
+            );
             continue;
           }
           // Any other error (DB down, network failure, etc.) surfaces as job failure.

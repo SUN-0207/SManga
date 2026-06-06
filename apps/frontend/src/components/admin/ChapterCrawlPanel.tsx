@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import type { DiscoveryStatus } from '@/api/discover';
+import { api } from '@/lib/api-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, CheckCircle2, Download, RefreshCw, ScanSearch } from 'lucide-react';
-import { api } from '@/lib/api-client';
-import type { DiscoveryStatus } from '@/api/discover';
+import { useState } from 'react';
 
 interface CrawlResult {
   enqueued: number;

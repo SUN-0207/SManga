@@ -1,3 +1,6 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import {
   Body,
   Controller,
@@ -12,11 +15,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { SourcesService } from './sources.service';
-import { CreateSourceDto, DiscoverAllSourceDto, UpdateSourceDto } from './dto/create-source.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type {
+  CreateSourceDto,
+  DiscoverAllSourceDto,
+  UpdateSourceDto,
+} from './dto/create-source.dto';
+import type { SourcesService } from './sources.service';
 
 @ApiTags('sources')
 @Controller({ path: 'sources', version: '1' })

@@ -1,8 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { and, count, eq, gt, sql, sum } from 'drizzle-orm';
-import { bookmark, readingProgress, story } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Database } from '@smanga/db';
+import { bookmark, readingProgress, story } from '@smanga/db/schema';
+import { and, count, eq, gt, sql, sum } from 'drizzle-orm';
 
 /** Average words per Vietnamese web-novel chapter (heuristic). */
 const WORDS_PER_CHAPTER = 1500;
@@ -61,10 +61,7 @@ export class StatsService {
         .select({ value: count() })
         .from(readingProgress)
         .where(eq(readingProgress.userId, userId)),
-      this.db
-        .select({ value: count() })
-        .from(bookmark)
-        .where(eq(bookmark.userId, userId)),
+      this.db.select({ value: count() }).from(bookmark).where(eq(bookmark.userId, userId)),
       this.db
         .select({ value: count() })
         .from(readingProgress)
@@ -115,8 +112,9 @@ export class StatsService {
       this.computeStreak(userId),
     ]);
 
-    const dailyChaptersLast7 = rowsOf<{ day: string; chapters: number }>(dailyRows)
-      .map((r) => Number(r.chapters));
+    const dailyChaptersLast7 = rowsOf<{ day: string; chapters: number }>(dailyRows).map((r) =>
+      Number(r.chapters),
+    );
 
     const totalSeconds = Number(weeklySecondsRows[0]?.total ?? 0);
     const weeklyHours = Math.round((totalSeconds / 3600) * 10) / 10;

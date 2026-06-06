@@ -1,10 +1,10 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { UsersService } from './users.service';
-import { UpdateRoleDto } from './dto/update-role.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { UpdateRoleDto } from './dto/update-role.dto';
+import type { UsersService } from './users.service';
 
 @ApiTags('admin/users')
 @Controller({ path: 'admin/users', version: '1' })
@@ -14,11 +14,7 @@ export class UsersController {
   constructor(private readonly users: UsersService) {}
 
   @Get()
-  list(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('q') q?: string,
-  ) {
+  list(@Query('page') page?: string, @Query('limit') limit?: string, @Query('q') q?: string) {
     return this.users.list({
       page: Number(page) || 1,
       limit: Number(limit) || 25,

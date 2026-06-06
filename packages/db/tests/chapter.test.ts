@@ -13,7 +13,7 @@ describe('chapter schema', () => {
 
     const payload = Buffer.from('Hello, gzipped text would go here');
     await db.insert(chapter).values({
-      storyId: s!.id,
+      storyId: s?.id,
       index: '1',
       title: 'Chương 1',
       sourceId: 'tf-ch',
@@ -23,7 +23,7 @@ describe('chapter schema', () => {
       status: 'crawled',
     });
 
-    const rows = await db.select().from(chapter).where(eq(chapter.storyId, s!.id));
+    const rows = await db.select().from(chapter).where(eq(chapter.storyId, s?.id));
     expect(rows).toHaveLength(1);
     expect(rows[0]?.contentText?.toString()).toContain('Hello');
   });
@@ -36,7 +36,7 @@ describe('chapter schema', () => {
     const [s] = await db.insert(story).values({ slug: 'ch-s-2', title: 'Ch S 2' }).returning();
 
     await db.insert(chapter).values({
-      storyId: s!.id,
+      storyId: s?.id,
       index: '1',
       title: 'Chương 1',
       sourceId: 'tf-dup',
@@ -45,7 +45,7 @@ describe('chapter schema', () => {
 
     await expect(
       db.insert(chapter).values({
-        storyId: s!.id,
+        storyId: s?.id,
         index: '1',
         title: 'Chương 1 dup',
         sourceId: 'tf-dup',

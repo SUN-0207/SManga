@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
-import { BookText, Check, ExternalLink, Loader2 } from 'lucide-react';
 import type { DiscoverItem } from '@/api/discover';
 import { useDiscoverImportStore } from '@/stores/discover-import-store';
+import { BookText, Check, ExternalLink, Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
 import { StubBadge } from './StubBadge';
 
 const STATUS_TONE: Record<string, string> = {
@@ -12,7 +12,7 @@ const STATUS_TONE: Record<string, string> = {
   // Legacy labels from external sources
   Full: 'bg-fg text-bg',
   Hot: 'bg-accent/15 text-accent border-accent/30',
-  'Mới': 'bg-accent/15 text-accent border-accent/30',
+  Mới: 'bg-accent/15 text-accent border-accent/30',
 };
 
 export function DiscoverTable({
@@ -39,8 +39,7 @@ export function DiscoverTable({
 
   const allVisibleSelected =
     selectableUrls.length > 0 && selectableUrls.every((u) => selected.has(u));
-  const someVisibleSelected =
-    selectableUrls.some((u) => selected.has(u)) && !allVisibleSelected;
+  const someVisibleSelected = selectableUrls.some((u) => selected.has(u)) && !allVisibleSelected;
 
   function onHeaderToggle() {
     if (allVisibleSelected) {
@@ -59,9 +58,7 @@ export function DiscoverTable({
   if (isLoading) {
     return (
       <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
-        <div className="px-5 py-8 text-center text-body-sm text-fg-muted">
-          Đang tải catalog...
-        </div>
+        <div className="px-5 py-8 text-center text-body-sm text-fg-muted">Đang tải catalog...</div>
       </div>
     );
   }
@@ -71,9 +68,7 @@ export function DiscoverTable({
       <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
         <div className="px-5 py-12 text-center">
           <p className="font-sans text-heading-md text-fg mb-1">Không có kết quả</p>
-          <p className="text-body-sm text-fg-muted">
-            Thử feed khác hoặc thay từ khóa tìm kiếm.
-          </p>
+          <p className="text-body-sm text-fg-muted">Thử feed khác hoặc thay từ khóa tìm kiếm.</p>
         </div>
       </div>
     );
@@ -117,7 +112,13 @@ export function DiscoverTable({
           </thead>
           <tbody>
             {items.map((it) => (
-              <Row key={it.externalUrl} item={it} selected={selected.has(it.externalUrl)} importing={importing.has(it.externalUrl)} onToggle={() => toggle(it.externalUrl)} />
+              <Row
+                key={it.externalUrl}
+                item={it}
+                selected={selected.has(it.externalUrl)}
+                importing={importing.has(it.externalUrl)}
+                onToggle={() => toggle(it.externalUrl)}
+              />
             ))}
           </tbody>
         </table>
@@ -183,7 +184,9 @@ function Row({
         </div>
       </td>
       <td className="px-3 py-2">
-        <div className="font-medium text-body-sm text-fg leading-snug line-clamp-2">{item.title}</div>
+        <div className="font-medium text-body-sm text-fg leading-snug line-clamp-2">
+          {item.title}
+        </div>
         <a
           href={item.externalUrl}
           target="_blank"

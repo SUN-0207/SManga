@@ -1,14 +1,14 @@
-import { useEffect, useMemo } from 'react';
-import { MessageCircle } from 'lucide-react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { listComments } from '@/api/comments';
 import type { CommentTree as CommentTreeType } from '@/api/comments';
-import { useAuthStore } from '@/stores/auth-store';
-import { CommentTree } from './CommentTree';
-import { CommentForm } from './CommentForm';
-import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Pagination } from '@/components/ui/Pagination';
+import { useAuthStore } from '@/stores/auth-store';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { MessageCircle } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+import { CommentForm } from './CommentForm';
+import { CommentTree } from './CommentTree';
 
 interface Props {
   targetType: 'story' | 'chapter';
@@ -30,7 +30,12 @@ function collectParticipants(nodes: CommentTreeType[]): { id: string; name: stri
   return [...map.entries()].map(([id, name]) => ({ id, name }));
 }
 
-export function CommentSection({ targetType, targetId, slug: _slug, chapterIndex: _chapterIndex }: Props) {
+export function CommentSection({
+  targetType,
+  targetId,
+  slug: _slug,
+  chapterIndex: _chapterIndex,
+}: Props) {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
 
@@ -131,7 +136,10 @@ export function CommentSection({ targetType, targetId, slug: _slug, chapterIndex
               // Build URL with commentsPage param without disturbing existing search params
               const url = new URL(window.location.href);
               url.searchParams.set('commentsPage', String(p));
-              void navigate({ to: url.pathname, search: Object.fromEntries(url.searchParams) as Record<string, string> });
+              void navigate({
+                to: url.pathname,
+                search: Object.fromEntries(url.searchParams) as Record<string, string>,
+              });
             }}
           />
         </div>

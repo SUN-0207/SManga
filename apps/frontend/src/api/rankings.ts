@@ -44,6 +44,8 @@ export const rankingsApi = {
 
   /** Mới hoàn thành — status='completed', ordered by updated_at DESC, paginated. */
   completed(page = 1, limit = 50): Promise<RankPage> {
-    return api.get<RankPage>('/rankings/completed', { params: { page, limit } }).then((r) => r.data);
+    return api
+      .get<RankPage>('/rankings/completed', { params: { page, limit } })
+      .then((r) => r.data);
   },
 };

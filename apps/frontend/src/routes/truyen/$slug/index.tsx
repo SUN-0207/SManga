@@ -1,14 +1,14 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
 import { getStoryBySlug, listChapters } from '@/api/stories';
-import { ChapterList } from '@/components/reader/ChapterList';
-import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
-import { ReadingInsights } from '@/components/reader/ReadingInsights';
-import { useTrackStoryView } from '@/hooks/use-track-view';
-import { RatingControl }     from '@/components/engagement/RatingControl';
-import { ViewCount }         from '@/components/engagement/ViewCount';
 import { CommentSection } from '@/components/comments/CommentSection';
+import { RatingControl } from '@/components/engagement/RatingControl';
+import { ViewCount } from '@/components/engagement/ViewCount';
+import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
+import { ChapterList } from '@/components/reader/ChapterList';
+import { ReadingInsights } from '@/components/reader/ReadingInsights';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
+import { useTrackStoryView } from '@/hooks/use-track-view';
+import { useQuery } from '@tanstack/react-query';
+import { Link, createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/truyen/$slug/')({
   component: StoryDetail,
@@ -43,11 +43,7 @@ function StoryDetail() {
   useTrackStoryView(storyQ.data?.id);
 
   if (storyQ.isLoading) {
-    return (
-      <div className="container py-20 text-center text-muted-foreground">
-        Đang tải...
-      </div>
-    );
+    return <div className="container py-20 text-center text-muted-foreground">Đang tải...</div>;
   }
   if (!storyQ.data) {
     return (
@@ -86,7 +82,11 @@ function StoryDetail() {
           {/* Cover */}
           <div className="relative aspect-[3/4] w-full max-w-[240px] rounded-lg overflow-hidden border border-border-strong shadow-elev">
             {s.hasCover ? (
-              <img src={`/api/v1/cover/${s.id}`} alt={`Bìa ${s.title}`} className="w-full h-full object-cover" />
+              <img
+                src={`/api/v1/cover/${s.id}`}
+                alt={`Bìa ${s.title}`}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="w-full h-full bg-accent-gradient" />
             )}
@@ -95,12 +95,15 @@ function StoryDetail() {
           <div>
             {s.featured && (
               <p className="text-label text-accent uppercase mb-3 inline-flex items-center gap-1.5">
-                <span aria-hidden>★</span>{' '}TRUYỆN NỔI BẬT
+                <span aria-hidden>★</span> TRUYỆN NỔI BẬT
               </p>
             )}
-            <h1 className="text-display-sm lg:text-display-md font-prose font-semibold tracking-tight">{s.title}</h1>
+            <h1 className="text-display-sm lg:text-display-md font-prose font-semibold tracking-tight">
+              {s.title}
+            </h1>
             <p className="mt-3 text-body text-fg-muted">
-              {s.author ?? 'Khuyết danh'} · {s.totalChapters} chương · {STATUS_LABEL[s.status] ?? s.status}
+              {s.author ?? 'Khuyết danh'} · {s.totalChapters} chương ·{' '}
+              {STATUS_LABEL[s.status] ?? s.status}
             </p>
             {/* Plan D: rating stars + view counter */}
             <div className="mt-4 flex flex-wrap items-center gap-4">
@@ -110,14 +113,15 @@ function StoryDetail() {
                 ratingAvg={s.ratingAvg ?? null}
                 ratingCount={s.ratingCount}
               />
-              {s.viewCount > 0 && (
-                <ViewCount count={s.viewCount} label="lượt xem" />
-              )}
+              {s.viewCount > 0 && <ViewCount count={s.viewCount} label="lượt xem" />}
             </div>
             {s.genres && s.genres.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {s.genres.map((g) => (
-                  <span key={g.slug} className="inline-flex items-center h-7 px-3 rounded-full text-body-sm bg-bg-subtle border border-border">
+                  <span
+                    key={g.slug}
+                    className="inline-flex items-center h-7 px-3 rounded-full text-body-sm bg-bg-subtle border border-border"
+                  >
                     {g.name}
                   </span>
                 ))}
@@ -175,11 +179,7 @@ function StoryDetail() {
 
       <RecommendationSection kind="similar" storyId={s.id} />
 
-      <CommentSection
-        targetType="story"
-        targetId={s.id}
-        slug={s.slug}
-      />
+      <CommentSection targetType="story" targetId={s.id} slug={s.slug} />
     </div>
   );
 }

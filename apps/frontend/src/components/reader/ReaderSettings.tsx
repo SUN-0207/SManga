@@ -1,42 +1,41 @@
-// apps/frontend/src/components/reader/ReaderSettings.tsx
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { RotateCcw } from "lucide-react";
 import {
-  useReaderPrefs,
-  type ReaderTheme,
-  type ReaderFontSize,
   type ReaderFontFamily,
-} from "@/stores/reader-prefs-store";
+  type ReaderFontSize,
+  type ReaderTheme,
+  useReaderPrefs,
+} from '@/stores/reader-prefs-store';
+import { RotateCcw } from 'lucide-react';
+// apps/frontend/src/components/reader/ReaderSettings.tsx
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 // Animation: per Spec B risk-mitigation, we use CSS-only sliding pill
 // (NOT View Transitions API) for Firefox compat + simplicity. See plan Task 5.
 
 const THEMES = [
-  { value: "light", label: "Sáng" },
-  { value: "dark", label: "Tối" },
-  { value: "system", label: "Hệ thống" },
+  { value: 'light', label: 'Sáng' },
+  { value: 'dark', label: 'Tối' },
+  { value: 'system', label: 'Hệ thống' },
 ] as const satisfies readonly { value: ReaderTheme; label: string }[];
 
 const FONT_SIZES = [
-  { value: "15", label: "Nhỏ" },
-  { value: "18", label: "Vừa" },
-  { value: "20", label: "To" },
-  { value: "24", label: "Rất to" },
+  { value: '15', label: 'Nhỏ' },
+  { value: '18', label: 'Vừa' },
+  { value: '20', label: 'To' },
+  { value: '24', label: 'Rất to' },
 ] as const satisfies readonly { value: ReaderFontSize; label: string }[];
 
 const FONT_FAMILIES = [
-  { value: "serif", label: "Serif" },
-  { value: "sans", label: "Sans" },
-  { value: "mono", label: "Mono" },
+  { value: 'serif', label: 'Serif' },
+  { value: 'sans', label: 'Sans' },
+  { value: 'mono', label: 'Mono' },
 ] as const satisfies readonly { value: ReaderFontFamily; label: string }[];
 
-const DEFAULT_THEME: ReaderTheme = "light";
-const DEFAULT_SIZE: ReaderFontSize = "18";
-const DEFAULT_FAMILY: ReaderFontFamily = "serif";
+const DEFAULT_THEME: ReaderTheme = 'light';
+const DEFAULT_SIZE: ReaderFontSize = '18';
+const DEFAULT_FAMILY: ReaderFontFamily = 'serif';
 
 export function ReaderSettings() {
-  const { theme, fontSize, fontFamily, setTheme, setFontSize, setFontFamily } =
-    useReaderPrefs();
+  const { theme, fontSize, fontFamily, setTheme, setFontSize, setFontFamily } = useReaderPrefs();
 
   // Local reset helper — the store does NOT export a `reset` action.
   // Could be promoted to the store later if needed elsewhere (out of scope here).
@@ -52,19 +51,11 @@ export function ReaderSettings() {
   return (
     <div className="space-y-7">
       <Field label="Giao diện">
-        <SegmentedControl
-          value={theme}
-          options={THEMES}
-          onChange={(v) => setTheme(v)}
-        />
+        <SegmentedControl value={theme} options={THEMES} onChange={(v) => setTheme(v)} />
       </Field>
 
       <Field label="Cỡ chữ">
-        <SegmentedControl
-          value={fontSize}
-          options={FONT_SIZES}
-          onChange={(v) => setFontSize(v)}
-        />
+        <SegmentedControl value={fontSize} options={FONT_SIZES} onChange={(v) => setFontSize(v)} />
       </Field>
 
       <Field label="Phông chữ">
@@ -95,9 +86,7 @@ export function ReaderSettings() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-fg-muted">
-        {label}
-      </p>
+      <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-fg-muted">{label}</p>
       {children}
     </div>
   );
@@ -145,8 +134,8 @@ function SegmentedControl<V extends string>({
         width: btnRect.width,
       });
     };
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
   }, [value, options]);
 
   return (
@@ -178,7 +167,7 @@ function SegmentedControl<V extends string>({
             aria-checked={active}
             onClick={() => onChange(opt.value)}
             className={`relative z-10 flex-1 cursor-pointer rounded-full px-3 py-1.5 text-body-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-              active ? "text-fg" : "text-fg-muted hover:text-fg"
+              active ? 'text-fg' : 'text-fg-muted hover:text-fg'
             }`}
           >
             {opt.label}
@@ -192,7 +181,7 @@ function SegmentedControl<V extends string>({
 function LivePreview() {
   const { fontSize, fontFamily } = useReaderPrefs();
   const fontClass =
-    fontFamily === "serif" ? "font-prose" : fontFamily === "sans" ? "font-sans" : "font-mono";
+    fontFamily === 'serif' ? 'font-prose' : fontFamily === 'sans' ? 'font-sans' : 'font-mono';
 
   return (
     <div className="space-y-2">
@@ -200,10 +189,7 @@ function LivePreview() {
         Bản xem trước
       </p>
       <div className="rounded-lg border border-border bg-bg p-4">
-        <p
-          className={`${fontClass} leading-relaxed text-fg`}
-          style={{ fontSize: `${fontSize}px` }}
-        >
+        <p className={`${fontClass} leading-relaxed text-fg`} style={{ fontSize: `${fontSize}px` }}>
           Nàng đặt cuốn sách xuống, nhìn ra ngoài cửa sổ.
           <br />
           Phố Hà Nội mùa thu, lá vàng rơi trên những con đường cũ.

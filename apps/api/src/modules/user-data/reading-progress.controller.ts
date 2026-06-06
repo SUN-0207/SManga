@@ -1,12 +1,22 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put, Res, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Put,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
-import { ReadingProgressService } from './reading-progress.service';
-import { ReadingProgressDto } from './dto/reading-progress.dto';
-import { SessionSecondsDto } from './dto/session-seconds.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { ReadingProgressDto } from './dto/reading-progress.dto';
+import type { SessionSecondsDto } from './dto/session-seconds.dto';
+import type { ReadingProgressService } from './reading-progress.service';
 
 @ApiTags('reading-progress')
 @Controller({ path: 'me/reading-progress', version: '1' })

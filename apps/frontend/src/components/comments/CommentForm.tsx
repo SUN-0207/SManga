@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react';
 import { createComment, updateComment } from '@/api/comments';
 import type { CommentTree } from '@/api/comments';
 import type { Participant } from '@/hooks/use-mention-autocomplete';
 import { useMentionAutocomplete } from '@/hooks/use-mention-autocomplete';
+import { useRef, useState } from 'react';
 
 interface Props {
   targetType: 'story' | 'chapter';
@@ -18,7 +18,17 @@ interface Props {
   autoFocus?: boolean;
 }
 
-export function CommentForm({ targetType, targetId, parentId, editCommentId, initialBody, participants, onSuccess, onCancel, autoFocus }: Props) {
+export function CommentForm({
+  targetType,
+  targetId,
+  parentId,
+  editCommentId,
+  initialBody,
+  participants,
+  onSuccess,
+  onCancel,
+  autoFocus,
+}: Props) {
   const [body, setBody] = useState(initialBody ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -45,9 +55,11 @@ export function CommentForm({ targetType, targetId, parentId, editCommentId, ini
       if (!editCommentId) setBody('');
       onSuccess(result);
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number; headers?: Record<string, string> } })?.response?.status;
+      const status = (err as { response?: { status?: number; headers?: Record<string, string> } })
+        ?.response?.status;
       if (status === 429) {
-        const retryAfter = (err as { response?: { headers?: Record<string, string> } })?.response?.headers?.['retry-after'];
+        const retryAfter = (err as { response?: { headers?: Record<string, string> } })?.response
+          ?.headers?.['retry-after'];
         const minutes = retryAfter ? Math.ceil(Number(retryAfter) / 60) : 60;
         setErrorMsg(`Bạn bình luận quá nhanh — thử lại sau ${minutes} phút`);
       } else {
@@ -64,7 +76,6 @@ export function CommentForm({ targetType, targetId, parentId, editCommentId, ini
         <textarea
           ref={textareaRef}
           value={body}
-          autoFocus={autoFocus}
           maxLength={2000}
           placeholder="Viết bình luận..."
           rows={3}
@@ -76,13 +87,18 @@ export function CommentForm({ targetType, targetId, parentId, editCommentId, ini
           }}
           onKeyDown={(e) => {
             const consumed = onKeyDown(e);
-            if (consumed) { e.preventDefault(); e.stopPropagation(); }
+            if (consumed) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
           }}
         />
 
         {/* Character counter shown when >1500 */}
         {body.length > 1500 && (
-          <span className={`absolute bottom-2 right-2 text-[11px] ${body.length >= 2000 ? 'text-destructive' : 'text-fg-muted'}`}>
+          <span
+            className={`absolute bottom-2 right-2 text-[11px] ${body.length >= 2000 ? 'text-destructive' : 'text-fg-muted'}`}
+          >
             {body.length}/2000
           </span>
         )}
@@ -90,14 +106,12 @@ export function CommentForm({ targetType, targetId, parentId, editCommentId, ini
         {/* Mention autocomplete popup */}
         {active && (
           <ul
-            role="listbox"
             className="absolute left-0 z-50 mt-1 w-56 rounded-lg border border-border bg-bg-elevated shadow-elev overflow-hidden"
             style={{ top: '100%' }}
           >
             {suggestions.map((s, i) => (
               <li
                 key={s.id}
-                role="option"
                 aria-selected={i === selectedIndex}
                 className={`px-3 py-2 text-body-sm cursor-pointer transition-colors duration-fast ${
                   i === selectedIndex ? 'bg-accent/10 text-accent' : 'text-fg hover:bg-bg-subtle'

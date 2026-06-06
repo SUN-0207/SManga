@@ -1,8 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
-import { bookmark, rating, story } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Database } from '@smanga/db';
+import { bookmark, rating, story } from '@smanga/db/schema';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 
 @Injectable()
 export class BookmarksService {

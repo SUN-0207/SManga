@@ -1,16 +1,16 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bull';
 import { gunzipSync } from 'node:zlib';
-import { and, asc, desc, eq, gt, inArray, lt } from 'drizzle-orm';
-import type { Queue } from 'bull';
-import { chapter, story } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import {
+  type FetchChapterJobData,
   JOB_FETCH_CHAPTER,
   QUEUE_CRAWLER,
-  type FetchChapterJobData,
 } from '@/modules/queue/queue.constants';
+import { InjectQueue } from '@nestjs/bull';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import type { Database } from '@smanga/db';
+import { chapter, story } from '@smanga/db/schema';
+import type { Queue } from 'bull';
+import { and, asc, desc, eq, gt, inArray, lt } from 'drizzle-orm';
 import type { CrawlChaptersDto } from './dto/crawl.dto';
 
 @Injectable()
@@ -71,10 +71,10 @@ export class ChaptersService {
         totalChapters: row.storyTotalChapters,
       },
       chapter: {
-        id:        row.chapterId,          // UUID string — used by useTrackChapterView
-        index:     Number(row.index),
-        title:     row.title,
-        content:   text,
+        id: row.chapterId, // UUID string — used by useTrackChapterView
+        index: Number(row.index),
+        title: row.title,
+        content: text,
         isCrawled: row.status === 'crawled' && text !== null,
         viewCount: Number(row.chapterViewCount ?? 0),
       },
@@ -99,8 +99,7 @@ export class ChaptersService {
     }
     if (storyRow.discoveryStatus !== 'complete') {
       throw new BadRequestException(
-        `chapter list not yet discovered for this story (discovery_status=${storyRow.discoveryStatus}). ` +
-          'POST /stories/:id/discover first.',
+        `chapter list not yet discovered for this story (discovery_status=${storyRow.discoveryStatus}). POST /stories/:id/discover first.`,
       );
     }
 

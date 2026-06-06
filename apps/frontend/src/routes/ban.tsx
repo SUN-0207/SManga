@@ -1,9 +1,9 @@
-import { createFileRoute, redirect, Link } from '@tanstack/react-router';
-import { Library, User as UserIcon, Settings as SettingsIcon, LogOut } from 'lucide-react';
-import { me, logout as logoutApi } from '@/api/auth';
+import { logout as logoutApi, me } from '@/api/auth';
+import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
 import { useAuthStore } from '@/stores/auth-store';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
-import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
+import { Link, createFileRoute, redirect } from '@tanstack/react-router';
+import { Library, LogOut, Settings as SettingsIcon, User as UserIcon } from 'lucide-react';
 
 export const Route = createFileRoute('/ban')({
   beforeLoad: async () => {
@@ -19,7 +19,11 @@ function BanPage() {
   const setSettingsOpen = useReaderPrefs((s) => s.setSettingsOpen);
 
   async function handleLogout() {
-    try { await logoutApi(); } catch { /* force-reset below */ }
+    try {
+      await logoutApi();
+    } catch {
+      /* force-reset below */
+    }
     useAuthStore.getState().setUser(null);
     window.location.href = '/';
   }
@@ -29,21 +33,21 @@ function BanPage() {
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-14 space-y-8">
       <header className="space-y-2">
-        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fg-muted">
-          CỦA BẠN
-        </p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fg-muted">CỦA BẠN</p>
         <div className="flex items-center gap-4">
           {user.image ? (
-            <img src={user.image} alt="" className="h-12 w-12 rounded-full object-cover border border-border" />
+            <img
+              src={user.image}
+              alt=""
+              className="h-12 w-12 rounded-full object-cover border border-border"
+            />
           ) : (
             <span className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-accent-gradient text-white text-heading-md font-bold">
               {fallbackInitial}
             </span>
           )}
           <div>
-            <h1 className="font-sans text-display-sm text-fg">
-              {user.name ?? user.email}
-            </h1>
+            <h1 className="font-sans text-display-sm text-fg">{user.name ?? user.email}</h1>
             <p className="text-body-sm text-fg-muted">{user.email}</p>
           </div>
         </div>

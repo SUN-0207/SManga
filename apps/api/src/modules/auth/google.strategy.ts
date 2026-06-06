@@ -1,9 +1,14 @@
-import { ExecutionContext, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
-import { AuthGuard, PassportStrategy } from '@nestjs/passport';
-import { Strategy, type Profile, type StrategyOptions } from 'passport-google-oauth20';
-import type { Request } from 'express';
-import { AuthService } from './auth.service';
 import { loadEnv } from '@/config/env';
+import {
+  type ExecutionContext,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { AuthGuard, PassportStrategy } from '@nestjs/passport';
+import type { Request } from 'express';
+import { type Profile, Strategy, type StrategyOptions } from 'passport-google-oauth20';
+import type { AuthService } from './auth.service';
 
 export const GOOGLE_STRATEGY_NAME = 'google';
 

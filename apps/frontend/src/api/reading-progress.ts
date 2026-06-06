@@ -11,8 +11,7 @@ export interface ReadingProgressRow {
 }
 
 export const readingProgressApi = {
-  list: () =>
-    api.get<ReadingProgressRow[]>('/me/reading-progress').then((r) => r.data),
+  list: () => api.get<ReadingProgressRow[]>('/me/reading-progress').then((r) => r.data),
   upsert: (storyId: string, chapterIndex: number) =>
     api.put('/me/reading-progress', { storyId, chapterIndex }).then((r) => r.data),
   postSession: (storyId: string, chapterIndex: string, seconds: number) =>

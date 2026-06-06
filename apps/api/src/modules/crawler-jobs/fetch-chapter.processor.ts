@@ -1,14 +1,14 @@
-import { Process, Processor } from '@nestjs/bull';
-import { Inject, Logger } from '@nestjs/common';
-import type { Job } from 'bull';
-import { fetchChapterById } from '@smanga/crawler';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import {
+  type FetchChapterJobData,
   JOB_FETCH_CHAPTER,
   QUEUE_CRAWLER,
-  type FetchChapterJobData,
 } from '@/modules/queue/queue.constants';
+import { Process, Processor } from '@nestjs/bull';
+import { Inject, Logger } from '@nestjs/common';
+import { fetchChapterById } from '@smanga/crawler';
+import type { Database } from '@smanga/db';
+import type { Job } from 'bull';
 
 @Processor(QUEUE_CRAWLER)
 export class FetchChapterProcessor {

@@ -1,7 +1,7 @@
+import { RatingStars } from '@/components/engagement/RatingStars';
+import { ViewCount } from '@/components/engagement/ViewCount';
 import { Link } from '@tanstack/react-router';
 import { BookText } from 'lucide-react';
-import { RatingStars } from '@/components/engagement/RatingStars';
-import { ViewCount }   from '@/components/engagement/ViewCount';
 
 export interface StoryCardProps {
   id: string;
@@ -12,9 +12,9 @@ export interface StoryCardProps {
   totalChapters: number;
   hasCover: boolean;
   /** Plan D: optional — zero/absent on cards passed from callers not yet updated */
-  ratingAvg?:    number | null;
-  ratingCount?:  number;
-  viewCount?:    number;
+  ratingAvg?: number | null;
+  ratingCount?: number;
+  viewCount?: number;
 }
 
 const STATUS_LABEL: Record<StoryCardProps['status'], string> = {
@@ -25,10 +25,10 @@ const STATUS_LABEL: Record<StoryCardProps['status'], string> = {
 };
 
 const STATUS_TONE: Record<string, string> = {
-  completed: "bg-fg text-bg",
-  ongoing: "bg-accent text-white",
-  dropped: "bg-bg-subtle text-fg-muted",
-  unknown: "bg-bg-subtle text-fg-muted",
+  completed: 'bg-fg text-bg',
+  ongoing: 'bg-accent text-white',
+  dropped: 'bg-bg-subtle text-fg-muted',
+  unknown: 'bg-bg-subtle text-fg-muted',
 };
 
 export function StoryCard(props: StoryCardProps) {
@@ -73,9 +73,7 @@ export function StoryCard(props: StoryCardProps) {
             {(props.ratingCount ?? 0) > 0 && (
               <RatingStars value={props.ratingAvg ?? null} size="sm" />
             )}
-            {(props.viewCount ?? 0) > 0 && (
-              <ViewCount count={props.viewCount!} />
-            )}
+            {(props.viewCount ?? 0) > 0 && <ViewCount count={props.viewCount!} />}
           </div>
         )}
       </div>

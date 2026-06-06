@@ -1,5 +1,5 @@
-import { Search } from 'lucide-react';
 import type { DiscoverItem } from '@/api/discover';
+import { Search } from 'lucide-react';
 import { DiscoverCard } from './DiscoverCard';
 
 export function DiscoverGrid({

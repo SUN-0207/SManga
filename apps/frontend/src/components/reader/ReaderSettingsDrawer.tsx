@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { X } from 'lucide-react';
-import { ReaderSettings } from './ReaderSettings';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
+import { X } from 'lucide-react';
+import { useEffect } from 'react';
+import { ReaderSettings } from './ReaderSettings';
 
 export function ReaderSettingsDrawer() {
   const open = useReaderPrefs((s) => s.settingsOpen);

@@ -1,7 +1,12 @@
-import { describe, expect, it, beforeEach } from 'vitest';
 import type { SourceAdapter } from '@smanga/shared';
 import { AdapterNotFoundError } from '@smanga/shared';
-import { _resetForTests, getAdapter, registerAdapter, resolveAdapterForUrl } from '../src/registry.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  _resetForTests,
+  getAdapter,
+  registerAdapter,
+  resolveAdapterForUrl,
+} from '../src/registry.js';
 
 const stub: SourceAdapter = {
   id: 'stub',
@@ -11,7 +16,13 @@ const stub: SourceAdapter = {
   requiresJs: false,
   rateLimit: { rps: 1 },
   parseStoryFromUrl: async () => ({
-    externalId: 'x', title: 'x', author: null, description: '', coverUrl: null, genres: [], status: 'unknown',
+    externalId: 'x',
+    title: 'x',
+    author: null,
+    description: '',
+    coverUrl: null,
+    genres: [],
+    status: 'unknown',
   }),
   listChapters: async () => ({ chapters: [], hasNextPage: false }),
   fetchChapterContent: async () => ({ title: '', text: 'x' }),

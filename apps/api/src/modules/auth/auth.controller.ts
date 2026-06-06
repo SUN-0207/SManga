@@ -1,3 +1,6 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
+import { loadEnv } from '@/config/env';
 import {
   Body,
   Controller,
@@ -14,15 +17,12 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import { AuthService } from './auth.service';
-import { ChangePasswordDto } from './dto/change-password.dto';
+import type { AuthService } from './auth.service';
+import type { ChangePasswordDto } from './dto/change-password.dto';
+import type { LoginDto } from './dto/login.dto';
+import type { RegisterDto } from './dto/register.dto';
+import type { UpdateMeDto } from './dto/update-me.dto';
 import { GOOGLE_STRATEGY_NAME, GoogleAuthGuard, isGoogleEnabled } from './google.strategy';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { UpdateMeDto } from './dto/update-me.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { loadEnv } from '@/config/env';
 
 @ApiTags('auth')
 @Controller({ path: 'auth', version: '1' })
@@ -109,7 +109,7 @@ export class AuthController {
     });
     // State carries the post-login redirect path (validated to be a same-origin path).
     const fallback = '/tu-sach';
-    const safeRedirect = state && state.startsWith('/') ? state : fallback;
+    const safeRedirect = state?.startsWith('/') ? state : fallback;
     const frontendBase = loadEnv().FRONTEND_BASE_URL.replace(/\/+$/, '');
     res.redirect(`${frontendBase}${safeRedirect}`);
   }

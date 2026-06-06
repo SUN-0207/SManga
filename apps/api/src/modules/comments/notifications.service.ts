@@ -1,7 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { sql } from 'drizzle-orm';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Database } from '@smanga/db';
+import { sql } from 'drizzle-orm';
 
 const rowsOf = <T>(r: unknown): T[] =>
   Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
@@ -95,9 +95,7 @@ export class NotificationsService {
     const items: NotificationItem[] = rows.map((r) => ({
       id: r.id,
       type: r.type as 'comment_reply' | 'comment_mention',
-      actor: r.actor_id
-        ? { id: r.actor_id, name: r.actor_name ?? '', image: r.actor_image }
-        : null,
+      actor: r.actor_id ? { id: r.actor_id, name: r.actor_name ?? '', image: r.actor_image } : null,
       sourceComment: r.sc_id
         ? {
             id: r.sc_id,
@@ -126,7 +124,10 @@ export class NotificationsService {
     } else {
       // Mark subset — always AND user_id check for security
       // ids is a JS string[]; use sql.join with ::uuid casts (same pattern as comment tree query)
-      const uuidList = sql.join(ids.map((id) => sql`${id}::uuid`), sql`, `);
+      const uuidList = sql.join(
+        ids.map((id) => sql`${id}::uuid`),
+        sql`, `,
+      );
       await this.db.execute(sql`
         UPDATE notification SET read_at = now()
         WHERE id = ANY(ARRAY[${uuidList}])

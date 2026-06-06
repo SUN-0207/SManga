@@ -1,8 +1,8 @@
+import { ReaderHeader } from '@/components/reader/ReaderHeader';
 import { useRouterState } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
-import { DesktopTopNav } from './DesktopTopNav';
 import { BottomTabBar } from './BottomTabBar';
-import { ReaderHeader } from '@/components/reader/ReaderHeader';
+import { DesktopTopNav } from './DesktopTopNav';
 
 /**
  * Reader root layout. Renders:
@@ -26,9 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <main
         className={
-          !isChapter
-            ? 'flex-1 pb-[calc(env(safe-area-inset-bottom)+72px)] lg:pb-0'
-            : 'flex-1'
+          !isChapter ? 'flex-1 pb-[calc(env(safe-area-inset-bottom)+72px)] lg:pb-0' : 'flex-1'
         }
       >
         {children}

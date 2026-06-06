@@ -61,15 +61,11 @@ export const discoverApi = {
       .then((r) => r.data),
 
   importBulk: (urls: string[], autoCrawl: boolean) =>
-    api
-      .post<BulkImportResponse>('/stories/import-bulk', { urls, autoCrawl })
-      .then((r) => r.data),
+    api.post<BulkImportResponse>('/stories/import-bulk', { urls, autoCrawl }).then((r) => r.data),
 
   triggerDiscover: (storyId: string) =>
     api.post<{ jobId: string }>(`/stories/${storyId}/discover`).then((r) => r.data),
 
   bulkAction: (ids: string[], action: BulkAction) =>
-    api
-      .post<BulkActionResponse>('/stories/bulk-action', { ids, action })
-      .then((r) => r.data),
+    api.post<BulkActionResponse>('/stories/bulk-action', { ids, action }).then((r) => r.data),
 };

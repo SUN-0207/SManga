@@ -1,8 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, sql } from 'drizzle-orm';
-import { genre, story, storyGenre } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Database } from '@smanga/db';
+import { genre, story, storyGenre } from '@smanga/db/schema';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import type { SearchQueryDto } from './dto/search-query.dto';
 
 @Injectable()
@@ -48,7 +48,9 @@ export class SearchService {
     const rows = await qb
       .where(and(...conditions))
       .orderBy(
-        desc(sql`similarity(immutable_unaccent(lower(${story.title})), immutable_unaccent(lower(${term})))`),
+        desc(
+          sql`similarity(immutable_unaccent(lower(${story.title})), immutable_unaccent(lower(${term})))`,
+        ),
         desc(story.updatedAt),
       )
       .limit(limit)

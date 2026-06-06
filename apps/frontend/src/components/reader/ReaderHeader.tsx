@@ -1,9 +1,9 @@
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { useAuthStore } from '@/stores/auth-store';
 import { Link } from '@tanstack/react-router';
 import { Search as SearchIcon } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth-store';
 import { AvatarMenu } from './AvatarMenu';
 import { ReaderSettingsDrawer } from './ReaderSettingsDrawer';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 /**
  * Mobile-only mini header (rendered <lg by AppShell).
@@ -28,7 +28,9 @@ export function ReaderHeader() {
               <SearchIcon className="h-4 w-4" />
             </Link>
             <NotificationBell />
-            {user ? <AvatarMenu user={user} /> : (
+            {user ? (
+              <AvatarMenu user={user} />
+            ) : (
               <Link
                 to="/dang-nhap"
                 search={{ redirect: '/' }}

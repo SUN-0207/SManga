@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bull';
-import type { Queue, JobStatus } from 'bull';
 import { QUEUE_CRAWLER } from '@/modules/queue/queue.constants';
+import { InjectQueue } from '@nestjs/bull';
+import { Injectable } from '@nestjs/common';
+import type { JobStatus, Queue } from 'bull';
 
 @Injectable()
 export class JobsService {
@@ -18,7 +18,13 @@ export class JobsService {
     return jobs.map((j) => ({
       id: String(j.id),
       name: j.name,
-      state: j.failedReason ? 'failed' : j.finishedOn ? 'completed' : j.processedOn ? 'active' : 'waiting',
+      state: j.failedReason
+        ? 'failed'
+        : j.finishedOn
+          ? 'completed'
+          : j.processedOn
+            ? 'active'
+            : 'waiting',
       attemptsMade: j.attemptsMade,
       timestamp: j.timestamp,
       processedOn: j.processedOn,

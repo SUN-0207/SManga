@@ -68,7 +68,11 @@ export interface ChapterListResponse {
   total: number;
 }
 
-export async function listChapters(slug: string, page = 1, pageSize = 50): Promise<ChapterListResponse> {
+export async function listChapters(
+  slug: string,
+  page = 1,
+  pageSize = 50,
+): Promise<ChapterListResponse> {
   const res = await api.get<ChapterListResponse>(`/stories/by-slug/${slug}/chapters`, {
     params: { page, pageSize },
   });

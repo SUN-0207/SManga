@@ -1,9 +1,9 @@
+import { Roles } from '@/common/decorators/roles.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Get, HttpCode, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AppSettingsService } from './app-settings.service';
-import { UpdateAutoRefreshDto } from './dto/update-auto-refresh.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
+import type { AppSettingsService } from './app-settings.service';
+import type { UpdateAutoRefreshDto } from './dto/update-auto-refresh.dto';
 
 @ApiTags('admin/settings')
 @Controller({ path: 'admin/settings/auto-refresh', version: '1' })

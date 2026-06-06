@@ -1,16 +1,16 @@
-import { useMemo, useState } from 'react';
-import { createFileRoute, Link, redirect } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
 import { me } from '@/api/auth';
-import { useAuthStore } from '@/stores/auth-store';
-import { bookmarksApi, type BookmarkRow } from '@/api/bookmarks';
-import { readingProgressApi, type ReadingProgressRow } from '@/api/reading-progress';
-import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
+import { type BookmarkRow, bookmarksApi } from '@/api/bookmarks';
+import { type ReadingProgressRow, readingProgressApi } from '@/api/reading-progress';
 import { RatingStars } from '@/components/engagement/RatingStars';
 import { ViewCount } from '@/components/engagement/ViewCount';
+import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EmptyBookshelf } from '@/components/ui/illustrations/EmptyBookshelf';
 import { EmptyFolder } from '@/components/ui/illustrations/EmptyFolder';
+import { useAuthStore } from '@/stores/auth-store';
+import { useQuery } from '@tanstack/react-query';
+import { Link, createFileRoute, redirect } from '@tanstack/react-router';
+import { useMemo, useState } from 'react';
 
 export const Route = createFileRoute('/tu-sach')({
   beforeLoad: async () => {
@@ -39,8 +39,14 @@ interface ShelfItem {
 
 function LibraryPage() {
   const [tab, setTab] = useState<ShelfTab>('reading');
-  const bookmarksQ = useQuery({ queryKey: ['me', 'bookmarks'], queryFn: () => bookmarksApi.list() });
-  const progressQ = useQuery({ queryKey: ['me', 'reading-progress'], queryFn: () => readingProgressApi.list() });
+  const bookmarksQ = useQuery({
+    queryKey: ['me', 'bookmarks'],
+    queryFn: () => bookmarksApi.list(),
+  });
+  const progressQ = useQuery({
+    queryKey: ['me', 'reading-progress'],
+    queryFn: () => readingProgressApi.list(),
+  });
 
   const { reading, saved, completed } = useMemo(() => {
     const progress: ReadingProgressRow[] = progressQ.data ?? [];
@@ -118,7 +124,11 @@ function LibraryPage() {
   );
 }
 
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function TabButton({
+  active,
+  onClick,
+  children,
+}: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -131,7 +141,10 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
     >
       {children}
       {active && (
-        <span aria-hidden className="absolute -bottom-px left-2 right-2 h-0.5 bg-accent-gradient rounded-full" />
+        <span
+          aria-hidden
+          className="absolute -bottom-px left-2 right-2 h-0.5 bg-accent-gradient rounded-full"
+        />
       )}
     </button>
   );
@@ -139,7 +152,7 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
 
 function LibraryCard({ item }: { item: ShelfItem }) {
   const hasRating = (item.ratingCount ?? 0) > 0;
-  const hasViews  = (item.viewCount ?? 0) > 0;
+  const hasViews = (item.viewCount ?? 0) > 0;
 
   return (
     <Link
@@ -169,7 +182,7 @@ function LibraryCard({ item }: { item: ShelfItem }) {
       {(hasRating || hasViews) && (
         <div className="mt-1 flex items-center gap-2 flex-wrap">
           {hasRating && <RatingStars value={item.ratingAvg ?? null} size="sm" />}
-          {hasViews  && <ViewCount count={item.viewCount!} />}
+          {hasViews && <ViewCount count={item.viewCount!} />}
         </div>
       )}
     </Link>

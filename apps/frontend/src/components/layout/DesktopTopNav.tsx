@@ -1,14 +1,18 @@
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { AvatarMenu } from '@/components/reader/AvatarMenu';
+import { ReaderSettingsDrawer } from '@/components/reader/ReaderSettingsDrawer';
+import { useAuthStore } from '@/stores/auth-store';
 // apps/frontend/src/components/layout/DesktopTopNav.tsx
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Search as SearchIcon } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth-store';
-import { AvatarMenu } from '@/components/reader/AvatarMenu';
-import { ReaderSettingsDrawer } from '@/components/reader/ReaderSettingsDrawer';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const NAV = [
   { to: '/' as const, label: 'Đọc', match: (p: string) => p === '/' },
-  { to: '/kham-pha', label: 'Khám phá', match: (p: string) => p.startsWith('/kham-pha') || p.startsWith('/tim-kiem') },
+  {
+    to: '/kham-pha',
+    label: 'Khám phá',
+    match: (p: string) => p.startsWith('/kham-pha') || p.startsWith('/tim-kiem'),
+  },
   { to: '/tu-sach' as const, label: 'Tủ sách', match: (p: string) => p.startsWith('/tu-sach') },
 ] as const;
 

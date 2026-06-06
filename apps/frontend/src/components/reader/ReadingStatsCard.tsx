@@ -1,8 +1,8 @@
-import { Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { Flame } from 'lucide-react';
 import { meApi } from '@/api/me';
 import { useAuthStore } from '@/stores/auth-store';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import { Flame } from 'lucide-react';
 
 const DAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
@@ -66,9 +66,7 @@ export function ReadingStatsCard() {
         <MiniStat label="Tổng" value={s.totalChaptersRead} unit="chương" />
         <MiniStat label="Thư viện" value={s.libraryCount} unit="truyện" />
         <MiniStat label="Hoàn thành" value={s.completedCount} unit="truyện" />
-        {s.weeklyHours > 0 && (
-          <MiniStat label="Giờ đọc" value={s.weeklyHours} unit="giờ / tuần" />
-        )}
+        {s.weeklyHours > 0 && <MiniStat label="Giờ đọc" value={s.weeklyHours} unit="giờ / tuần" />}
       </div>
 
       <Sparkline data={s.dailyChaptersLast7} />
@@ -81,8 +79,7 @@ function StatsContainer({ children }: { children: React.ReactNode }) {
     <section
       className="relative overflow-hidden rounded-lg border border-accent/15 p-6"
       style={{
-        background:
-          'linear-gradient(135deg, rgba(236,72,153,0.08), rgba(244,114,182,0.02))',
+        background: 'linear-gradient(135deg, rgba(236,72,153,0.08), rgba(244,114,182,0.02))',
       }}
     >
       <div
@@ -117,10 +114,7 @@ function Sparkline({ data }: { data: number[] }) {
         const isToday = i === data.length - 1;
         const heightPct = Math.max(8, Math.round((v / max) * 100));
         return (
-          <div
-            key={i}
-            className="flex-1 flex flex-col items-center gap-1"
-          >
+          <div key={i} className="flex-1 flex flex-col items-center gap-1">
             <div
               className={`w-full rounded-sm transition-all duration-fast ${
                 isToday ? 'bg-accent-gradient shadow-glow-pink-soft' : 'bg-accent/30'
@@ -128,9 +122,7 @@ function Sparkline({ data }: { data: number[] }) {
               style={{ height: `${heightPct}%`, minHeight: '4px' }}
             />
             <span
-              className={`text-[10px] ${
-                isToday ? 'text-accent font-semibold' : 'text-fg-muted'
-              }`}
+              className={`text-[10px] ${isToday ? 'text-accent font-semibold' : 'text-fg-muted'}`}
             >
               {DAY_LABELS[i] ?? ''}
             </span>

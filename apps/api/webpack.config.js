@@ -62,8 +62,7 @@ module.exports = function webpackConfig(options) {
       // Include workspace packages (they're NOT in node_modules on disk after
       // symlink resolution, but we explicitly allow @smanga anyway)
       exclude: (modulePath) =>
-        modulePath.includes('node_modules') &&
-        !modulePath.includes('@smanga'),
+        modulePath.includes('node_modules') && !modulePath.includes('@smanga'),
       use: rule.use.map((u) => {
         if (!(u.loader || '').includes('ts-loader')) return u;
         return {
@@ -84,7 +83,7 @@ module.exports = function webpackConfig(options) {
   const patchedExternals = (options.externals || []).map((ext) => {
     if (typeof ext !== 'function') return ext;
     return function smangaAwareExternal(ctx, cb) {
-      if (ctx.request && ctx.request.startsWith('@smanga/')) return cb();
+      if (ctx.request?.startsWith('@smanga/')) return cb();
       return ext(ctx, cb);
     };
   });

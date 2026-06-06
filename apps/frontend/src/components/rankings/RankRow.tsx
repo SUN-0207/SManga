@@ -1,7 +1,7 @@
+import type { RankItem } from '@/api/rankings';
 // apps/frontend/src/components/rankings/RankRow.tsx
 import { Link } from '@tanstack/react-router';
 import type { LucideIcon } from 'lucide-react';
-import type { RankItem } from '@/api/rankings';
 
 export interface MetricResult {
   icon: LucideIcon;

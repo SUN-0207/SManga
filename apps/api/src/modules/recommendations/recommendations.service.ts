@@ -1,8 +1,8 @@
+import { DRIZZLE } from '@/modules/db/db.provider';
 // apps/api/src/modules/recommendations/recommendations.service.ts
 import { Inject, Injectable } from '@nestjs/common';
-import { sql } from 'drizzle-orm';
 import type { Database } from '@smanga/db';
-import { DRIZZLE } from '@/modules/db/db.provider';
+import { sql } from 'drizzle-orm';
 
 /**
  * postgres-js db.execute() returns the row array directly (postgres.RowList).
@@ -84,10 +84,7 @@ export class RecommendationsService {
   // Similar — content-based by shared genre, public endpoint
   // ---------------------------------------------------------------------------
 
-  async getSimilar(
-    storyId: string,
-    limit: number,
-  ): Promise<{ items: RecommendationItem[] }> {
+  async getSimilar(storyId: string, limit: number): Promise<{ items: RecommendationItem[] }> {
     const raw = await this.db.execute<SimilarRow>(sql`
       WITH anchor_genres AS (
         SELECT genre_id FROM story_genre WHERE story_id = ${storyId}
@@ -150,9 +147,7 @@ export class RecommendationsService {
       ratingAvg: r.rating_avg != null ? Number(r.rating_avg) : null,
       ratingCount: Number(r.rating_count ?? 0),
       reason:
-        r.top_shared_genre != null
-          ? `Cùng thể loại ${r.top_shared_genre}`
-          : 'Cùng phong cách',
+        r.top_shared_genre != null ? `Cùng thể loại ${r.top_shared_genre}` : 'Cùng phong cách',
     }));
 
     return { items };
@@ -206,10 +201,7 @@ export class RecommendationsService {
   // For You — content-based on user history, auth-required endpoint
   // ---------------------------------------------------------------------------
 
-  async getForYou(
-    userId: string,
-    limit: number,
-  ): Promise<{ items: RecommendationItem[] }> {
+  async getForYou(userId: string, limit: number): Promise<{ items: RecommendationItem[] }> {
     const raw = await this.db.execute<ForYouRow>(sql`
       WITH my_history AS (
         SELECT story_id FROM bookmark         WHERE user_id = ${userId}
@@ -282,10 +274,7 @@ export class RecommendationsService {
       viewCount: Number(r.view_count ?? 0),
       ratingAvg: r.rating_avg != null ? Number(r.rating_avg) : null,
       ratingCount: Number(r.rating_count ?? 0),
-      reason:
-        r.reason_anchor != null
-          ? `Vì anh đã đọc ${r.reason_anchor}`
-          : 'Cùng phong cách',
+      reason: r.reason_anchor != null ? `Vì anh đã đọc ${r.reason_anchor}` : 'Cùng phong cách',
     }));
 
     return { items };

@@ -11,8 +11,8 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { source } from './source.ts';
 import { storyDiscoveryStatusEnum, storySourceStatusEnum, storyStatusEnum } from './enums.ts';
+import { source } from './source.ts';
 
 const bytea = customType<{ data: Buffer; default: false }>({
   dataType() {

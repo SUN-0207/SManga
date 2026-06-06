@@ -1,10 +1,10 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Delete, Get, HttpCode, Param, Put, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { EngagementService } from './engagement.service';
-import { RateStoryDto } from './dto/rate-story.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { RateStoryDto } from './dto/rate-story.dto';
+import type { EngagementService } from './engagement.service';
 
 // GET /ratings/* rides the global OptionalJwtGuard — no @UseGuards needed.
 // PUT/DELETE /ratings/* require a valid JWT — @UseGuards(JwtAuthGuard) overrides
@@ -18,10 +18,7 @@ export class RatingsController {
   // Use @CurrentUser() (consistent with rest of codebase) instead of @Request()
   // to avoid hand-typed inline type annotations that may diverge from the JWT payload shape.
   @Get('story/:storyId')
-  getRating(
-    @Param('storyId') storyId: string,
-    @CurrentUser() user: { id: string } | null,
-  ) {
+  getRating(@Param('storyId') storyId: string, @CurrentUser() user: { id: string } | null) {
     return this.svc.getRatingAggregate(storyId, user?.id ?? null);
   }
 
@@ -40,10 +37,7 @@ export class RatingsController {
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @HttpCode(200)
-  deleteRating(
-    @Param('storyId') storyId: string,
-    @CurrentUser() user: { id: string },
-  ) {
+  deleteRating(@Param('storyId') storyId: string, @CurrentUser() user: { id: string }) {
     return this.svc.deleteRating(storyId, user.id);
   }
 }

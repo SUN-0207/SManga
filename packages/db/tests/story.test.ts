@@ -22,14 +22,14 @@ describe('story schema', () => {
     expect(inserted?.id).toBeDefined();
 
     await db.insert(storySource).values({
-      storyId: inserted!.id,
+      storyId: inserted?.id,
       sourceId: 'truyenfull-2',
       externalId: 'tieu-thuyet-test',
       externalUrl: 'https://x.test/tieu-thuyet-test',
       isPrimary: true,
     });
 
-    const rows = await db.select().from(storySource).where(eq(storySource.storyId, inserted!.id));
+    const rows = await db.select().from(storySource).where(eq(storySource.storyId, inserted?.id));
     expect(rows).toHaveLength(1);
     expect(rows[0]?.isPrimary).toBe(true);
   });
@@ -40,17 +40,11 @@ describe('story schema', () => {
       .values({ id: 'src-dup', name: 'Dup', baseUrl: 'https://x.test' })
       .onConflictDoNothing();
 
-    const [s1] = await db
-      .insert(story)
-      .values({ slug: 'dup-1', title: 'Dup 1' })
-      .returning();
-    const [s2] = await db
-      .insert(story)
-      .values({ slug: 'dup-2', title: 'Dup 2' })
-      .returning();
+    const [s1] = await db.insert(story).values({ slug: 'dup-1', title: 'Dup 1' }).returning();
+    const [s2] = await db.insert(story).values({ slug: 'dup-2', title: 'Dup 2' }).returning();
 
     await db.insert(storySource).values({
-      storyId: s1!.id,
+      storyId: s1?.id,
       sourceId: 'src-dup',
       externalId: 'same-external',
       externalUrl: 'https://x.test/a',
@@ -58,7 +52,7 @@ describe('story schema', () => {
 
     await expect(
       db.insert(storySource).values({
-        storyId: s2!.id,
+        storyId: s2?.id,
         sourceId: 'src-dup',
         externalId: 'same-external',
         externalUrl: 'https://x.test/b',

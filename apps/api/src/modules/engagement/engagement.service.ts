@@ -1,12 +1,12 @@
+import { DRIZZLE } from '@/modules/db/db.provider';
 import { Inject, Injectable } from '@nestjs/common';
-import { sql } from 'drizzle-orm';
+import type { Database } from '@smanga/db';
 // NOTE: import from the barrel '@smanga/db/schema', NOT from a per-file subpath
 // (e.g. NOT '@smanga/db/schema/engagement.js'). The webpack alias in apps/api/webpack.config.js
 // maps '@smanga/db/schema' to the barrel index only — subpath imports have no alias and
 // will fail at bundle time with module-not-found.
 import { rating } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
-import { DRIZZLE } from '@/modules/db/db.provider';
+import { sql } from 'drizzle-orm';
 
 /**
  * postgres-js db.execute() returns the row array directly (postgres.RowList).
@@ -16,9 +16,9 @@ const rowsOf = <T>(r: unknown): T[] =>
   Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
 
 export interface RatingAggregate {
-  avg:   number | null;
+  avg: number | null;
   count: number;
-  mine:  number | null;
+  mine: number | null;
 }
 
 @Injectable()
@@ -51,8 +51,8 @@ export class EngagementService {
       FROM rating
       WHERE story_id = ${storyId}
     `);
-    const agg   = rowsOf<{ avg: string | null; cnt: string }>(aggRaw)[0];
-    const avg   = agg?.avg != null ? Number(agg.avg) : null;
+    const agg = rowsOf<{ avg: string | null; cnt: string }>(aggRaw)[0];
+    const avg = agg?.avg != null ? Number(agg.avg) : null;
     const count = Number(agg?.cnt ?? 0);
 
     let mine: number | null = null;

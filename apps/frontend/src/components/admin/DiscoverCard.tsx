@@ -1,12 +1,12 @@
-import { BookText, Check, Loader2 } from 'lucide-react';
 import type { DiscoverItem } from '@/api/discover';
 import { useDiscoverImportStore } from '@/stores/discover-import-store';
+import { BookText, Check, Loader2 } from 'lucide-react';
 import { StubBadge } from './StubBadge';
 
 const STATUS_TONE: Record<string, string> = {
   Full: 'bg-foreground text-background',
   Hot: 'bg-[hsl(var(--color-cta))] text-white',
-  'Mới': 'bg-blue-500 text-white',
+  Mới: 'bg-blue-500 text-white',
 };
 
 export function DiscoverCard({ item }: { item: DiscoverItem }) {
@@ -18,18 +18,23 @@ export function DiscoverCard({ item }: { item: DiscoverItem }) {
   const disabled = alreadyImported || importing;
 
   // Six mutex visual states ordered by precedence
-  const state: 'imported_full' | 'imported_stub' | 'importing' | 'selected' | 'discoverable' | 'error' =
-    importing
-      ? 'importing'
-      : alreadyImported && item.existingDiscoveryStatus === 'complete'
-        ? 'imported_full'
-        : alreadyImported && item.existingDiscoveryStatus === 'failed'
-          ? 'error'
-          : alreadyImported
-            ? 'imported_stub'
-            : selected
-              ? 'selected'
-              : 'discoverable';
+  const state:
+    | 'imported_full'
+    | 'imported_stub'
+    | 'importing'
+    | 'selected'
+    | 'discoverable'
+    | 'error' = importing
+    ? 'importing'
+    : alreadyImported && item.existingDiscoveryStatus === 'complete'
+      ? 'imported_full'
+      : alreadyImported && item.existingDiscoveryStatus === 'failed'
+        ? 'error'
+        : alreadyImported
+          ? 'imported_stub'
+          : selected
+            ? 'selected'
+            : 'discoverable';
 
   const ringClass =
     state === 'selected'

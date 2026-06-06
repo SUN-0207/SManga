@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
-import { useAuthStore } from '@/stores/auth-store';
 import { engagementApi } from '@/api/engagement';
+import { useAuthStore } from '@/stores/auth-store';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { RatingStars } from './RatingStars';
 
 type StarValue = 1 | 2 | 3 | 4 | 5;
@@ -29,34 +29,34 @@ function httpStatus(err: unknown): number | null {
 }
 
 interface RatingControlProps {
-  readonly storyId:     string;
+  readonly storyId: string;
   /** TanStack Query key for the story query — invalidated on successful mutation. */
-  readonly slug:        string;
+  readonly slug: string;
   /** Initial avg from story query — displayed before the dedicated rating query resolves. */
-  readonly ratingAvg:   number | null;
+  readonly ratingAvg: number | null;
   readonly ratingCount: number;
 }
 
 export function RatingControl({ storyId, slug, ratingAvg, ratingCount }: RatingControlProps) {
-  const user  = useAuthStore((s) => s.user);
-  const qc    = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
   const toast = useInlineToast();
 
   // Only fire the rating point-lookup when the user is logged in.
   // This keeps GET /stories/by-slug/:slug cacheable for anonymous users.
   const ratingQ = useQuery({
     queryKey: ['rating', storyId],
-    queryFn:  () => engagementApi.getRating(storyId),
-    enabled:  !!user,
+    queryFn: () => engagementApi.getRating(storyId),
+    enabled: !!user,
   });
 
-  const mine  = (ratingQ.data?.mine ?? null) as StarValue | null;
-  const avg   = ratingQ.data?.avg   ?? ratingAvg;
+  const mine = (ratingQ.data?.mine ?? null) as StarValue | null;
+  const avg = ratingQ.data?.avg ?? ratingAvg;
   const count = ratingQ.data?.count ?? ratingCount;
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['rating', storyId] }).catch(() => undefined);
-    qc.invalidateQueries({ queryKey: ['story',  slug] }).catch(() => undefined);
+    qc.invalidateQueries({ queryKey: ['story', slug] }).catch(() => undefined);
   };
 
   const upsert = useMutation({
@@ -119,12 +119,7 @@ export function RatingControl({ storyId, slug, ratingAvg, ratingCount }: RatingC
         className={`flex items-center gap-2 ${isPending ? 'opacity-60 pointer-events-none' : ''}`}
       >
         {/* Always pass onChange so stars are interactive for anonymous users (spec: click fires toast) */}
-        <RatingStars
-          value={avg}
-          mine={mine}
-          onChange={handleChange}
-          size="md"
-        />
+        <RatingStars value={avg} mine={mine} onChange={handleChange} size="md" />
         {count > 0 ? (
           <span className="text-body-sm text-fg-muted">({count} đánh giá)</span>
         ) : (

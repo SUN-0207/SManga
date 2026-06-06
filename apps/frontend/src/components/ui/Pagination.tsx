@@ -25,10 +25,7 @@ export function Pagination({
     'inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-body-sm font-medium transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2';
 
   return (
-    <nav
-      aria-label="Phân trang"
-      className="flex items-center justify-center gap-3 pt-8"
-    >
+    <nav aria-label="Phân trang" className="flex items-center justify-center gap-3 pt-8">
       <button
         type="button"
         onClick={() => onChange(page - 1)}

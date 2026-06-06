@@ -1,3 +1,4 @@
+import { DRIZZLE } from '@/modules/db/db.provider';
 import {
   BadRequestException,
   ForbiddenException,
@@ -5,9 +6,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { sql } from 'drizzle-orm';
 import type { Database } from '@smanga/db';
-import { DRIZZLE } from '@/modules/db/db.provider';
+import { sql } from 'drizzle-orm';
 
 const rowsOf = <T>(r: unknown): T[] =>
   Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
@@ -152,7 +152,10 @@ export class CommentsService {
     // IMPORTANT: rootIds is a JS string[]. Drizzle's sql tag does NOT auto-serialize
     // a JS array as a Postgres array literal. We use sql.join with explicit uuid casts
     // to build a valid ARRAY[...] expression. DO NOT pass rootIds directly to ANY().
-    const rootUuidList = sql.join(rootIds.map((id) => sql`${id}::uuid`), sql`, `);
+    const rootUuidList = sql.join(
+      rootIds.map((id) => sql`${id}::uuid`),
+      sql`, `,
+    );
     const flatRaw = await this.db.execute<FlatRow>(sql`
       WITH RECURSIVE tree AS (
         SELECT id FROM "comment"
@@ -216,12 +219,16 @@ export class CommentsService {
     // Validate target existence
     if (targetType === 'story') {
       const rows = rowsOf<{ id: string }>(
-        await this.db.execute<{ id: string }>(sql`SELECT id FROM story WHERE id = ${targetId}::uuid LIMIT 1`),
+        await this.db.execute<{ id: string }>(
+          sql`SELECT id FROM story WHERE id = ${targetId}::uuid LIMIT 1`,
+        ),
       );
       if (rows.length === 0) throw new NotFoundException('Story not found');
     } else if (targetType === 'chapter') {
       const rows = rowsOf<{ id: string }>(
-        await this.db.execute<{ id: string }>(sql`SELECT id FROM chapter WHERE id = ${targetId}::uuid LIMIT 1`),
+        await this.db.execute<{ id: string }>(
+          sql`SELECT id FROM chapter WHERE id = ${targetId}::uuid LIMIT 1`,
+        ),
       );
       if (rows.length === 0) throw new NotFoundException('Chapter not found');
     } else {
@@ -289,7 +296,9 @@ export class CommentsService {
       // Reply notification
       if (parentId) {
         const parentOwnerRows = rowsOf<{ user_id: string }>(
-          await this.db.execute(sql`SELECT user_id FROM "comment" WHERE id = ${parentId}::uuid LIMIT 1`),
+          await this.db.execute(
+            sql`SELECT user_id FROM "comment" WHERE id = ${parentId}::uuid LIMIT 1`,
+          ),
         );
         const parentOwnerId = parentOwnerRows.at(0)?.user_id;
         if (parentOwnerId && parentOwnerId !== actorId) {
@@ -301,7 +310,9 @@ export class CommentsService {
       }
 
       // Mention notifications — @(\w+) regex
-      const mentions = [...body.matchAll(/@(\w+)/g)].map((m) => m[1]).filter((n): n is string => n !== undefined);
+      const mentions = [...body.matchAll(/@(\w+)/g)]
+        .map((m) => m[1])
+        .filter((n): n is string => n !== undefined);
       const seen = new Set<string>();
       for (const name of mentions) {
         if (seen.has(name)) continue;
@@ -365,11 +376,7 @@ export class CommentsService {
   // UPDATE (5-min edit window)
   // -------------------------------------------------------------------------
 
-  async updateComment(
-    id: string,
-    userId: string,
-    body: string,
-  ): Promise<CommentTree> {
+  async updateComment(id: string, userId: string, body: string): Promise<CommentTree> {
     if (body.trim().length === 0 || body.length > 2000) {
       throw new BadRequestException('body must be 1-2000 characters');
     }
@@ -392,7 +399,8 @@ export class CommentsService {
         FROM "comment" WHERE id = ${id}::uuid
       `),
     );
-    if (!withinWindow.at(0)?.ok) throw new ForbiddenException('Edit window of 5 minutes has passed');
+    if (!withinWindow.at(0)?.ok)
+      throw new ForbiddenException('Edit window of 5 minutes has passed');
 
     await this.db.execute(sql`
       UPDATE "comment"
@@ -407,11 +415,7 @@ export class CommentsService {
   // DELETE (soft)
   // -------------------------------------------------------------------------
 
-  async deleteComment(
-    id: string,
-    userId: string,
-    role: string,
-  ): Promise<void> {
+  async deleteComment(id: string, userId: string, role: string): Promise<void> {
     const rows = rowsOf<{ user_id: string; deleted_at: string | null }>(
       await this.db.execute(sql`
         SELECT user_id, deleted_at FROM "comment" WHERE id = ${id}::uuid LIMIT 1

@@ -1,5 +1,5 @@
-import { IsInt, IsNumber, IsUUID, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsInt, IsNumber, IsUUID, Max, Min } from 'class-validator';
 
 export class SessionSecondsDto {
   @IsUUID()

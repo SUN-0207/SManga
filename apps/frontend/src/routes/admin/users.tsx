@@ -1,17 +1,12 @@
-import { useState, type FormEvent } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Loader2, Search, Trash2, X } from 'lucide-react';
-import {
-  deleteUser,
-  listAdminUsers,
-  updateUserRole,
-  type AdminUserRow,
-} from '@/api/users';
-import { useAuthStore } from '@/stores/auth-store';
+import { type AdminUserRow, deleteUser, listAdminUsers, updateUserRole } from '@/api/users';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
 import { EmptyFolder } from '@/components/ui/illustrations/EmptyFolder';
+import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
+import { useAuthStore } from '@/stores/auth-store';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import { ChevronLeft, ChevronRight, Loader2, Search, Trash2, X } from 'lucide-react';
+import { type FormEvent, useState } from 'react';
 
 export const Route = createFileRoute('/admin/users')({
   component: AdminUsersPage,
@@ -77,12 +72,18 @@ function AdminUsersPage() {
         </div>
         {data && (
           <div className="text-body-sm text-fg-muted tabular-nums">
-            <span className="font-medium text-fg">{data.total.toLocaleString('vi-VN')}</span> tài khoản
+            <span className="font-medium text-fg">{data.total.toLocaleString('vi-VN')}</span> tài
+            khoản
           </div>
         )}
       </div>
 
-      <form onSubmit={submitSearch} role="search" aria-label="Tìm người dùng" className="flex items-center gap-2 max-w-lg">
+      <form
+        onSubmit={submitSearch}
+        role="search"
+        aria-label="Tìm người dùng"
+        className="flex items-center gap-2 max-w-lg"
+      >
         <div className="relative flex-1">
           <Search
             aria-hidden
@@ -136,7 +137,7 @@ function AdminUsersPage() {
           <table className="w-full text-left text-body-sm">
             <thead className="sticky top-0 z-10 bg-bg/95 backdrop-blur">
               <tr className="border-b border-border">
-                <th className="px-5 py-3 w-12"></th>
+                <th className="px-5 py-3 w-12" />
                 <th className="px-3 py-3 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                   Người dùng
                 </th>
@@ -149,14 +150,17 @@ function AdminUsersPage() {
                 <th className="px-3 py-3 w-36 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                   Ngày tạo
                 </th>
-                <th className="px-5 py-3 w-20"></th>
+                <th className="px-5 py-3 w-20" />
               </tr>
             </thead>
             <tbody>
               {data.items.map((u) => {
                 const isSelf = currentUser?.id === u.id;
                 return (
-                  <tr key={u.id} className="border-b border-border/60 last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60">
+                  <tr
+                    key={u.id}
+                    className="border-b border-border/60 last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60"
+                  >
                     <td className="px-5 py-3">
                       {u.image ? (
                         <img
@@ -171,7 +175,9 @@ function AdminUsersPage() {
                       )}
                     </td>
                     <td className="px-3 py-3 min-w-0">
-                      <div className="font-medium text-fg truncate">{u.name ?? '(chưa đặt tên)'}</div>
+                      <div className="font-medium text-fg truncate">
+                        {u.name ?? '(chưa đặt tên)'}
+                      </div>
                       <div className="text-[11px] text-fg-muted truncate">
                         {u.email}
                         {isSelf && <span className="ml-2 text-fg-subtle">· bạn</span>}
@@ -181,7 +187,9 @@ function AdminUsersPage() {
                       <select
                         value={u.role}
                         disabled={isSelf || roleM.isPending}
-                        onChange={(e) => roleM.mutate({ id: u.id, role: e.target.value as 'user' | 'admin' })}
+                        onChange={(e) =>
+                          roleM.mutate({ id: u.id, role: e.target.value as 'user' | 'admin' })
+                        }
                         aria-label={`Vai trò của ${u.email}`}
                         className="h-9 rounded-md border border-border bg-bg-elevated px-3 text-body-sm text-fg transition-colors duration-fast hover:border-border-strong focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
                       >
@@ -230,7 +238,9 @@ function AdminUsersPage() {
               </button>
               <button
                 type="button"
-                onClick={() => navigate({ search: { q, page: Math.min(data.totalPages, page + 1) } })}
+                onClick={() =>
+                  navigate({ search: { q, page: Math.min(data.totalPages, page + 1) } })
+                }
                 disabled={page >= data.totalPages}
                 className="inline-flex h-9 items-center gap-1 rounded-md border border-border bg-bg px-3 text-body-sm font-medium text-fg transition-colors duration-fast hover:border-border-strong hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -286,14 +296,13 @@ function DeleteConfirm({
           Xoá người dùng
         </h2>
         <p className="mt-2 text-body-sm text-fg-muted">
-          Hành động này không thể hoàn tác. Để xác nhận, nhập email{" "}
+          Hành động này không thể hoàn tác. Để xác nhận, nhập email{' '}
           <span className="font-mono text-fg">{user.email}</span> bên dưới.
         </p>
 
         <input
           type="email"
           autoComplete="off"
-          autoFocus
           value={typed}
           onChange={(e) => setTyped(e.target.value)}
           placeholder={user.email}

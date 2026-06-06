@@ -1,19 +1,25 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bull';
-import type { Queue } from 'bull';
-import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
-import { resolveAdapterForUrl } from '@smanga/crawler';
-import { chapter, genre, story, storyGenre, storySource } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import {
+  type DiscoverChaptersJobData,
+  type ImportStoryJobData,
   JOB_DISCOVER_CHAPTERS,
   JOB_FETCH_CHAPTER,
   JOB_IMPORT_STORY,
   QUEUE_CRAWLER,
-  type DiscoverChaptersJobData,
-  type ImportStoryJobData,
 } from '@/modules/queue/queue.constants';
+import { InjectQueue } from '@nestjs/bull';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { resolveAdapterForUrl } from '@smanga/crawler';
+import type { Database } from '@smanga/db';
+import { chapter, genre, story, storyGenre, storySource } from '@smanga/db/schema';
+import type { Queue } from 'bull';
+import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
 const BULK_IMPORT_CAP = 50;
 
@@ -40,10 +46,12 @@ export class StoriesService {
         COUNT(*) FILTER (WHERE cover IS NOT NULL)::bigint AS stories_with_cover
       FROM story
     `);
-    const chapterRow = (result as unknown as { rows: Array<Record<string, string | number>> })
-      .rows?.[0] ?? (result as unknown as Array<Record<string, string | number>>)[0];
-    const coverRow = (coverResult as unknown as { rows: Array<Record<string, string | number>> })
-      .rows?.[0] ?? (coverResult as unknown as Array<Record<string, string | number>>)[0];
+    const chapterRow =
+      (result as unknown as { rows: Array<Record<string, string | number>> }).rows?.[0] ??
+      (result as unknown as Array<Record<string, string | number>>)[0];
+    const coverRow =
+      (coverResult as unknown as { rows: Array<Record<string, string | number>> }).rows?.[0] ??
+      (coverResult as unknown as Array<Record<string, string | number>>)[0];
     const contentBytes = Number(chapterRow?.content_bytes ?? 0);
     const coverBytes = Number(coverRow?.cover_bytes ?? 0);
     return {
@@ -79,11 +87,20 @@ export class StoriesService {
     const featuredFilter = featuredOnly ? sql`AND s.featured = true` : sql``;
 
     const rawRows = await this.db.execute<{
-      id: string; slug: string; title: string; author: string | null;
-      status: string; total_chapters: number; has_cover: boolean;
-      discovery_status: string; discovery_error: string | null;
-      discovered_at: string | null; updated_at: string;
-      view_count: number; rating_avg: string | null; rating_count: string;
+      id: string;
+      slug: string;
+      title: string;
+      author: string | null;
+      status: string;
+      total_chapters: number;
+      has_cover: boolean;
+      discovery_status: string;
+      discovery_error: string | null;
+      discovered_at: string | null;
+      updated_at: string;
+      view_count: number;
+      rating_avg: string | null;
+      rating_count: string;
       featured: boolean;
     }>(sql`
       SELECT
@@ -109,40 +126,59 @@ export class StoriesService {
     `);
 
     const arr = rowsOf<{
-      id: string; slug: string; title: string; author: string | null;
-      status: string; total_chapters: number; has_cover: boolean;
-      discovery_status: string; discovery_error: string | null;
-      discovered_at: string | null; updated_at: string;
-      view_count: number; rating_avg: string | null; rating_count: string;
+      id: string;
+      slug: string;
+      title: string;
+      author: string | null;
+      status: string;
+      total_chapters: number;
+      has_cover: boolean;
+      discovery_status: string;
+      discovery_error: string | null;
+      discovered_at: string | null;
+      updated_at: string;
+      view_count: number;
+      rating_avg: string | null;
+      rating_count: string;
       featured: boolean;
     }>(rawRows);
 
     return arr.map((row) => ({
-      id:             row.id,
-      slug:           row.slug,
-      title:          row.title,
-      author:         row.author ?? null,
-      status:         row.status,
-      totalChapters:  Number(row.total_chapters),
-      hasCover:       Boolean(row.has_cover),
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      author: row.author ?? null,
+      status: row.status,
+      totalChapters: Number(row.total_chapters),
+      hasCover: Boolean(row.has_cover),
       discoveryStatus: row.discovery_status,
       discoveryError: row.discovery_error ?? null,
-      discoveredAt:   row.discovered_at ?? null,
-      updatedAt:      row.updated_at,
-      viewCount:      Number(row.view_count ?? 0),
-      ratingAvg:      row.rating_avg != null ? Number(row.rating_avg) : null,
-      ratingCount:    Number(row.rating_count ?? 0),
-      featured:       Boolean(row.featured),
+      discoveredAt: row.discovered_at ?? null,
+      updatedAt: row.updated_at,
+      viewCount: Number(row.view_count ?? 0),
+      ratingAvg: row.rating_avg != null ? Number(row.rating_avg) : null,
+      ratingCount: Number(row.rating_count ?? 0),
+      featured: Boolean(row.featured),
     }));
   }
 
   async getBySlug(slug: string) {
     const rawRows = await this.db.execute<{
-      id: string; slug: string; title: string; author: string | null;
-      description: string; status: string; total_chapters: number;
-      has_cover: boolean; featured: boolean; discovery_status: string; discovery_error: string | null;
-      discovered_at: string | null; view_count: number;
-      rating_avg: string | null; rating_count: string;
+      id: string;
+      slug: string;
+      title: string;
+      author: string | null;
+      description: string;
+      status: string;
+      total_chapters: number;
+      has_cover: boolean;
+      featured: boolean;
+      discovery_status: string;
+      discovery_error: string | null;
+      discovered_at: string | null;
+      view_count: number;
+      rating_avg: string | null;
+      rating_count: string;
     }>(sql`
       SELECT
         s.id, s.slug, s.title, s.author, s.description, s.status,
@@ -164,32 +200,42 @@ export class StoriesService {
     `);
 
     const arr = rowsOf<{
-      id: string; slug: string; title: string; author: string | null;
-      description: string; status: string; total_chapters: number;
-      has_cover: boolean; featured: boolean; discovery_status: string; discovery_error: string | null;
-      discovered_at: string | null; view_count: number;
-      rating_avg: string | null; rating_count: string;
+      id: string;
+      slug: string;
+      title: string;
+      author: string | null;
+      description: string;
+      status: string;
+      total_chapters: number;
+      has_cover: boolean;
+      featured: boolean;
+      discovery_status: string;
+      discovery_error: string | null;
+      discovered_at: string | null;
+      view_count: number;
+      rating_avg: string | null;
+      rating_count: string;
     }>(rawRows);
     if (arr.length === 0) throw new NotFoundException();
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const row = arr[0]!;
 
     const s = {
-      id:             row.id,
-      slug:           row.slug,
-      title:          row.title,
-      author:         row.author ?? null,
-      description:    row.description,
-      status:         row.status,
-      totalChapters:  Number(row.total_chapters),
-      hasCover:       Boolean(row.has_cover),
-      featured:       Boolean(row.featured),
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      author: row.author ?? null,
+      description: row.description,
+      status: row.status,
+      totalChapters: Number(row.total_chapters),
+      hasCover: Boolean(row.has_cover),
+      featured: Boolean(row.featured),
       discoveryStatus: row.discovery_status,
       discoveryError: row.discovery_error ?? null,
-      discoveredAt:   row.discovered_at ?? null,
-      viewCount:      Number(row.view_count ?? 0),
-      ratingAvg:      row.rating_avg != null ? Number(row.rating_avg) : null,
-      ratingCount:    Number(row.rating_count ?? 0),
+      discoveredAt: row.discovered_at ?? null,
+      viewCount: Number(row.view_count ?? 0),
+      ratingAvg: row.rating_avg != null ? Number(row.rating_avg) : null,
+      ratingCount: Number(row.rating_count ?? 0),
     };
 
     // Genres + sources — keep existing typed selects
@@ -199,10 +245,7 @@ export class StoriesService {
       .innerJoin(genre, eq(storyGenre.genreId, genre.id))
       .where(eq(storyGenre.storyId, s.id));
 
-    const sources = await this.db
-      .select()
-      .from(storySource)
-      .where(eq(storySource.storyId, s.id));
+    const sources = await this.db.select().from(storySource).where(eq(storySource.storyId, s.id));
 
     return { ...s, genres, sources };
   }

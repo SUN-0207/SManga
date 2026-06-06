@@ -1,6 +1,6 @@
 import process from 'node:process';
-import { createDb } from '@smanga/db';
 import { fetchAllPendingChapters, importStory } from '@smanga/crawler';
+import { createDb } from '@smanga/db';
 
 function parseArgs(argv: string[]): { url: string; chapters: boolean } {
   const args = argv.slice(2);

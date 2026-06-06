@@ -1,7 +1,7 @@
+import type { RankItem } from '@/api/rankings';
 // apps/frontend/src/components/rankings/RankList.tsx
 import type { ReactNode } from 'react';
-import type { RankItem } from '@/api/rankings';
-import { RankRow, type MetricResult } from './RankRow';
+import { type MetricResult, RankRow } from './RankRow';
 
 interface RankListProps {
   items: RankItem[];

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { Bell } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth-store';
 import { listNotifications, markNotificationsRead } from '@/api/notifications';
 import type { Notification } from '@/api/notifications';
+import { useAuthStore } from '@/stores/auth-store';
+import { Bell } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { NotificationItem } from './NotificationItem';
 
 const POLL_INTERVAL_MS = 30_000;
@@ -61,7 +61,7 @@ export function NotificationBell() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Close dropdown on outside click
@@ -86,7 +86,9 @@ export function NotificationBell() {
       const unreadIds = items.filter((n) => !n.readAt).map((n) => n.id);
       if (unreadIds.length > 0) {
         setUnreadCount(0);
-        setItems((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
+        setItems((prev) =>
+          prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })),
+        );
         try {
           await markNotificationsRead(unreadIds);
         } catch {
@@ -124,11 +126,7 @@ export function NotificationBell() {
           ) : (
             <div className="divide-y divide-border/40">
               {items.map((n) => (
-                <NotificationItem
-                  key={n.id}
-                  notification={n}
-                  onClick={() => setOpen(false)}
-                />
+                <NotificationItem key={n.id} notification={n} onClick={() => setOpen(false)} />
               ))}
             </div>
           )}

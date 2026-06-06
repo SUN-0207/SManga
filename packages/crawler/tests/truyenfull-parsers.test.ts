@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   parseCatalogListingHtml,
-  parseStoryHtml,
-  parseChapterListHtml,
   parseChapterContentHtml,
+  parseChapterListHtml,
+  parseStoryHtml,
 } from '../src/sources/truyenfull/parsers.js';
 
 const fixturesDir = join(
@@ -54,14 +54,20 @@ describe('truyenfull parseStoryHtml', () => {
 
 describe('truyenfull parseChapterListHtml', () => {
   it('extracts at least one chapter with monotonically meaningful indices', () => {
-    const { chapters } = parseChapterListHtml(chapterListHtml, 'https://truyenfull.today/xuyen-thu-chi-ba-ai-doc-the/');
+    const { chapters } = parseChapterListHtml(
+      chapterListHtml,
+      'https://truyenfull.today/xuyen-thu-chi-ba-ai-doc-the/',
+    );
     expect(chapters.length).toBeGreaterThan(0);
     expect(chapters.every((c) => Number.isFinite(c.index))).toBe(true);
     expect(chapters.every((c) => c.externalUrl.startsWith('http'))).toBe(true);
   });
 
   it('returns hasNextPage as a boolean', () => {
-    const { hasNextPage } = parseChapterListHtml(chapterListHtml, 'https://truyenfull.today/xuyen-thu-chi-ba-ai-doc-the/');
+    const { hasNextPage } = parseChapterListHtml(
+      chapterListHtml,
+      'https://truyenfull.today/xuyen-thu-chi-ba-ai-doc-the/',
+    );
     expect(typeof hasNextPage).toBe('boolean');
   });
 });

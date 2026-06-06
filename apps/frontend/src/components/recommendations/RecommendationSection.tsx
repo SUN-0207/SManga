@@ -1,11 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import { recommendationsApi } from '@/api/recommendations';
 import { useAuthStore } from '@/stores/auth-store';
+import { useQuery } from '@tanstack/react-query';
 import { RecommendationCard } from './RecommendationCard';
 
-type Props =
-  | { kind: 'similar'; storyId: string }
-  | { kind: 'forYou' };
+type Props = { kind: 'similar'; storyId: string } | { kind: 'forYou' };
 
 export function RecommendationSection(props: Props) {
   const user = useAuthStore((s) => s.user);
@@ -49,9 +47,7 @@ export function RecommendationSection(props: Props) {
           ? Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] rounded-md bg-bg-subtle animate-pulse" />
             ))
-          : query.data!.items.map((item) => (
-              <RecommendationCard key={item.id} item={item} />
-            ))}
+          : query.data?.items.map((item) => <RecommendationCard key={item.id} item={item} />)}
       </div>
     </section>
   );

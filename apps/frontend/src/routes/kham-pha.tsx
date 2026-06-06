@@ -1,14 +1,14 @@
-import { useState, type FormEvent } from 'react';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
-import { getStoriesCount, listStories, type StorySummary } from '@/api/stories';
-import { searchStories } from '@/api/search';
 import { listGenres } from '@/api/genres';
+import { searchStories } from '@/api/search';
+import { type StorySummary, getStoriesCount, listStories } from '@/api/stories';
 import { StoryCard } from '@/components/reader/StoryCard';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
 import { Pagination } from '@/components/ui/Pagination';
+import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { Link, createFileRoute } from '@tanstack/react-router';
+import { Search } from 'lucide-react';
+import { type FormEvent, useState } from 'react';
 
 const PAGE_SIZE = 24;
 
@@ -109,7 +109,6 @@ function DiscoverPage() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Tìm truyện, tác giả..."
-          autoFocus
           className="w-full h-12 pl-11 pr-24 rounded-full bg-bg-elevated border border-border focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none text-body transition-colors duration-fast"
         />
         <button

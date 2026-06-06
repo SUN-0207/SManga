@@ -56,7 +56,9 @@ const hasSessionSeconds = await sql<{ exists: boolean }[]>`
 console.log('→ Schema check:');
 console.log(`  story.featured           : ${hasFeatured[0]?.exists ? 'OK' : 'MISSING'}`);
 console.log(`  comment table            : ${hasCommentTable[0]?.exists ? 'OK' : 'MISSING'}`);
-console.log(`  reading_progress.session_seconds : ${hasSessionSeconds[0]?.exists ? 'OK' : 'MISSING'}`);
+console.log(
+  `  reading_progress.session_seconds : ${hasSessionSeconds[0]?.exists ? 'OK' : 'MISSING'}`,
+);
 
 await sql.end();
 console.log('migrations applied');

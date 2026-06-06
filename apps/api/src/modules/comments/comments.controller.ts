@@ -1,3 +1,5 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import {
   Body,
   Controller,
@@ -12,11 +14,9 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { CommentsService } from './comments.service';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { CommentsService } from './comments.service';
+import type { CreateCommentDto } from './dto/create-comment.dto';
+import type { UpdateCommentDto } from './dto/update-comment.dto';
 
 @ApiTags('comments')
 @Controller({ path: 'comments', version: '1' })
@@ -28,8 +28,8 @@ export class CommentsController {
   listComments(
     @Query('targetType') targetType: string,
     @Query('targetId') targetId: string,
-    @Query('page') page = '1',
-    @Query('limit') limit = '20',
+    @Query('page') page,
+    @Query('limit') limit,
     @CurrentUser() user: { id: string } | null,
   ) {
     return this.svc.listComments(
@@ -45,10 +45,7 @@ export class CommentsController {
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60_000 * 60 } })
   @HttpCode(201)
-  createComment(
-    @Body() dto: CreateCommentDto,
-    @CurrentUser() user: { id: string },
-  ) {
+  createComment(@Body() dto: CreateCommentDto, @CurrentUser() user: { id: string }) {
     return this.svc.createComment(
       user.id,
       dto.targetType,
@@ -72,20 +69,14 @@ export class CommentsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
-  deleteComment(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string; role: string },
-  ) {
+  deleteComment(@Param('id') id: string, @CurrentUser() user: { id: string; role: string }) {
     return this.svc.deleteComment(id, user.id, user.role);
   }
 
   @Post(':id/react')
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 30, ttl: 60_000 * 60 } })
-  reactComment(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-  ) {
+  reactComment(@Param('id') id: string, @CurrentUser() user: { id: string }) {
     return this.svc.toggleReact(id, user.id);
   }
 }

@@ -2,8 +2,8 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { RankingsService } from './rankings.service';
-import { RankingsQueryDto } from './dto/rankings-query.dto';
+import type { RankingsQueryDto } from './dto/rankings-query.dto';
+import type { RankingsService } from './rankings.service';
 
 /**
  * All /rankings/* endpoints are public — no @UseGuards.

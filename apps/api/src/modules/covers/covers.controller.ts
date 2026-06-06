@@ -1,12 +1,12 @@
-import { Controller, Get, Param, Req, Res } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 import { createHash } from 'node:crypto';
+import { DRIZZLE } from '@/modules/db/db.provider';
+import { Controller, Get, Param, Req, Res } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import type { Database } from '@smanga/db';
+import { story } from '@smanga/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Request, Response } from 'express';
-import { Inject } from '@nestjs/common';
-import { story } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
-import { DRIZZLE } from '@/modules/db/db.provider';
 
 @ApiTags('covers')
 @Controller({ path: 'cover', version: '1' })
@@ -14,11 +14,7 @@ export class CoversController {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   @Get(':storyId')
-  async get(
-    @Param('storyId') storyId: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async get(@Param('storyId') storyId: string, @Req() req: Request, @Res() res: Response) {
     const [row] = await this.db
       .select({ cover: story.cover, mime: story.coverMimeType })
       .from(story)
@@ -28,7 +24,9 @@ export class CoversController {
       res.status(404).send('Not found');
       return;
     }
-    const etag = `"${createHash('sha1').update(row.cover as Buffer).digest('hex')}"`;
+    const etag = `"${createHash('sha1')
+      .update(row.cover as Buffer)
+      .digest('hex')}"`;
     if (req.headers['if-none-match'] === etag) {
       res.status(304).setHeader('ETag', etag).end();
       return;

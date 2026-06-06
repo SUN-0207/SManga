@@ -1,6 +1,13 @@
 export function EmptyFolder() {
   return (
-    <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden className="w-full h-full">
+    <svg
+      viewBox="0 0 160 160"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      className="w-full h-full"
+    >
+      <title>Thư mục trống</title>
       <defs>
         <linearGradient id="ef-accent" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="var(--accent)" />
@@ -15,10 +22,7 @@ export function EmptyFolder() {
         strokeLinejoin="round"
       />
       {/* Pink corner accent */}
-      <path
-        d="M120 60 L130 70 L130 80 Z"
-        fill="url(#ef-accent)"
-      />
+      <path d="M120 60 L130 70 L130 80 Z" fill="url(#ef-accent)" />
       <circle cx="80" cy="95" r="3" fill="var(--border-strong)" />
       <circle cx="68" cy="95" r="3" fill="var(--border-strong)" />
       <circle cx="92" cy="95" r="3" fill="var(--border-strong)" />

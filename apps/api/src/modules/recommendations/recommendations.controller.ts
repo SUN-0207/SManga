@@ -1,12 +1,12 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 // apps/api/src/modules/recommendations/recommendations.controller.ts
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { RecommendationsService } from './recommendations.service';
-import { SimilarQueryDto } from './dto/similar-query.dto';
-import { ForYouQueryDto } from './dto/for-you-query.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { ForYouQueryDto } from './dto/for-you-query.dto';
+import type { SimilarQueryDto } from './dto/similar-query.dto';
+import type { RecommendationsService } from './recommendations.service';
 
 /**
  * GET /api/v1/recommendations/similar?storyId=:uuid&limit=8

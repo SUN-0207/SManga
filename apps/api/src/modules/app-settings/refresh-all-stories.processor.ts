@@ -1,17 +1,17 @@
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { Inject, Logger } from '@nestjs/common';
-import type { Job, Queue } from 'bull';
-import { and, eq } from 'drizzle-orm';
-import { appSetting, story } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import {
+  type DiscoverChaptersJobData,
   JOB_DISCOVER_CHAPTERS,
   JOB_REFRESH_ALL_STORIES,
   QUEUE_CRAWLER,
-  type DiscoverChaptersJobData,
 } from '@/modules/queue/queue.constants';
-import { AppSettingsService } from './app-settings.service';
+import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import { Inject, Logger } from '@nestjs/common';
+import type { Database } from '@smanga/db';
+import { appSetting, story } from '@smanga/db/schema';
+import type { Job, Queue } from 'bull';
+import { and, eq } from 'drizzle-orm';
+import type { AppSettingsService } from './app-settings.service';
 
 @Processor(QUEUE_CRAWLER)
 export class RefreshAllStoriesProcessor {
@@ -44,10 +44,7 @@ export class RefreshAllStoriesProcessor {
     // Eligible: discovery already complete (so we have a chapter list baseline),
     // not opted out via per-story toggle. Scope='ongoing' further narrows to
     // status='ongoing' so dropped/completed stories don't waste rate-limit budget.
-    const baseConds = [
-      eq(story.discoveryStatus, 'complete'),
-      eq(story.autoRefresh, true),
-    ];
+    const baseConds = [eq(story.discoveryStatus, 'complete'), eq(story.autoRefresh, true)];
     if (config.autoRefreshScope === 'ongoing') {
       baseConds.push(eq(story.status, 'ongoing'));
     }

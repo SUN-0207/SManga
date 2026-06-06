@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { me } from '@/api/auth';
 import { useAuthStore } from '@/stores/auth-store';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 /**
  * Fetch /auth/me once on app load and mirror the result into the auth store.

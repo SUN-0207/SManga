@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
 import { readingProgressApi } from '@/api/reading-progress';
+import { useEffect, useRef } from 'react';
 
 /**
  * Tracks time the user actively spends on a chapter and POSTs accumulated
@@ -32,9 +32,7 @@ export function useReadingSessionTracker(
       secondsRef.current = 0;
       const payload = Math.min(s, MAX_DELTA);
       // fire-and-forget; ignore errors (e.g., 401 when not logged in)
-      void readingProgressApi
-        .postSession(storyId!, chapterIndex!, payload)
-        .catch(() => {});
+      void readingProgressApi.postSession(storyId!, chapterIndex!, payload).catch(() => {});
     }
 
     const tickHandle = setInterval(() => {

@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react';
-import { Search, X } from 'lucide-react';
 import type { CatalogFeed } from '@/api/discover';
+import { Search, X } from 'lucide-react';
+import { type FormEvent, useState } from 'react';
 
 export function DiscoverFilters({
   feeds,
@@ -53,7 +53,12 @@ export function DiscoverFilters({
       </div>
 
       {supportsSearch && (
-        <form onSubmit={submit} role="search" aria-label="Tìm trên nguồn" className="relative max-w-md">
+        <form
+          onSubmit={submit}
+          role="search"
+          aria-label="Tìm trên nguồn"
+          className="relative max-w-md"
+        >
           <label htmlFor="discover-search" className="sr-only">
             Từ khóa tìm kiếm
           </label>

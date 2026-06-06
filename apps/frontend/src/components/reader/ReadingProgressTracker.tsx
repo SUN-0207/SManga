@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { readingProgressApi } from '@/api/reading-progress';
 import { useAuthStore } from '@/stores/auth-store';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 
 export function ReadingProgressTracker({
   storyId,

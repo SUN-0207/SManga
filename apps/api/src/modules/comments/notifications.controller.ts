@@ -1,9 +1,9 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Get, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsUUID } from 'class-validator';
-import { NotificationsService } from './notifications.service';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { NotificationsService } from './notifications.service';
 
 class MarkReadDto {
   @IsOptional()
@@ -33,10 +33,7 @@ export class NotificationsController {
 
   @Post('read')
   @HttpCode(204)
-  markRead(
-    @CurrentUser() user: { id: string },
-    @Body() body: MarkReadDto,
-  ) {
+  markRead(@CurrentUser() user: { id: string }, @Body() body: MarkReadDto) {
     return this.svc.markRead(user.id, body.ids);
   }
 }

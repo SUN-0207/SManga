@@ -1,6 +1,5 @@
 import { gzipSync } from 'node:zlib';
-import { eq, inArray, sql } from 'drizzle-orm';
-import { storyMetadataSchema, type CatalogPage, type StoryMetadata } from '@smanga/shared';
+import type { Database } from '@smanga/db';
 import {
   chapter,
   genre,
@@ -9,12 +8,13 @@ import {
   storyGenre,
   storySource,
 } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
+import { type CatalogPage, type StoryMetadata, storyMetadataSchema } from '@smanga/shared';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { downloadCover } from './cover.ts';
 import { fetchHtml } from './fetcher.ts';
 import { logger } from './logger.ts';
-import { getAdapter, resolveAdapterForUrl } from './registry.ts';
 import { TokenBucket } from './rate-limit.ts';
+import { getAdapter, resolveAdapterForUrl } from './registry.ts';
 
 const buckets = new Map<string, TokenBucket>();
 function bucketFor(sourceId: string, rps: number): TokenBucket {
@@ -337,7 +337,11 @@ async function uniqueSlug(db: Database, base: string): Promise<string> {
 export async function fetchChapterById(db: Database, chapterId: string): Promise<void> {
   const [row] = await db.select().from(chapter).where(eq(chapter.id, chapterId)).limit(1);
   if (!row) throw new Error(`chapter not found: ${chapterId}`);
-  const [src] = await db.select().from(sourceTable).where(eq(sourceTable.id, row.sourceId)).limit(1);
+  const [src] = await db
+    .select()
+    .from(sourceTable)
+    .where(eq(sourceTable.id, row.sourceId))
+    .limit(1);
   if (!src) throw new Error(`source not found: ${row.sourceId}`);
 
   const adapter = getAdapter(row.sourceId);

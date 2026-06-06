@@ -11,10 +11,7 @@ export interface ChapterNavProps {
 
 export function ChapterNav({ slug, prev, next, current, totalChapters }: ChapterNavProps) {
   return (
-    <nav
-      className="flex items-center justify-between gap-2 py-4"
-      aria-label="Điều hướng chương"
-    >
+    <nav className="flex items-center justify-between gap-2 py-4" aria-label="Điều hướng chương">
       <div className="flex-1 min-w-0">
         {prev ? (
           <Link

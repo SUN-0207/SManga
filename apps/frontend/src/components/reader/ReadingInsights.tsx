@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { Flame, Clock } from 'lucide-react';
 import { meApi } from '@/api/me';
 import { useAuthStore } from '@/stores/auth-store';
+import { useQuery } from '@tanstack/react-query';
+import { Clock, Flame } from 'lucide-react';
 
 interface Props {
   readonly storyId: string;
@@ -64,22 +64,17 @@ export function ReadingInsights({ storyId }: Props) {
       <span className="inline-flex items-center gap-1.5">
         <Flame className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
         <span>
-          Tốc độ đọc:{' '}
-          <span className="font-semibold text-fg">{speed.wordsPerMinute} từ/phút</span>
+          Tốc độ đọc: <span className="font-semibold text-fg">{speed.wordsPerMinute} từ/phút</span>
         </span>
       </span>
-      <span className="text-border-strong" aria-hidden>·</span>
+      <span className="text-border-strong" aria-hidden>
+        ·
+      </span>
       <span className="inline-flex items-center gap-1.5">
         <Clock className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
         <span>
-          ETA hoàn thành:{' '}
-          <span className="font-semibold text-fg">
-            {estimatedDays} ngày
-          </span>
-          {' '}
-          <span className="text-fg-subtle">
-            ({eta.remainingChapters} chương còn lại)
-          </span>
+          ETA hoàn thành: <span className="font-semibold text-fg">{estimatedDays} ngày</span>{' '}
+          <span className="text-fg-subtle">({eta.remainingChapters} chương còn lại)</span>
         </span>
       </span>
     </div>

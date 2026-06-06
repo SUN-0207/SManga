@@ -1,8 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { desc, eq, sql } from 'drizzle-orm';
-import { readingProgress, story } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Database } from '@smanga/db';
+import { readingProgress, story } from '@smanga/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
 import type { SessionSecondsDto } from './dto/session-seconds.dto';
 
 @Injectable()

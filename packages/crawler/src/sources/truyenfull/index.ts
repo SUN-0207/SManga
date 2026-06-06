@@ -40,7 +40,7 @@ export const truyenfullAdapter: SourceAdapter = {
     return parseStoryHtml(html, url);
   },
   async listChapters(html) {
-    return parseChapterListHtml(html, BASE + '/');
+    return parseChapterListHtml(html, `${BASE}/`);
   },
   async fetchChapterContent(html) {
     return parseChapterContentHtml(html);

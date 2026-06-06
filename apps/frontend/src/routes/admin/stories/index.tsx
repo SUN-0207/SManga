@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, Compass, Download, Loader2, Search, X, Zap } from 'lucide-react';
+import { type BulkAction, discoverApi } from '@/api/discover';
 import { listStories } from '@/api/stories';
-import { discoverApi, type BulkAction } from '@/api/discover';
 import { ImportStoryForm } from '@/components/admin/ImportStoryForm';
 import { StubBadge } from '@/components/admin/StubBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EmptyFolder } from '@/components/ui/illustrations/EmptyFolder';
 import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, createFileRoute } from '@tanstack/react-router';
+import { ChevronRight, Compass, Download, Loader2, Search, X, Zap } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 export const Route = createFileRoute('/admin/stories/')({
   component: AdminStoriesPage,
@@ -54,10 +54,8 @@ function AdminStoriesPage() {
   );
 
   const visibleIds = filtered.map((s) => s.id);
-  const allVisibleSelected =
-    visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
-  const someVisibleSelected =
-    visibleIds.some((id) => selected.has(id)) && !allVisibleSelected;
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
+  const someVisibleSelected = visibleIds.some((id) => selected.has(id)) && !allVisibleSelected;
 
   function toggleAll() {
     setSelected((prev) => {
@@ -90,8 +88,8 @@ function AdminStoriesPage() {
         </p>
         <h1 className="font-sans font-bold text-3xl sm:text-4xl tracking-tight text-fg">Truyện</h1>
         <p className="text-body-sm text-fg-muted mt-2 max-w-xl">
-          Khám phá catalog từ source rồi import metadata. Chọn nhiều truyện và bấm quét + crawl
-          hàng loạt thay vì làm từng truyện.
+          Khám phá catalog từ source rồi import metadata. Chọn nhiều truyện và bấm quét + crawl hàng
+          loạt thay vì làm từng truyện.
         </p>
       </div>
 
@@ -117,7 +115,9 @@ function AdminStoriesPage() {
       <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
-            <h2 className="font-sans font-semibold text-heading-md text-fg mr-2">Danh sách truyện</h2>
+            <h2 className="font-sans font-semibold text-heading-md text-fg mr-2">
+              Danh sách truyện
+            </h2>
             <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
               Tất cả ({stories.length})
             </FilterChip>
@@ -179,7 +179,9 @@ function AdminStoriesPage() {
                     <tr
                       key={r.id}
                       className={`group border-b border-border/60 last:border-0 transition-colors duration-fast ${
-                        isChecked ? 'border-l-2 border-l-accent bg-bg-subtle' : 'hover:bg-bg-subtle/60'
+                        isChecked
+                          ? 'border-l-2 border-l-accent bg-bg-subtle'
+                          : 'hover:bg-bg-subtle/60'
                       }`}
                     >
                       <td className="pl-5 pr-2 py-3">
@@ -290,9 +292,7 @@ function BulkActionBar({
       };
       const skip = res.skipped.length;
       setInfo(
-        `Đã enqueue ${res.queued.length} truyện cho ${labels[vars.action]}` +
-          (skip > 0 ? `, bỏ qua ${skip}` : '') +
-          '. Theo dõi ở Jobs.',
+        `Đã enqueue ${res.queued.length} truyện cho ${labels[vars.action]}${skip > 0 ? `, bỏ qua ${skip}` : ''}. Theo dõi ở Jobs.`,
       );
       onDone();
       setTimeout(() => setInfo(null), 8_000);

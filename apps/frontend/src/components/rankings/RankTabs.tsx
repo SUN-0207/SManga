@@ -12,9 +12,9 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  { key: 'hot',       label: 'Hot tuần' },
-  { key: 'views',     label: 'Lượt xem' },
-  { key: 'rating',    label: 'Rating' },
+  { key: 'hot', label: 'Hot tuần' },
+  { key: 'views', label: 'Lượt xem' },
+  { key: 'rating', label: 'Rating' },
   { key: 'completed', label: 'Mới hoàn thành' },
 ];
 

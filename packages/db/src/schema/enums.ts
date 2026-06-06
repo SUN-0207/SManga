@@ -7,16 +7,9 @@ export const storyStatusEnum = pgEnum('story_status', [
   'unknown',
 ]);
 
-export const storySourceStatusEnum = pgEnum('story_source_status', [
-  'active',
-  'unavailable',
-]);
+export const storySourceStatusEnum = pgEnum('story_source_status', ['active', 'unavailable']);
 
-export const chapterStatusEnum = pgEnum('chapter_status', [
-  'pending',
-  'crawled',
-  'failed',
-]);
+export const chapterStatusEnum = pgEnum('chapter_status', ['pending', 'crawled', 'failed']);
 
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 

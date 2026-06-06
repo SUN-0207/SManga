@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+import { DRIZZLE } from '@/modules/db/db.provider';
 import {
   BadRequestException,
   ConflictException,
@@ -6,14 +8,12 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { eq } from 'drizzle-orm';
-import * as bcrypt from 'bcryptjs';
-import { randomUUID } from 'node:crypto';
-import { account, user } from '@smanga/db/schema';
-import { and } from 'drizzle-orm';
+import type { JwtService } from '@nestjs/jwt';
 import type { Database } from '@smanga/db';
-import { DRIZZLE } from '@/modules/db/db.provider';
+import { account, user } from '@smanga/db/schema';
+import * as bcrypt from 'bcryptjs';
+import { eq } from 'drizzle-orm';
+import { and } from 'drizzle-orm';
 import type { ChangePasswordDto } from './dto/change-password.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { RegisterDto } from './dto/register.dto';
@@ -45,10 +45,12 @@ export class AuthService {
         passwordHash,
       })
       .returning();
-    return { id: created!.id, email: created!.email };
+    return { id: created?.id, email: created?.email };
   }
 
-  async login(dto: LoginDto): Promise<{ token: string; user: { id: string; email: string; role: string } }> {
+  async login(
+    dto: LoginDto,
+  ): Promise<{ token: string; user: { id: string; email: string; role: string } }> {
     const [row] = await this.db.select().from(user).where(eq(user.email, dto.email)).limit(1);
     if (!row || !row.passwordHash) throw new UnauthorizedException('Invalid credentials');
     const ok = await bcrypt.compare(dto.password, row.passwordHash);
@@ -81,17 +83,13 @@ export class AuthService {
     if (dto.name !== undefined) patch.name = dto.name.trim();
     if (dto.image !== undefined) patch.image = dto.image;
 
-    const [updated] = await this.db
-      .update(user)
-      .set(patch)
-      .where(eq(user.id, id))
-      .returning({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        image: user.image,
-        role: user.role,
-      });
+    const [updated] = await this.db.update(user).set(patch).where(eq(user.id, id)).returning({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      image: user.image,
+      role: user.role,
+    });
     if (!updated) throw new NotFoundException('User not found');
     return updated;
   }
@@ -115,7 +113,10 @@ export class AuthService {
       .select({ userId: account.userId })
       .from(account)
       .where(
-        and(eq(account.provider, params.provider), eq(account.providerAccountId, params.providerAccountId)),
+        and(
+          eq(account.provider, params.provider),
+          eq(account.providerAccountId, params.providerAccountId),
+        ),
       )
       .limit(1);
     if (linked) {
@@ -142,7 +143,7 @@ export class AuthService {
           image: params.image,
         })
         .returning({ id: user.id });
-      userId = created[0]!.id;
+      userId = created[0]?.id;
     }
 
     // 3. link the OAuth account

@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, List, Settings as SettingsIcon } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { getChapterContent } from '@/api/chapters';
-import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
-import { useTrackChapterView } from '@/hooks/use-track-view';
-import { useReadingSessionTracker } from '@/hooks/use-reading-session-tracker';
 import { CommentSection } from '@/components/comments/CommentSection';
+import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
+import { useReadingSessionTracker } from '@/hooks/use-reading-session-tracker';
+import { useTrackChapterView } from '@/hooks/use-track-view';
+import { useReaderPrefs } from '@/stores/reader-prefs-store';
+import { useQuery } from '@tanstack/react-query';
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { ArrowLeft, List, Settings as SettingsIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/truyen/$slug/chuong/$index')({
   component: ChapterReader,
@@ -84,15 +84,10 @@ function ChapterReader() {
   }, []);
 
   const reduceMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (isLoading || !data) {
-    return (
-      <div className="container py-20 text-center text-fg-muted">
-        Đang tải chương...
-      </div>
-    );
+    return <div className="container py-20 text-center text-fg-muted">Đang tải chương...</div>;
   }
 
   const { chapter, story, prev, next } = data;
@@ -101,19 +96,17 @@ function ChapterReader() {
   const cleanTitle = chapter.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '');
 
   const fontSizeClass =
-    ({
-      '15': 'text-[15px] leading-[1.7]',
-      '18': 'text-[17px] sm:text-[18px] leading-[1.75]',
-      '20': 'text-[18px] sm:text-[20px] leading-[1.75]',
-      '24': 'text-[20px] sm:text-[24px] leading-[1.7]',
-    } as Record<string, string>)[fontSize] ?? 'text-[18px] leading-[1.75]';
+    (
+      {
+        '15': 'text-[15px] leading-[1.7]',
+        '18': 'text-[17px] sm:text-[18px] leading-[1.75]',
+        '20': 'text-[18px] sm:text-[20px] leading-[1.75]',
+        '24': 'text-[20px] sm:text-[24px] leading-[1.7]',
+      } as Record<string, string>
+    )[fontSize] ?? 'text-[18px] leading-[1.75]';
 
   const fontFamilyClass =
-    fontFamily === 'sans'
-      ? 'font-sans'
-      : fontFamily === 'mono'
-        ? 'font-mono'
-        : 'font-prose';
+    fontFamily === 'sans' ? 'font-sans' : fontFamily === 'mono' ? 'font-mono' : 'font-prose';
 
   // Word-based reading time (Spec C: ceil(wordCount / 250))
   const wordCount = (chapter.content?.match(/\S+/g) ?? []).length;
@@ -180,7 +173,11 @@ function ChapterReader() {
           <button
             type="button"
             onClick={() =>
-              navigate({ to: '/truyen/$slug', params: { slug }, search: { page: 1, commentsPage: 1 } })
+              navigate({
+                to: '/truyen/$slug',
+                params: { slug },
+                search: { page: 1, commentsPage: 1 },
+              })
             }
             aria-label="Quay lại trang truyện"
             className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-bg-subtle transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -237,12 +234,7 @@ function ChapterReader() {
         )}
       </article>
 
-      <CommentSection
-        targetType="chapter"
-        targetId={chapter.id}
-        slug={slug}
-        chapterIndex={index}
-      />
+      <CommentSection targetType="chapter" targetId={chapter.id} slug={slug} chapterIndex={index} />
 
       {/* Floating prev/next pill — always visible, thumb-zone */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex gap-2 bg-bg/80 backdrop-blur-md p-1.5 rounded-full border border-border shadow-elev">

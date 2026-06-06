@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { sourcesApi } from '@/api/sources';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Plus } from 'lucide-react';
-import { sourcesApi } from '@/api/sources';
+import { type FormEvent, useState } from 'react';
 
 export function SourceForm() {
   const queryClient = useQueryClient();

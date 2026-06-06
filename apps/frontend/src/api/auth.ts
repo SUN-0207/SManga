@@ -13,7 +13,11 @@ export async function login(email: string, password: string): Promise<{ user: Us
   return res.data as { user: User };
 }
 
-export async function register(email: string, password: string, name?: string): Promise<{ id: string; email: string }> {
+export async function register(
+  email: string,
+  password: string,
+  name?: string,
+): Promise<{ id: string; email: string }> {
   const res = await api.post('/auth/register', { email, password, name });
   return res.data as { id: string; email: string };
 }

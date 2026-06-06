@@ -1,9 +1,9 @@
+import { Roles } from '@/common/decorators/roles.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ChaptersService } from './chapters.service';
-import { CrawlChaptersDto } from './dto/crawl.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
+import type { ChaptersService } from './chapters.service';
+import type { CrawlChaptersDto } from './dto/crawl.dto';
 
 @ApiTags('chapters')
 @Controller({ path: 'chapters', version: '1' })

@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, ArrowLeft, CheckCircle2, Clock, RefreshCw, Star } from 'lucide-react';
-import { api } from '@/lib/api-client';
+import type { DiscoveryStatus } from '@/api/discover';
 import { setFeatured } from '@/api/stories';
 import { ChapterCrawlPanel } from '@/components/admin/ChapterCrawlPanel';
 import { StubBadge } from '@/components/admin/StubBadge';
-import type { DiscoveryStatus } from '@/api/discover';
+import { api } from '@/lib/api-client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link, createFileRoute } from '@tanstack/react-router';
+import { AlertCircle, ArrowLeft, CheckCircle2, Clock, RefreshCw, Star } from 'lucide-react';
 
 export const Route = createFileRoute('/admin/stories/$id')({
   component: AdminStoryDetail,
@@ -63,10 +63,8 @@ function AdminStoryDetail() {
   const story = storyQ.data;
   const chapters = chaptersQ.data ?? [];
 
-  if (storyQ.isLoading)
-    return <p className="text-sm text-fg-muted">Đang tải...</p>;
-  if (!story)
-    return <p className="text-sm text-destructive">Không tìm thấy truyện.</p>;
+  if (storyQ.isLoading) return <p className="text-sm text-fg-muted">Đang tải...</p>;
+  if (!story) return <p className="text-sm text-destructive">Không tìm thấy truyện.</p>;
 
   const isStub = story.discoveryStatus !== 'complete';
   const crawledCount = chapters.filter((c) => c.status === 'crawled').length;
@@ -84,9 +82,7 @@ function AdminStoryDetail() {
           Truyện
         </Link>
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="font-sans font-bold text-3xl sm:text-4xl tracking-tight">
-            {story.title}
-          </h1>
+          <h1 className="font-sans font-bold text-3xl sm:text-4xl tracking-tight">{story.title}</h1>
           <StubBadge status={story.discoveryStatus} />
         </div>
         <p className="text-sm text-fg-muted mt-2">
@@ -108,7 +104,12 @@ function AdminStoryDetail() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Stat icon={CheckCircle2} label="Đã crawl" value={crawledCount} tone="positive" />
           <Stat icon={Clock} label="Chờ" value={pendingCount} />
-          <Stat icon={AlertCircle} label="Lỗi" value={failedCount} tone={failedCount > 0 ? 'warning' : 'neutral'} />
+          <Stat
+            icon={AlertCircle}
+            label="Lỗi"
+            value={failedCount}
+            tone={failedCount > 0 ? 'warning' : 'neutral'}
+          />
         </div>
       )}
 
@@ -235,8 +236,8 @@ function FeaturedToggle({ id, featured }: { id: string; featured: boolean }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">Truyện nổi bật</p>
         <p className="text-xs text-fg-muted mt-0.5">
-          Truyện được đánh dấu nổi bật sẽ xuất hiện ưu tiên trong slider trang chủ thay vì danh
-          sách cập nhật gần đây.
+          Truyện được đánh dấu nổi bật sẽ xuất hiện ưu tiên trong slider trang chủ thay vì danh sách
+          cập nhật gần đây.
         </p>
       </div>
       <button
@@ -249,7 +250,10 @@ function FeaturedToggle({ id, featured }: { id: string; featured: boolean }) {
             : 'border-border-strong bg-bg hover:bg-bg-subtle text-fg'
         }`}
       >
-        <Star className={`h-3 w-3 ${featured ? 'fill-amber-400 text-amber-400' : ''}`} aria-hidden />
+        <Star
+          className={`h-3 w-3 ${featured ? 'fill-amber-400 text-amber-400' : ''}`}
+          aria-hidden
+        />
         {featured ? 'Đang nổi bật' : 'Đánh dấu nổi bật'}
       </button>
     </div>
@@ -304,10 +308,7 @@ function Stat({
   value: number;
   tone?: 'neutral' | 'positive' | 'warning';
 }) {
-  const valueClass =
-    tone === 'warning' && value > 0
-      ? 'text-[var(--accent)]'
-      : 'text-fg';
+  const valueClass = tone === 'warning' && value > 0 ? 'text-[var(--accent)]' : 'text-fg';
   return (
     <div className="rounded-xl border border-border bg-bg p-4">
       <div className="flex items-center gap-2 text-fg-muted">

@@ -1,16 +1,23 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bull';
-import type { Queue } from 'bull';
-import { asc, eq } from 'drizzle-orm';
-import { browseCatalog, getAdapter, listAdapters, searchCatalog } from '@smanga/crawler';
-import { source } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import {
+  type DiscoverAllSourceJobData,
   JOB_DISCOVER_ALL_SOURCE,
   QUEUE_CRAWLER,
-  type DiscoverAllSourceJobData,
 } from '@/modules/queue/queue.constants';
+import { InjectQueue } from '@nestjs/bull';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { browseCatalog, getAdapter, listAdapters, searchCatalog } from '@smanga/crawler';
+import type { SourceAdapter } from '@smanga/crawler';
+import type { Database } from '@smanga/db';
+import { source } from '@smanga/db/schema';
+import type { Queue } from 'bull';
+import { asc, eq } from 'drizzle-orm';
 import type { CreateSourceDto, UpdateSourceDto } from './dto/create-source.dto';
 
 @Injectable()
@@ -27,7 +34,9 @@ export class SourcesService {
   async create(dto: CreateSourceDto) {
     const valid = new Set(listAdapters().map((a) => a.id));
     if (!valid.has(dto.id)) {
-      throw new BadRequestException(`No adapter registered for id=${dto.id}. Valid: ${[...valid].join(', ')}`);
+      throw new BadRequestException(
+        `No adapter registered for id=${dto.id}. Valid: ${[...valid].join(', ')}`,
+      );
     }
     const [existing] = await this.db.select().from(source).where(eq(source.id, dto.id)).limit(1);
     if (existing) throw new ConflictException(`source ${dto.id} already exists`);
@@ -66,7 +75,7 @@ export class SourcesService {
    * search is supported. Used by the discover UI to render feed tabs.
    */
   feeds(sourceId: string) {
-    let adapter;
+    let adapter: SourceAdapter;
     try {
       adapter = getAdapter(sourceId);
     } catch {
@@ -81,7 +90,12 @@ export class SourcesService {
     };
   }
 
-  async discover(sourceId: string, feedId: string | undefined, page: number, query: string | undefined) {
+  async discover(
+    sourceId: string,
+    feedId: string | undefined,
+    page: number,
+    query: string | undefined,
+  ) {
     try {
       getAdapter(sourceId);
     } catch {
@@ -108,7 +122,7 @@ export class SourcesService {
     requestedBy: string | null,
   ): Promise<{ jobId: string }> {
     // 1. Validate adapter exists
-    let adapter;
+    let adapter: SourceAdapter;
     try {
       adapter = getAdapter(sourceId);
     } catch {

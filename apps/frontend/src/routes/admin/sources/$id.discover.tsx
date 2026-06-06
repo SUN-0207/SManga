@@ -1,7 +1,3 @@
-import { useEffect, useState } from 'react';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, Zap, Download } from 'lucide-react';
 import { discoverApi } from '@/api/discover';
 import { sourcesApi } from '@/api/sources';
 import { DiscoverActionBar } from '@/components/admin/DiscoverActionBar';
@@ -9,6 +5,10 @@ import { DiscoverFilters } from '@/components/admin/DiscoverFilters';
 import { DiscoverPagination } from '@/components/admin/DiscoverPagination';
 import { DiscoverTable } from '@/components/admin/DiscoverTable';
 import { useDiscoverImportStore } from '@/stores/discover-import-store';
+import { useQuery } from '@tanstack/react-query';
+import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { ArrowLeft, Download, Loader2, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/admin/sources/$id/discover')({
   component: DiscoverPage,
@@ -27,7 +27,10 @@ function DiscoverPage() {
   const clearSelection = useDiscoverImportStore((s) => s.clearSelection);
 
   const [showImportAll, setShowImportAll] = useState(false);
-  const [importAllToast, setImportAllToast] = useState<{ type: 'success' | 'error' | 'conflict'; message: string } | null>(null);
+  const [importAllToast, setImportAllToast] = useState<{
+    type: 'success' | 'error' | 'conflict';
+    message: string;
+  } | null>(null);
 
   const feedsQ = useQuery({
     queryKey: ['source-feeds', sourceId],
@@ -40,10 +43,15 @@ function DiscoverPage() {
   const searching = search.q.length > 0;
 
   const browseQ = useQuery({
-    queryKey: ['discover', sourceId, searching ? `q:${search.q}` : `feed:${activeFeed}`, search.page],
+    queryKey: [
+      'discover',
+      sourceId,
+      searching ? `q:${search.q}` : `feed:${activeFeed}`,
+      search.page,
+    ],
     queryFn: () =>
       discoverApi.browse(sourceId, {
-        feed: searching ? undefined : activeFeed ?? undefined,
+        feed: searching ? undefined : (activeFeed ?? undefined),
         page: search.page,
         q: searching ? search.q : undefined,
       }),
@@ -99,8 +107,8 @@ function DiscoverPage() {
               Khám phá {sourceName}
             </h1>
             <p className="text-sm text-muted-foreground mt-2 max-w-xl">
-              Chọn truyện từ catalog của <code>{baseUrl}</code> để import metadata. Việc quét chapter
-              và crawl nội dung sẽ chạy theo lệnh sau khi anh duyệt từng truyện.
+              Chọn truyện từ catalog của <code>{baseUrl}</code> để import metadata. Việc quét
+              chapter và crawl nội dung sẽ chạy theo lệnh sau khi anh duyệt từng truyện.
             </p>
           </div>
           {activeFeed && !searching && (
@@ -199,7 +207,11 @@ function ImportAllConfirm({
       const axiosErr = err as { response?: { status?: number; data?: { message?: string } } };
       const status = axiosErr.response?.status;
       const raw = axiosErr.response?.data?.message;
-      const msg = Array.isArray(raw) ? raw.join(', ') : (typeof raw === 'string' ? raw : (err as Error).message ?? 'Lỗi không xác định');
+      const msg = Array.isArray(raw)
+        ? raw.join(', ')
+        : typeof raw === 'string'
+          ? raw
+          : ((err as Error).message ?? 'Lỗi không xác định');
       if (status === 409) {
         setError('Job đang chạy. Mở trang Jobs để xem.');
       } else {

@@ -1,8 +1,8 @@
+import { DRIZZLE } from '@/modules/db/db.provider';
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { sql } from 'drizzle-orm';
 import type { Database } from '@smanga/db';
-import { DRIZZLE } from '@/modules/db/db.provider';
+import { sql } from 'drizzle-orm';
 
 @ApiTags('health')
 @Controller({ path: 'health', version: '1' })

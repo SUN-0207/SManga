@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bull';
 import { loadEnv } from '@/config/env';
+import { BullModule } from '@nestjs/bull';
+import { Module } from '@nestjs/common';
 import { QUEUE_CRAWLER } from './queue.constants';
 
 @Module({

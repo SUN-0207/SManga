@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Loader2, X, Zap, Download } from 'lucide-react';
 import { discoverApi } from '@/api/discover';
 import { useDiscoverImportStore } from '@/stores/discover-import-store';
+import { Download, Loader2, X, Zap } from 'lucide-react';
+import { useState } from 'react';
 
 export function DiscoverActionBar({ onImported }: { onImported: () => void }) {
   const selected = useDiscoverImportStore((s) => s.selected);
@@ -112,12 +112,8 @@ export function DiscoverActionBar({ onImported }: { onImported: () => void }) {
         </button>
       </div>
 
-      {error && (
-        <p className="mt-2 text-[11px] text-destructive text-center">{error}</p>
-      )}
-      {info && !error && (
-        <p className="mt-2 text-[11px] text-positive text-center">{info}</p>
-      )}
+      {error && <p className="mt-2 text-[11px] text-destructive text-center">{error}</p>}
+      {info && !error && <p className="mt-2 text-[11px] text-positive text-center">{info}</p>}
     </div>
   );
 }

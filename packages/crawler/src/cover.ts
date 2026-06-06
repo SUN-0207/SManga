@@ -4,7 +4,9 @@ import { logger } from './logger.ts';
 const MAX_COVER_BYTES = 2 * 1024 * 1024; // 2 MB
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 
-export async function downloadCover(url: string): Promise<{ bytes: Buffer; mimeType: string } | null> {
+export async function downloadCover(
+  url: string,
+): Promise<{ bytes: Buffer; mimeType: string } | null> {
   try {
     const { bytes, contentType } = await fetchBytes(url);
     const mimeType = contentType.split(';')[0]?.trim() ?? 'application/octet-stream';

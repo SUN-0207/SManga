@@ -1,20 +1,20 @@
-import { useEffect, useState } from 'react';
-import { createFileRoute, Outlet, Link, redirect, useRouterState } from '@tanstack/react-router';
+import { me } from '@/api/auth';
+import { api } from '@/lib/api-client';
+import { useAuthStore } from '@/stores/auth-store';
+import { Link, Outlet, createFileRoute, redirect, useRouterState } from '@tanstack/react-router';
 import {
   Activity,
   BookOpen,
   Database,
+  ExternalLink,
   LayoutDashboard,
   LogOut,
-  ExternalLink,
   Menu,
   Settings as SettingsIcon,
   Users,
   X,
 } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth-store';
-import { me } from '@/api/auth';
-import { api } from '@/lib/api-client';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/admin')({
   beforeLoad: async () => {
@@ -81,7 +81,9 @@ function AdminLayout() {
             className="inline-flex items-center gap-2 font-sans text-base font-semibold tracking-tight text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
           >
             SManga
-            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">ADMIN</span>
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">
+              ADMIN
+            </span>
           </Link>
           <button
             type="button"
@@ -140,7 +142,9 @@ function SidebarBrand() {
         className="inline-flex items-center gap-2 font-sans text-lg font-semibold tracking-tight text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
       >
         SManga
-        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">ADMIN</span>
+        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">
+          ADMIN
+        </span>
       </Link>
     </div>
   );

@@ -5,56 +5,56 @@
 :root,
 :root[data-theme="dark"] {
   /* Surfaces */
-  --bg:            #0A0A0A;
-  --bg-elevated:   #18181B;
-  --bg-subtle:     rgba(255, 255, 255, 0.04);
+  --bg: #0a0a0a;
+  --bg-elevated: #18181b;
+  --bg-subtle: rgba(255, 255, 255, 0.04);
 
   /* Foreground */
-  --fg:            #FAFAFA;
-  --fg-muted:      rgba(255, 255, 255, 0.60);
-  --fg-subtle:     rgba(255, 255, 255, 0.40);
+  --fg: #fafafa;
+  --fg-muted: rgba(255, 255, 255, 0.6);
+  --fg-subtle: rgba(255, 255, 255, 0.4);
 
   /* Brand */
-  --accent:        #EC4899;
-  --accent-strong: #F472B6;
+  --accent: #ec4899;
+  --accent-strong: #f472b6;
 
   /* Borders */
-  --border:        rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.16);
 
   /* Status */
-  --destructive:   #F43F5E;
-  --positive:      #34D399;
+  --destructive: #f43f5e;
+  --positive: #34d399;
 
   /* Shadows (signature) */
-  --glow-pink:        0 0 24px rgba(236, 72, 153, 0.40), 0 0 64px rgba(236, 72, 153, 0.15);
-  --glow-pink-soft:   0 0 16px rgba(236, 72, 153, 0.20);
-  --shadow-elev:      0 8px 24px rgba(0, 0, 0, 0.40);
+  --glow-pink: 0 0 24px rgba(236, 72, 153, 0.4), 0 0 64px rgba(236, 72, 153, 0.15);
+  --glow-pink-soft: 0 0 16px rgba(236, 72, 153, 0.2);
+  --shadow-elev: 0 8px 24px rgba(0, 0, 0, 0.4);
 
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
-  --bg:            #FAFAFA;
-  --bg-elevated:   #FFFFFF;
-  --bg-subtle:     #F4F4F5;
+  --bg: #fafafa;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #f4f4f5;
 
-  --fg:            #18181B;
-  --fg-muted:      #52525B;
-  --fg-subtle:     #A1A1AA;
+  --fg: #18181b;
+  --fg-muted: #52525b;
+  --fg-subtle: #a1a1aa;
 
-  --accent:        #EC4899;
-  --accent-strong: #F472B6;
+  --accent: #ec4899;
+  --accent-strong: #f472b6;
 
-  --border:        #E4E4E7;
-  --border-strong: #D4D4D8;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
 
-  --destructive:   #E11D48;
-  --positive:      #059669;
+  --destructive: #e11d48;
+  --positive: #059669;
 
-  --glow-pink:        0 0 24px rgba(236, 72, 153, 0.30), 0 0 64px rgba(236, 72, 153, 0.10);
-  --glow-pink-soft:   0 0 16px rgba(236, 72, 153, 0.15);
-  --shadow-elev:      0 8px 24px rgba(0, 0, 0, 0.08);
+  --glow-pink: 0 0 24px rgba(236, 72, 153, 0.3), 0 0 64px rgba(236, 72, 153, 0.1);
+  --glow-pink-soft: 0 0 16px rgba(236, 72, 153, 0.15);
+  --shadow-elev: 0 8px 24px rgba(0, 0, 0, 0.08);
 
   color-scheme: light;
 }
@@ -73,18 +73,18 @@ body {
   --background: var(--bg);
   --foreground: var(--fg);
   --primary: var(--accent);
-  --primary-foreground: #FFFFFF;
+  --primary-foreground: #ffffff;
   --muted: var(--bg-subtle);
   --muted-foreground: var(--fg-muted);
   --input: var(--border-strong);
   --ring: var(--accent);
-  --destructive-foreground: #FFFFFF;
+  --destructive-foreground: #ffffff;
   --radius: 0.625rem;
 }
 
 /* Plan C3: drop-cap for chapter first paragraph */
 .drop-cap {
-  font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+  font-family: "Newsreader", Georgia, "Times New Roman", serif;
   font-weight: 700;
   font-size: 3.5em;
   line-height: 0.85;
@@ -110,7 +110,7 @@ body {
   display: block;
   text-align: center;
   margin: 2.5em 0;
-  font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+  font-family: "Newsreader", Georgia, "Times New Roman", serif;
   font-size: 1.5em;
   letter-spacing: 0.4em;
   color: var(--fg-muted);

@@ -1,8 +1,8 @@
+import { DRIZZLE } from '@/modules/db/db.provider';
 // apps/api/src/modules/rankings/rankings.service.ts
 import { Inject, Injectable } from '@nestjs/common';
-import { sql } from 'drizzle-orm';
 import type { Database } from '@smanga/db';
-import { DRIZZLE } from '@/modules/db/db.provider';
+import { sql } from 'drizzle-orm';
 
 /**
  * postgres-js db.execute() returns the row array directly (postgres.RowList).
@@ -142,7 +142,7 @@ export class RankingsService {
       viewCount: Number(r.view_count ?? 0),
       ratingAvg: null,
       ratingCount: 0,
-      rank: 1 + i,        // offset is always 0 for hot
+      rank: 1 + i, // offset is always 0 for hot
       metric: Number(r.weekly_readers ?? 0),
     }));
 

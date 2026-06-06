@@ -44,10 +44,7 @@ export async function createComment(body: {
   return data;
 }
 
-export async function updateComment(
-  id: string,
-  body: { body: string },
-): Promise<CommentTree> {
+export async function updateComment(id: string, body: { body: string }): Promise<CommentTree> {
   const { data } = await api.patch<CommentTree>(`/comments/${id}`, body);
   return data;
 }
@@ -56,9 +53,7 @@ export async function deleteComment(id: string): Promise<void> {
   await api.delete(`/comments/${id}`);
 }
 
-export async function reactComment(
-  id: string,
-): Promise<{ likeCount: number; likedByMe: boolean }> {
+export async function reactComment(id: string): Promise<{ likeCount: number; likedByMe: boolean }> {
   const { data } = await api.post<{ likeCount: number; likedByMe: boolean }>(
     `/comments/${id}/react`,
   );

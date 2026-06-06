@@ -1,27 +1,27 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { LoggerModule } from 'nestjs-pino';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import '@smanga/crawler'; // side effect: register adapters
-import { DbModule } from './modules/db/db.module';
-import { QueueModule } from './modules/queue/queue.module';
-import { CrawlerJobsModule } from './modules/crawler-jobs/crawler-jobs.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { SourcesModule } from './modules/sources/sources.module';
-import { StoriesModule } from './modules/stories/stories.module';
-import { ChaptersModule } from './modules/chapters/chapters.module';
-import { CoversModule } from './modules/covers/covers.module';
-import { JobsModule } from './modules/jobs/jobs.module';
-import { SearchModule } from './modules/search/search.module';
-import { UserDataModule } from './modules/user-data/user-data.module';
-import { UsersModule } from './modules/users/users.module';
 import { AppSettingsModule } from './modules/app-settings/app-settings.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { ChaptersModule } from './modules/chapters/chapters.module';
+import { CommentsModule } from './modules/comments/comments.module';
+import { CoversModule } from './modules/covers/covers.module';
+import { CrawlerJobsModule } from './modules/crawler-jobs/crawler-jobs.module';
+import { DbModule } from './modules/db/db.module';
 import { EngagementModule } from './modules/engagement/engagement.module';
 import { GenresModule } from './modules/genres/genres.module';
 import { HealthModule } from './modules/health/health.module';
+import { JobsModule } from './modules/jobs/jobs.module';
+import { QueueModule } from './modules/queue/queue.module';
 import { RankingsModule } from './modules/rankings/rankings.module';
-import { CommentsModule } from './modules/comments/comments.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
+import { SearchModule } from './modules/search/search.module';
+import { SourcesModule } from './modules/sources/sources.module';
+import { StoriesModule } from './modules/stories/stories.module';
+import { UserDataModule } from './modules/user-data/user-data.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [

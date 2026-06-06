@@ -28,10 +28,9 @@ export async function listAdminUsers(params: {
 }
 
 export async function updateUserRole(id: string, role: 'user' | 'admin') {
-  const res = await api.patch<{ id: string; role: 'user' | 'admin' }>(
-    `/admin/users/${id}/role`,
-    { role },
-  );
+  const res = await api.patch<{ id: string; role: 'user' | 'admin' }>(`/admin/users/${id}/role`, {
+    role,
+  });
   return res.data;
 }
 

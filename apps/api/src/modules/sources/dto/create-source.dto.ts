@@ -1,5 +1,5 @@
-import { IsBoolean, IsNumber, IsOptional, IsString, IsUrl, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsBoolean, IsNumber, IsOptional, IsString, IsUrl, Min } from 'class-validator';
 
 export class CreateSourceDto {
   @IsString()

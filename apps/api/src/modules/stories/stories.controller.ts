@@ -1,14 +1,14 @@
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { StoriesService } from './stories.service';
-import { BulkActionDto } from './dto/bulk-action.dto';
-import { ImportStoryBulkDto, ImportStoryDto } from './dto/import-story.dto';
-import { SetAutoRefreshDto } from './dto/set-auto-refresh.dto';
-import { SetFeaturedDto } from './dto/set-featured.dto';
-import { ListStoriesDto } from './dto/list-stories.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import type { BulkActionDto } from './dto/bulk-action.dto';
+import type { ImportStoryBulkDto, ImportStoryDto } from './dto/import-story.dto';
+import type { ListStoriesDto } from './dto/list-stories.dto';
+import type { SetAutoRefreshDto } from './dto/set-auto-refresh.dto';
+import type { SetFeaturedDto } from './dto/set-featured.dto';
+import type { StoriesService } from './stories.service';
 
 @ApiTags('stories')
 @Controller({ path: 'stories', version: '1' })
@@ -41,11 +41,7 @@ export class StoriesController {
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    return this.stories.chapterListBySlug(
-      slug,
-      Number(page) || 1,
-      Number(pageSize) || 50,
-    );
+    return this.stories.chapterListBySlug(slug, Number(page) || 1, Number(pageSize) || 50);
   }
 
   @Get(':id')

@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Loader2, Play, Settings as SettingsIcon } from 'lucide-react';
 import {
+  type AutoRefreshSetting,
   getAutoRefresh,
   runAutoRefreshNow,
   updateAutoRefresh,
-  type AutoRefreshSetting,
 } from '@/api/settings';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import { Check, Loader2, Play, Settings as SettingsIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/admin/settings')({
   component: AdminSettingsPage,
@@ -23,7 +23,10 @@ const PRESETS: { label: string; cron: string; note: string }[] = [
 
 function AdminSettingsPage() {
   const qc = useQueryClient();
-  const settingQ = useQuery({ queryKey: ['admin', 'settings', 'auto-refresh'], queryFn: getAutoRefresh });
+  const settingQ = useQuery({
+    queryKey: ['admin', 'settings', 'auto-refresh'],
+    queryFn: getAutoRefresh,
+  });
 
   return (
     <div className="space-y-8 max-w-3xl">
@@ -37,13 +40,13 @@ function AdminSettingsPage() {
         </p>
       </div>
 
-      {settingQ.isLoading && (
-        <p className="text-sm text-fg-muted">Đang tải...</p>
-      )}
+      {settingQ.isLoading && <p className="text-sm text-fg-muted">Đang tải...</p>}
       {settingQ.data && (
         <AutoRefreshCard
           setting={settingQ.data}
-          onUpdated={() => qc.invalidateQueries({ queryKey: ['admin', 'settings', 'auto-refresh'] })}
+          onUpdated={() =>
+            qc.invalidateQueries({ queryKey: ['admin', 'settings', 'auto-refresh'] })
+          }
         />
       )}
     </div>
@@ -69,7 +72,13 @@ function AutoRefreshCard({
     setCron(setting.autoRefreshCron);
     setScope(setting.autoRefreshScope);
     setConcurrency(setting.autoRefreshConcurrency);
-  }, [setting.updatedAt, setting.autoRefreshEnabled, setting.autoRefreshCron, setting.autoRefreshScope, setting.autoRefreshConcurrency]);
+  }, [
+    setting.updatedAt,
+    setting.autoRefreshEnabled,
+    setting.autoRefreshCron,
+    setting.autoRefreshScope,
+    setting.autoRefreshConcurrency,
+  ]);
 
   const saveM = useMutation({
     mutationFn: () => updateAutoRefresh({ enabled, cron: cron.trim(), scope, concurrency }),
@@ -91,7 +100,9 @@ function AutoRefreshCard({
     scope !== setting.autoRefreshScope ||
     concurrency !== setting.autoRefreshConcurrency;
 
-  const errMsg = (saveM.error || runM.error) as { response?: { data?: { message?: string } } } | null;
+  const errMsg = (saveM.error || runM.error) as {
+    response?: { data?: { message?: string } };
+  } | null;
   const errorText = errMsg?.response?.data?.message ?? null;
 
   return (
@@ -154,7 +165,8 @@ function AutoRefreshCard({
           />
           <p className="text-xs text-fg-muted">
             Múi giờ: Asia/Ho_Chi_Minh.{' '}
-            {PRESETS.find((p) => p.cron === cron.trim())?.note ?? 'Cron tuỳ chỉnh — validate khi lưu.'}
+            {PRESETS.find((p) => p.cron === cron.trim())?.note ??
+              'Cron tuỳ chỉnh — validate khi lưu.'}
           </p>
         </div>
 

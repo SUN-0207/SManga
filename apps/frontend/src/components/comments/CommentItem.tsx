@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { useRouterState } from '@tanstack/react-router';
-import { Heart, MessageCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
-import { useAuthStore } from '@/stores/auth-store';
 import { deleteComment, reactComment } from '@/api/comments';
 import type { CommentTree } from '@/api/comments';
-import { formatRelativeTime } from '@/lib/format';
-import { CommentForm } from './CommentForm';
 import type { Participant } from '@/hooks/use-mention-autocomplete';
+import { formatRelativeTime } from '@/lib/format';
+import { useAuthStore } from '@/stores/auth-store';
+import { useRouterState } from '@tanstack/react-router';
+import { Heart, MessageCircle, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { CommentForm } from './CommentForm';
 
 const EDIT_WINDOW_MS = 5 * 60 * 1000;
 
@@ -19,7 +19,9 @@ interface Props {
 export function CommentItem({ comment: c, participants, onMutated }: Props) {
   const user = useAuthStore((s) => s.user);
   // s.location.href does NOT exist on TanStack Router's ParsedLocation — use pathname + searchStr
-  const path = useRouterState({ select: (s) => s.location.pathname + (s.location.searchStr ?? '') });
+  const path = useRouterState({
+    select: (s) => s.location.pathname + (s.location.searchStr ?? ''),
+  });
   const [replyOpen, setReplyOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -34,7 +36,10 @@ export function CommentItem({ comment: c, participants, onMutated }: Props) {
     const created = new Date(c.createdAt).getTime();
     const expiry = created + EDIT_WINDOW_MS;
     const remaining = expiry - Date.now();
-    if (remaining <= 0) { setEditExpired(true); return; }
+    if (remaining <= 0) {
+      setEditExpired(true);
+      return;
+    }
     const t = setTimeout(() => setEditExpired(true), remaining);
     return () => clearTimeout(t);
   }, [c.createdAt]);
@@ -51,7 +56,10 @@ export function CommentItem({ comment: c, participants, onMutated }: Props) {
   }, []);
 
   async function handleLike() {
-    if (!user) { setAnonPrompt(true); return; }
+    if (!user) {
+      setAnonPrompt(true);
+      return;
+    }
     // Optimistic
     const prev = { likeCount, likedByMe };
     setLikedByMe(!likedByMe);
@@ -86,20 +94,27 @@ export function CommentItem({ comment: c, participants, onMutated }: Props) {
     let key = 0;
     combined.lastIndex = 0;
 
-    while ((match = combined.exec(text)) !== null) {
+    for (match = combined.exec(text); match !== null; match = combined.exec(text)) {
       if (match.index > lastIndex) {
         parts.push(text.slice(lastIndex, match.index));
       }
       if (match[1]) {
         parts.push(
-          <a key={key++} href={match[1]} target="_blank" rel="noopener noreferrer nofollow"
-             className="text-accent underline underline-offset-2 break-all">
+          <a
+            key={key++}
+            href={match[1]}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="text-accent underline underline-offset-2 break-all"
+          >
             {match[1]}
           </a>,
         );
       } else if (match[2]) {
         parts.push(
-          <span key={key++} className="text-accent">@{match[2]}</span>,
+          <span key={key++} className="text-accent">
+            @{match[2]}
+          </span>,
         );
       }
       lastIndex = match.index + match[0].length;
@@ -129,9 +144,7 @@ export function CommentItem({ comment: c, participants, onMutated }: Props) {
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-fg text-body-sm">{c.user.name}</span>
           <span className="text-body-sm text-fg-muted">{formatRelativeTime(c.createdAt)}</span>
-          {c.editedAt && (
-            <span className="text-[11px] text-fg-subtle italic">(đã sửa)</span>
-          )}
+          {c.editedAt && <span className="text-[11px] text-fg-subtle italic">(đã sửa)</span>}
         </div>
 
         {/* Body */}
@@ -142,7 +155,10 @@ export function CommentItem({ comment: c, participants, onMutated }: Props) {
             editCommentId={c.id}
             initialBody={c.body ?? ''}
             participants={participants}
-            onSuccess={() => { setEditOpen(false); onMutated(); }}
+            onSuccess={() => {
+              setEditOpen(false);
+              onMutated();
+            }}
             onCancel={() => setEditOpen(false)}
             autoFocus
           />
@@ -171,7 +187,10 @@ export function CommentItem({ comment: c, participants, onMutated }: Props) {
           <button
             type="button"
             onClick={() => {
-              if (!user) { setAnonPrompt(true); return; }
+              if (!user) {
+                setAnonPrompt(true);
+                return;
+              }
               setReplyOpen((v) => !v);
             }}
             className="inline-flex items-center gap-1 text-body-sm text-fg-muted hover:text-fg cursor-pointer transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
@@ -197,7 +216,10 @@ export function CommentItem({ comment: c, participants, onMutated }: Props) {
                     <button
                       type="button"
                       disabled={editExpired}
-                      onClick={() => { setEditOpen(true); setMenuOpen(false); }}
+                      onClick={() => {
+                        setEditOpen(true);
+                        setMenuOpen(false);
+                      }}
                       className="flex w-full items-center gap-2 px-3 py-2 text-body-sm text-fg hover:bg-bg-subtle disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors duration-fast"
                     >
                       <Pencil className="h-4 w-4" />
@@ -206,7 +228,10 @@ export function CommentItem({ comment: c, participants, onMutated }: Props) {
                   )}
                   <button
                     type="button"
-                    onClick={() => { void handleDelete(); setMenuOpen(false); }}
+                    onClick={() => {
+                      void handleDelete();
+                      setMenuOpen(false);
+                    }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-body-sm text-destructive hover:bg-bg-subtle cursor-pointer transition-colors duration-fast"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -241,7 +266,10 @@ export function CommentItem({ comment: c, participants, onMutated }: Props) {
               targetId={c.targetId}
               parentId={c.id}
               participants={participants}
-              onSuccess={() => { setReplyOpen(false); onMutated(); }}
+              onSuccess={() => {
+                setReplyOpen(false);
+                onMutated();
+              }}
               onCancel={() => setReplyOpen(false)}
               autoFocus
             />

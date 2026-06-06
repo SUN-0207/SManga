@@ -1,5 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { jobsApi } from '@/api/jobs';
+import { JobsTable } from '@/components/admin/JobsTable';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptyQueue } from '@/components/ui/illustrations/EmptyQueue';
+import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -9,11 +14,6 @@ import {
   RefreshCw,
   Timer,
 } from 'lucide-react';
-import { jobsApi } from '@/api/jobs';
-import { JobsTable } from '@/components/admin/JobsTable';
-import { useAuthStore } from '@/stores/auth-store';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { EmptyQueue } from '@/components/ui/illustrations/EmptyQueue';
 
 export const Route = createFileRoute('/admin/jobs')({
   component: AdminJobsPage,
@@ -87,19 +87,12 @@ function AdminJobsPage() {
           const count = stats[state] ?? 0;
           const Icon = meta.icon;
           const valueClass =
-            meta.tone === 'warning' && count > 0
-              ? 'text-[var(--accent)]'
-              : 'text-fg';
+            meta.tone === 'warning' && count > 0 ? 'text-[var(--accent)]' : 'text-fg';
           return (
-            <div
-              key={state}
-              className="rounded-xl border border-border bg-bg p-4"
-            >
+            <div key={state} className="rounded-xl border border-border bg-bg p-4">
               <div className="flex items-center gap-1.5 text-fg-muted">
                 <Icon className="h-3.5 w-3.5" />
-                <p className="text-[10px] uppercase tracking-[0.18em] font-medium">
-                  {meta.label}
-                </p>
+                <p className="text-[10px] uppercase tracking-[0.18em] font-medium">{meta.label}</p>
               </div>
               <div className={`mt-2 font-sans font-bold text-2xl tabular-nums ${valueClass}`}>
                 {count.toLocaleString('vi-VN')}

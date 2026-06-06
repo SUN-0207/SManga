@@ -1,4 +1,13 @@
-import { customType, integer, numeric, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  customType,
+  integer,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { chapterStatusEnum } from './enums.ts';
 import { source } from './source.ts';
 import { story } from './story.ts';

@@ -1,5 +1,5 @@
-import { useEffect, type ReactNode } from 'react';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
+import { type ReactNode, useEffect } from 'react';
 
 const FAMILY_CSS: Record<'sans' | 'serif' | 'mono', string> = {
   sans: 'Inter, ui-sans-serif, system-ui, sans-serif',

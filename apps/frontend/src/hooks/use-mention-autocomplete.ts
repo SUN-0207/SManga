@@ -47,19 +47,16 @@ export function useMentionAutocomplete(
   }
 
   // Called on every textarea onChange to detect @word pattern at caret
-  const detect = useCallback(
-    (val: string, selStart: number) => {
-      const before = val.slice(0, selStart);
-      const match = before.match(/@(\w*)$/);
-      if (match) {
-        setQuery(match[1] ?? '');
-        setSelectedIndex(0);
-      } else {
-        setQuery('');
-      }
-    },
-    [],
-  );
+  const detect = useCallback((val: string, selStart: number) => {
+    const before = val.slice(0, selStart);
+    const match = before.match(/@(\w*)$/);
+    if (match) {
+      setQuery(match[1] ?? '');
+      setSelectedIndex(0);
+    } else {
+      setQuery('');
+    }
+  }, []);
 
   const onSelect = useCallback(
     (name: string) => {
@@ -105,5 +102,14 @@ export function useMentionAutocomplete(
   // textareaRef is unused at runtime but kept for future focus management
   void textareaRef;
 
-  return { suggestions, query, selectedIndex, onSelect, onKeyDown, clear, detect, active: suggestions.length > 0 && query.length > 0 };
+  return {
+    suggestions,
+    query,
+    selectedIndex,
+    onSelect,
+    onKeyDown,
+    clear,
+    detect,
+    active: suggestions.length > 0 && query.length > 0,
+  };
 }

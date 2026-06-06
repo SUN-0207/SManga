@@ -1,10 +1,10 @@
-import { useState, type FormEvent } from 'react';
-import { createFileRoute, useNavigate, useRouter, Link } from '@tanstack/react-router';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { login as apiLogin, register as apiRegister } from '@/api/auth';
-import { useAuthStore } from '@/stores/auth-store';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
+import { useAuthStore } from '@/stores/auth-store';
+import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { type FormEvent, useState } from 'react';
 
 export const Route = createFileRoute('/dang-ky')({
   component: SignUpPage,
@@ -76,7 +76,8 @@ function SignUpPage() {
               htmlFor="name"
               className="block text-[11px] font-medium uppercase tracking-[0.18em] text-fg-muted"
             >
-              Tên hiển thị <span className="normal-case tracking-normal text-fg-subtle">(tuỳ chọn)</span>
+              Tên hiển thị{' '}
+              <span className="normal-case tracking-normal text-fg-subtle">(tuỳ chọn)</span>
             </label>
             <input
               id="name"
@@ -118,7 +119,7 @@ function SignUpPage() {
             <div className="relative">
               <input
                 id="password"
-                type={showPwd ? "text" : "password"}
+                type={showPwd ? 'text' : 'password'}
                 autoComplete="new-password"
                 required
                 minLength={8}
@@ -131,7 +132,7 @@ function SignUpPage() {
                 type="button"
                 onClick={() => setShowPwd((v) => !v)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                aria-label={showPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                aria-label={showPwd ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               >
                 {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -139,16 +140,16 @@ function SignUpPage() {
             <p
               className={
                 password.length === 0
-                  ? "text-body-sm text-fg-muted"
+                  ? 'text-body-sm text-fg-muted'
                   : password.length >= 8
-                    ? "text-body-sm text-positive"
-                    : "text-body-sm text-destructive"
+                    ? 'text-body-sm text-positive'
+                    : 'text-body-sm text-destructive'
               }
             >
               {password.length === 0
-                ? "Mật khẩu phải có ít nhất 8 ký tự."
+                ? 'Mật khẩu phải có ít nhất 8 ký tự.'
                 : password.length >= 8
-                  ? "✓ Mật khẩu đủ dài."
+                  ? '✓ Mật khẩu đủ dài.'
                   : `Cần thêm ${8 - password.length} ký tự nữa.`}
             </p>
           </div>
@@ -165,12 +166,12 @@ function SignUpPage() {
             className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-accent-gradient px-4 text-[14px] font-bold text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            {busy ? "Đang tạo tài khoản…" : "Tạo tài khoản"}
+            {busy ? 'Đang tạo tài khoản…' : 'Tạo tài khoản'}
           </button>
         </form>
 
         <p className="border-t border-border pt-6 text-center text-body-sm text-fg-muted">
-          Đã có tài khoản?{" "}
+          Đã có tài khoản?{' '}
           <Link
             to="/dang-nhap"
             search={{ redirect }}

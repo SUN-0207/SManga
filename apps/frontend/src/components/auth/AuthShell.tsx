@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import { type ReactNode } from "react";
+import { Link } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 type AuthShellProps = {
   children: ReactNode;
@@ -11,9 +11,9 @@ type AuthShellProps = {
 
 export function AuthShell({
   children,
-  eyebrow = "TẠP CHÍ TRUYỆN CHỮ VIỆT",
-  title = "Đọc chậm. Đọc kỹ. Đọc lại.",
-  subtitle = "Một thư viện truyện chữ Việt biên tập như một tạp chí — không quảng cáo, không pop-up.",
+  eyebrow = 'TẠP CHÍ TRUYỆN CHỮ VIỆT',
+  title = 'Đọc chậm. Đọc kỹ. Đọc lại.',
+  subtitle = 'Một thư viện truyện chữ Việt biên tập như một tạp chí — không quảng cáo, không pop-up.',
 }: AuthShellProps) {
   return (
     <div className="min-h-screen w-full bg-bg text-fg lg:grid lg:grid-cols-2">
@@ -21,8 +21,7 @@ export function AuthShell({
       <aside
         className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12"
         style={{
-          background:
-            "linear-gradient(135deg, #0A0A0A 0%, rgba(236,72,153,0.12) 100%)",
+          background: 'linear-gradient(135deg, #0A0A0A 0%, rgba(236,72,153,0.12) 100%)',
         }}
       >
         {/* Top-right pink glow orb */}
@@ -31,7 +30,7 @@ export function AuthShell({
           className="pointer-events-none absolute right-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full"
           style={{
             background:
-              "radial-gradient(circle at center, rgba(236,72,153,0.25) 0%, rgba(236,72,153,0) 70%)",
+              'radial-gradient(circle at center, rgba(236,72,153,0.25) 0%, rgba(236,72,153,0) 70%)',
           }}
         />
 
@@ -40,9 +39,7 @@ export function AuthShell({
             to="/"
             className="inline-flex items-center gap-2 text-white/90 transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
           >
-            <span className="font-sans text-2xl font-semibold tracking-tight">
-              SManga
-            </span>
+            <span className="font-sans text-2xl font-semibold tracking-tight">SManga</span>
           </Link>
         </div>
 
@@ -58,9 +55,7 @@ export function AuthShell({
 
         <div className="relative z-10 flex items-center gap-3 text-white/40">
           <span className="h-px w-10 bg-white/20" />
-          <span className="text-[11px] uppercase tracking-[0.18em]">
-            SManga · 2026
-          </span>
+          <span className="text-[11px] uppercase tracking-[0.18em]">SManga · 2026</span>
         </div>
       </aside>
 

@@ -58,6 +58,6 @@ export const meApi = {
    */
   getReadingEta: (storyId: string) =>
     api
-      .get<ReadingEta | null>(`/me/stats/reading-eta`, { params: { storyId } })
+      .get<ReadingEta | null>('/me/stats/reading-eta', { params: { storyId } })
       .then((r) => r.data),
 };

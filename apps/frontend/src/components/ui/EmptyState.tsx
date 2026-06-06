@@ -18,7 +18,12 @@ export interface EmptyStateProps {
   title: string;
   description: string;
   cta?:
-    | { label: string; to: string; search?: Record<string, unknown>; params?: Record<string, string> }
+    | {
+        label: string;
+        to: string;
+        search?: Record<string, unknown>;
+        params?: Record<string, string>;
+      }
     | { label: string; onClick: () => void };
 }
 

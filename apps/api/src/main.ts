@@ -1,19 +1,19 @@
 import 'reflect-metadata';
-import { config as loadDotenv } from 'dotenv';
 import { resolve } from 'node:path';
+import { config as loadDotenv } from 'dotenv';
 
 // Load repo-root .env BEFORE any module imports (loadEnv() / module decorators read
 // process.env at evaluation time, well before NestJS ConfigModule.forRoot() runs).
 // On Railway/Vercel env vars are injected directly, so missing file is fine.
 loadDotenv({ path: resolve(__dirname, '../../../.env') });
 
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { Logger } from 'nestjs-pino';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
-import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { loadEnv } from './config/env';
 

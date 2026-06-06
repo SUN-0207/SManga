@@ -23,3 +23,5 @@ packages/*/src/**/*.d.ts.map
 tests-e2e/
 # Superpowers brainstorming visual companion (mockup HTML lives in project for re-use)
 .superpowers/
+# Per-machine Claude Code settings (mcp servers, permission grants)
+.claude/settings.local.json

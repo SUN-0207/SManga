@@ -1,9 +1,9 @@
 import { api } from '@/lib/api-client';
 
 export interface RatingAggregate {
-  avg:   number | null;
+  avg: number | null;
   count: number;
-  mine:  1 | 2 | 3 | 4 | 5 | null;
+  mine: 1 | 2 | 3 | 4 | 5 | null;
 }
 
 export const engagementApi = {

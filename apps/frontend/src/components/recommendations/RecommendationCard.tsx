@@ -1,6 +1,6 @@
+import type { RecommendationItem } from '@/api/recommendations';
 import { Link } from '@tanstack/react-router';
 import { Sparkles } from 'lucide-react';
-import type { RecommendationItem } from '@/api/recommendations';
 
 interface Props {
   item: RecommendationItem;

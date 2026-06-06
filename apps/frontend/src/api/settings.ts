@@ -23,7 +23,9 @@ export async function getAutoRefresh(): Promise<AutoRefreshSetting> {
   return res.data;
 }
 
-export async function updateAutoRefresh(patch: UpdateAutoRefreshPatch): Promise<AutoRefreshSetting> {
+export async function updateAutoRefresh(
+  patch: UpdateAutoRefreshPatch,
+): Promise<AutoRefreshSetting> {
   const res = await api.patch<AutoRefreshSetting>('/admin/settings/auto-refresh', patch);
   return res.data;
 }

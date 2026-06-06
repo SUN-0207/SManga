@@ -1,6 +1,6 @@
+import { Type } from 'class-transformer';
 // apps/api/src/modules/rankings/dto/rankings-query.dto.ts
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
-import { Type } from 'class-transformer';
 
 export class RankingsQueryDto {
   @IsOptional()

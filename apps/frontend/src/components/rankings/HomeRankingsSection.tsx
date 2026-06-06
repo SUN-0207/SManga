@@ -1,13 +1,13 @@
-// apps/frontend/src/components/rankings/HomeRankingsSection.tsx
-import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { type RankItem, type RankTab, rankingsApi } from '@/api/rankings';
+import { formatCompact } from '@/components/engagement/ViewCount';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { BookOpen, Eye, Flame, Star } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { rankingsApi, type RankItem, type RankTab } from '@/api/rankings';
-import { RankTabs } from './RankTabs';
+// apps/frontend/src/components/rankings/HomeRankingsSection.tsx
+import { useState } from 'react';
 import { RankList } from './RankList';
-import { formatCompact } from '@/components/engagement/ViewCount';
+import { RankTabs } from './RankTabs';
 
 const TOP_N = 10;
 
@@ -15,9 +15,9 @@ const TOP_N = 10;
 // `{ icon: typeof Flame; text: string }` — the latter causes TS errors on Eye/Star/BookOpen
 // entries because those are different component types from Flame.
 const metricFormatters: Record<RankTab, (item: RankItem) => { icon: LucideIcon; text: string }> = {
-  hot:       (i) => ({ icon: Flame,    text: `${i.metric.toLocaleString('vi-VN')} người đọc tuần này` }),
-  views:     (i) => ({ icon: Eye,      text: `${formatCompact(i.metric)} lượt xem` }),
-  rating:    (i) => ({ icon: Star,     text: `${i.metric.toFixed(1)} · ${i.ratingCount} đánh giá` }),
+  hot: (i) => ({ icon: Flame, text: `${i.metric.toLocaleString('vi-VN')} người đọc tuần này` }),
+  views: (i) => ({ icon: Eye, text: `${formatCompact(i.metric)} lượt xem` }),
+  rating: (i) => ({ icon: Star, text: `${i.metric.toFixed(1)} · ${i.ratingCount} đánh giá` }),
   completed: (i) => ({ icon: BookOpen, text: `${i.metric.toLocaleString('vi-VN')} chương` }),
 };
 
@@ -27,9 +27,9 @@ export function HomeRankingsSection() {
   const rankQ = useQuery({
     queryKey: ['rankings', activeTab, { page: 1, limit: TOP_N }] as const,
     queryFn: () => {
-      if (activeTab === 'hot')       return rankingsApi.hot(TOP_N);
-      if (activeTab === 'views')     return rankingsApi.views(1, TOP_N);
-      if (activeTab === 'rating')    return rankingsApi.rating(1, TOP_N);
+      if (activeTab === 'hot') return rankingsApi.hot(TOP_N);
+      if (activeTab === 'views') return rankingsApi.views(1, TOP_N);
+      if (activeTab === 'rating') return rankingsApi.rating(1, TOP_N);
       return rankingsApi.completed(1, TOP_N);
     },
     staleTime: 5 * 60_000,

@@ -1,6 +1,6 @@
-import { type Provider } from '@nestjs/common';
-import { createDb, type Database } from '@smanga/db';
 import { loadEnv } from '@/config/env';
+import type { Provider } from '@nestjs/common';
+import { type Database, createDb } from '@smanga/db';
 
 export const DRIZZLE = Symbol('DRIZZLE');
 

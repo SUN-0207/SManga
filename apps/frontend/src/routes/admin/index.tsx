@@ -1,10 +1,20 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ArrowRight, BookOpen, CheckCircle2, Database, FileCheck2, FileText, HardDrive, Loader2 } from 'lucide-react';
-import { sourcesApi } from '@/api/sources';
 import { jobsApi } from '@/api/jobs';
+import { sourcesApi } from '@/api/sources';
 import { getStorageStats, listStories } from '@/api/stories';
 import { useAuthStore } from '@/stores/auth-store';
+import { useQuery } from '@tanstack/react-query';
+import { Link, createFileRoute } from '@tanstack/react-router';
+import {
+  AlertTriangle,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  Database,
+  FileCheck2,
+  FileText,
+  HardDrive,
+  Loader2,
+} from 'lucide-react';
 
 function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
@@ -113,11 +123,7 @@ function AdminDashboard() {
         <StatCard
           icon={Loader2}
           label="Đang chạy + chờ"
-          value={
-            stats !== undefined
-              ? (stats?.waiting ?? 0) + (stats?.active ?? 0)
-              : undefined
-          }
+          value={stats !== undefined ? (stats?.waiting ?? 0) + (stats?.active ?? 0) : undefined}
           href="/admin/jobs"
         />
         <StatCard
@@ -160,13 +166,21 @@ type StatCardProps = {
   href: string;
   icon: typeof BookOpen; // any lucide-react icon
   label: string;
-  value?: number | null;  // numeric value (used when textValue is absent); null treated as missing
-  textValue?: string;     // pre-formatted string (e.g., "12.4 MB"); takes precedence
+  value?: number | null; // numeric value (used when textValue is absent); null treated as missing
+  textValue?: string; // pre-formatted string (e.g., "12.4 MB"); takes precedence
   subValue?: string;
   tone?: StatTone;
 };
 
-function StatCard({ href, icon: Icon, label, value, textValue, subValue, tone = 'default' }: StatCardProps) {
+function StatCard({
+  href,
+  icon: Icon,
+  label,
+  value,
+  textValue,
+  subValue,
+  tone = 'default',
+}: StatCardProps) {
   const displayValue =
     textValue !== undefined
       ? textValue
@@ -175,7 +189,8 @@ function StatCard({ href, icon: Icon, label, value, textValue, subValue, tone = 
         : value.toLocaleString('vi-VN');
 
   // Gradient bg-clip-text only when the value is a positive accent (Spec B line 86-88).
-  const numericValue = typeof value === 'number' ? value : Number(textValue?.replace(/[^\d]/g, '') ?? 0);
+  const numericValue =
+    typeof value === 'number' ? value : Number(textValue?.replace(/[^\d]/g, '') ?? 0);
   const accentValue = tone === 'positive' && numericValue > 0;
 
   return (
@@ -203,9 +218,7 @@ function StatCard({ href, icon: Icon, label, value, textValue, subValue, tone = 
         <ArrowRight className="h-4 w-4 text-fg-muted transition-transform duration-fast group-hover:translate-x-0.5" />
       </div>
 
-      {subValue ? (
-        <p className="text-body-sm text-fg-muted">{subValue}</p>
-      ) : null}
+      {subValue ? <p className="text-body-sm text-fg-muted">{subValue}</p> : null}
     </Link>
   );
 }

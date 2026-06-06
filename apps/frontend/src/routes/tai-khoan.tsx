@@ -1,11 +1,11 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { createFileRoute, redirect } from '@tanstack/react-router';
-import { useQueryClient } from '@tanstack/react-query';
-import { Camera, Check, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
-import { changePassword, me, updateMe, type User } from '@/api/auth';
-import { useAuthStore } from '@/stores/auth-store';
-import { resizeToDataUrl } from '@/lib/image-resize';
+import { type User, changePassword, me, updateMe } from '@/api/auth';
 import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
+import { resizeToDataUrl } from '@/lib/image-resize';
+import { useAuthStore } from '@/stores/auth-store';
+import { useQueryClient } from '@tanstack/react-query';
+import { createFileRoute, redirect } from '@tanstack/react-router';
+import { Camera, Check, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
+import { type ChangeEvent, type FormEvent, useRef, useState } from 'react';
 
 export const Route = createFileRoute('/tai-khoan')({
   beforeLoad: async () => {
@@ -54,9 +54,7 @@ function Card({
     <section className="rounded-lg border border-border bg-bg-elevated p-5 sm:p-6">
       <header className="space-y-1 border-b border-border/60 pb-4">
         <h2 className="font-sans text-heading-md text-fg">{title}</h2>
-        {description ? (
-          <p className="text-body-sm text-fg-muted">{description}</p>
-        ) : null}
+        {description ? <p className="text-body-sm text-fg-muted">{description}</p> : null}
       </header>
       <div className="pt-5">{children}</div>
     </section>
@@ -337,13 +335,9 @@ function PasswordCard() {
                 Đủ điều kiện
               </span>
             ) : nextTooShort ? (
-              <p className="text-body-sm text-destructive">
-                Tối thiểu 8 ký tự
-              </p>
+              <p className="text-body-sm text-destructive">Tối thiểu 8 ký tự</p>
             ) : (
-              <p className="text-body-sm text-fg-muted">
-                Tối thiểu 8 ký tự
-              </p>
+              <p className="text-body-sm text-fg-muted">Tối thiểu 8 ký tự</p>
             )}
           </div>
         </div>

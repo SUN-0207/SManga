@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, BookOpen } from 'lucide-react';
-import { meApi } from '@/api/me';
-import { listStories, type StorySummary } from '@/api/stories';
 import { listGenres } from '@/api/genres';
-import { useAuthStore } from '@/stores/auth-store';
+import { meApi } from '@/api/me';
+import { type StorySummary, listStories } from '@/api/stories';
 import { RatingStars } from '@/components/engagement/RatingStars';
-import { ViewCount }   from '@/components/engagement/ViewCount';
+import { ViewCount } from '@/components/engagement/ViewCount';
 import { HomeRankingsSection } from '@/components/rankings/HomeRankingsSection';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
+import { useAuthStore } from '@/stores/auth-store';
+import { useQuery } from '@tanstack/react-query';
+import { Link, createFileRoute } from '@tanstack/react-router';
+import { ArrowRight, BookOpen } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/')({ component: HomePage });
 
@@ -82,7 +82,9 @@ function FeaturedSlider({
             className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-accent/15 blur-3xl pointer-events-none"
           />
           <p className="relative text-label text-fg-muted uppercase mb-3 inline-flex items-center gap-1.5">
-            <span aria-hidden className="text-accent">✦</span>
+            <span aria-hidden className="text-accent">
+              ✦
+            </span>
             TẠP CHÍ TRUYỆN CHỮ VIỆT
           </p>
           <h1 className="relative text-display-sm sm:text-display-md lg:text-display-lg font-prose font-bold">
@@ -91,8 +93,8 @@ function FeaturedSlider({
             <span className="italic font-normal text-fg-muted">theo cách của bạn.</span>
           </h1>
           <p className="relative mt-6 max-w-md text-body text-fg-muted">
-            Tuyển chọn tiểu thuyết tiếng Việt với trải nghiệm đọc tối giản —
-            không quảng cáo chen ngang, không pop-up, chỉ có bạn và câu chuyện.
+            Tuyển chọn tiểu thuyết tiếng Việt với trải nghiệm đọc tối giản — không quảng cáo chen
+            ngang, không pop-up, chỉ có bạn và câu chuyện.
           </p>
           <div className="relative mt-8 flex flex-wrap gap-3">
             <Link
@@ -120,8 +122,7 @@ function FeaturedSlider({
             aria-hidden
             className="absolute inset-0 pointer-events-none"
             style={{
-              background:
-                'linear-gradient(135deg, rgba(236,72,153,0.18), rgba(244,114,182,0.04))',
+              background: 'linear-gradient(135deg, rgba(236,72,153,0.18), rgba(244,114,182,0.04))',
             }}
           />
           {slides.map((story, i) => (
@@ -152,7 +153,8 @@ function FeaturedSlider({
                   {story.title}
                 </h3>
                 <p className="mt-2 text-body-sm text-fg-muted truncate">
-                  {story.author ?? 'Khuyết danh'} · {story.totalChapters.toLocaleString('vi-VN')} chương
+                  {story.author ?? 'Khuyết danh'} · {story.totalChapters.toLocaleString('vi-VN')}{' '}
+                  chương
                 </p>
                 <span className="mt-4 inline-flex items-center gap-1.5 text-body font-semibold text-fg group-hover:gap-2.5 transition-all duration-fast">
                   Đọc ngay
@@ -229,7 +231,10 @@ function LoggedInHero() {
   const chapter = Math.floor(Number(cr.chapterIndex));
   return (
     <section className="relative overflow-hidden rounded-xl border border-accent/20 bg-bg-elevated p-8 lg:p-12">
-      <div aria-hidden className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
+      <div
+        aria-hidden
+        className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-accent/20 blur-3xl"
+      />
       <div className="relative flex flex-col sm:flex-row gap-6 sm:items-center">
         {cr.hasCover && (
           <img
@@ -330,12 +335,8 @@ function HomeStoryCard({ story }: { story: StorySummary }) {
       {/* Plan D: micro engagement — render only when at least one signal is non-zero */}
       {(story.ratingCount > 0 || story.viewCount > 0) && (
         <div className="mt-1 flex items-center gap-2 flex-wrap">
-          {story.ratingCount > 0 && (
-            <RatingStars value={story.ratingAvg} size="sm" />
-          )}
-          {story.viewCount > 0 && (
-            <ViewCount count={story.viewCount} />
-          )}
+          {story.ratingCount > 0 && <RatingStars value={story.ratingAvg} size="sm" />}
+          {story.viewCount > 0 && <ViewCount count={story.viewCount} />}
         </div>
       )}
     </Link>

@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Star } from 'lucide-react';
+import { useState } from 'react';
 
 type StarValue = 1 | 2 | 3 | 4 | 5;
 
@@ -8,15 +8,15 @@ interface RatingStarsProps {
    * Aggregate avg for read-only display (rounded to nearest integer for fill).
    * Pass `mine` for interactive mode — it drives the committed selection.
    */
-  value:     number | null;
+  value: number | null;
   /** User's own committed rating — preselects fill in interactive mode. */
-  mine?:     StarValue | null;
+  mine?: StarValue | null;
   /**
    * When provided the component becomes interactive.
    * Clicking a filled star that equals `mine` calls onChange(null) (clear).
    */
   onChange?: (v: StarValue | null) => void;
-  size?:     'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 const SIZE_CLASS: Record<'sm' | 'md' | 'lg', string> = {
@@ -28,13 +28,11 @@ const SIZE_CLASS: Record<'sm' | 'md' | 'lg', string> = {
 export function RatingStars({ value, mine, onChange, size = 'md' }: RatingStarsProps) {
   const [hovered, setHovered] = useState<StarValue | null>(null);
   const interactive = !!onChange;
-  const iconClass   = SIZE_CLASS[size];
+  const iconClass = SIZE_CLASS[size];
 
   // Interactive: hover preview takes priority; fall back to mine then 0.
   // Read-only: round the aggregate avg for display.
-  const displayValue = interactive
-    ? (hovered ?? mine ?? 0)
-    : Math.round(value ?? 0);
+  const displayValue = interactive ? (hovered ?? mine ?? 0) : Math.round(value ?? 0);
 
   return (
     <span

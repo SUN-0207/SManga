@@ -1,14 +1,14 @@
-import { Module, type Provider } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { APP_GUARD } from '@nestjs/core';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { GoogleStrategy, isGoogleEnabled } from './google.strategy';
-import { JwtStrategy } from './jwt.strategy';
 import { OptionalJwtGuard } from '@/common/guards/jwt.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { loadEnv } from '@/config/env';
+import { Module, type Provider } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { GoogleStrategy, isGoogleEnabled } from './google.strategy';
+import { JwtStrategy } from './jwt.strategy';
 
 const oauthProviders: Provider[] = isGoogleEnabled() ? [GoogleStrategy] : [];
 

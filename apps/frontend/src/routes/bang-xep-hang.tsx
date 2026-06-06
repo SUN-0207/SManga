@@ -1,15 +1,15 @@
+import { type RankItem, type RankTab, rankingsApi } from '@/api/rankings';
+import { formatCompact } from '@/components/engagement/ViewCount';
+import { RankList } from '@/components/rankings/RankList';
+import { RankTabs } from '@/components/rankings/RankTabs';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Pagination } from '@/components/ui/Pagination';
+import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 // apps/frontend/src/routes/bang-xep-hang.tsx
 import { createFileRoute } from '@tanstack/react-router';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { BookOpen, Eye, Flame, Info, Star } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { rankingsApi, type RankItem, type RankTab } from '@/api/rankings';
-import { RankTabs } from '@/components/rankings/RankTabs';
-import { RankList } from '@/components/rankings/RankList';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
-import { Pagination } from '@/components/ui/Pagination';
-import { formatCompact } from '@/components/engagement/ViewCount';
 
 const VALID_TABS: RankTab[] = ['hot', 'views', 'rating', 'completed'];
 const PAGE_SIZE = 50;
@@ -17,13 +17,8 @@ const PAGE_SIZE = 50;
 export const Route = createFileRoute('/bang-xep-hang')({
   component: BangXepHangPage,
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: VALID_TABS.includes(search.tab as RankTab)
-      ? (search.tab as RankTab)
-      : 'hot',
-    page:
-      typeof search.page === 'number' && search.page >= 1
-        ? Math.floor(search.page)
-        : 1,
+    tab: VALID_TABS.includes(search.tab as RankTab) ? (search.tab as RankTab) : 'hot',
+    page: typeof search.page === 'number' && search.page >= 1 ? Math.floor(search.page) : 1,
   }),
 });
 
@@ -35,9 +30,9 @@ export const Route = createFileRoute('/bang-xep-hang')({
 // `{ icon: typeof Flame; text: string }` — the latter causes TS errors on Eye/Star/BookOpen
 // entries because those are different component types from Flame.
 const metricFormatters: Record<RankTab, (item: RankItem) => { icon: LucideIcon; text: string }> = {
-  hot:       (i) => ({ icon: Flame,    text: `${i.metric.toLocaleString('vi-VN')} người đọc tuần này` }),
-  views:     (i) => ({ icon: Eye,      text: `${formatCompact(i.metric)} lượt xem` }),
-  rating:    (i) => ({ icon: Star,     text: `${i.metric.toFixed(1)} · ${i.ratingCount} đánh giá` }),
+  hot: (i) => ({ icon: Flame, text: `${i.metric.toLocaleString('vi-VN')} người đọc tuần này` }),
+  views: (i) => ({ icon: Eye, text: `${formatCompact(i.metric)} lượt xem` }),
+  rating: (i) => ({ icon: Star, text: `${i.metric.toFixed(1)} · ${i.ratingCount} đánh giá` }),
   completed: (i) => ({ icon: BookOpen, text: `${i.metric.toLocaleString('vi-VN')} chương` }),
 };
 
@@ -56,9 +51,9 @@ function BangXepHangPage() {
   const rankQ = useQuery({
     queryKey: ['rankings', tab, { page: effectivePage, limit: PAGE_SIZE }] as const,
     queryFn: () => {
-      if (tab === 'hot')       return rankingsApi.hot(PAGE_SIZE);
-      if (tab === 'views')     return rankingsApi.views(effectivePage, PAGE_SIZE);
-      if (tab === 'rating')    return rankingsApi.rating(effectivePage, PAGE_SIZE);
+      if (tab === 'hot') return rankingsApi.hot(PAGE_SIZE);
+      if (tab === 'views') return rankingsApi.views(effectivePage, PAGE_SIZE);
+      if (tab === 'rating') return rankingsApi.rating(effectivePage, PAGE_SIZE);
       return rankingsApi.completed(effectivePage, PAGE_SIZE);
     },
     staleTime: 5 * 60_000,
@@ -92,7 +87,11 @@ function BangXepHangPage() {
       illustration={<EmptySearch />}
       title="Tuần này chưa có hoạt động"
       description="Hãy là người đầu tiên đọc truyện và lên bảng xếp hạng!"
-      cta={{ label: 'Khám phá truyện', to: '/kham-pha', search: { q: '', page: 1, genre: undefined } }}
+      cta={{
+        label: 'Khám phá truyện',
+        to: '/kham-pha',
+        search: { q: '', page: 1, genre: undefined },
+      }}
     />
   );
 

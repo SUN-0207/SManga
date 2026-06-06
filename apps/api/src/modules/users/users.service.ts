@@ -1,3 +1,4 @@
+import { DRIZZLE } from '@/modules/db/db.provider';
 import {
   BadRequestException,
   ForbiddenException,
@@ -5,10 +6,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { count, desc, eq, ilike, or, sql } from 'drizzle-orm';
-import { account, bookmark, readingProgress, user } from '@smanga/db/schema';
 import type { Database } from '@smanga/db';
-import { DRIZZLE } from '@/modules/db/db.provider';
+import { account, bookmark, readingProgress, user } from '@smanga/db/schema';
+import { count, desc, eq, ilike, or, sql } from 'drizzle-orm';
 
 const MAX_PAGE_SIZE = 100;
 

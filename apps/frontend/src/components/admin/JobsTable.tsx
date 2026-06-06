@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
-import { jobsApi, type JobRow } from '@/api/jobs';
+import { type JobRow, jobsApi } from '@/api/jobs';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EmptyQueue } from '@/components/ui/illustrations/EmptyQueue';
+import { useQueryClient } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 const PAGE_SIZE = 25;
 
@@ -50,10 +50,7 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
   const totalPages = Math.max(1, Math.ceil(jobs.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
-  const slice = useMemo(
-    () => jobs.slice(startIdx, startIdx + PAGE_SIZE),
-    [jobs, startIdx],
-  );
+  const slice = useMemo(() => jobs.slice(startIdx, startIdx + PAGE_SIZE), [jobs, startIdx]);
 
   async function retry(id: string) {
     setBusy(id);
@@ -106,9 +103,15 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
             </thead>
             <tbody>
               {slice.map((j) => (
-                <tr key={j.id} className="border-b border-border/60 last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60">
+                <tr
+                  key={j.id}
+                  className="border-b border-border/60 last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60"
+                >
                   <td className="px-5 py-2 font-mono text-xs text-fg">{j.name}</td>
-                  <td className="px-5 py-2 font-mono text-[11px] text-fg-muted truncate max-w-xs" title={formatPayload(j.data)}>
+                  <td
+                    className="px-5 py-2 font-mono text-[11px] text-fg-muted truncate max-w-xs"
+                    title={formatPayload(j.data)}
+                  >
                     {formatPayload(j.data)}
                   </td>
                   <td className="px-5 py-2">
@@ -124,7 +127,10 @@ export function JobsTable({ jobs }: { jobs: JobRow[] }) {
                   <td className="px-5 py-2 text-xs text-fg-muted tabular-nums">
                     {j.timestamp ? new Date(j.timestamp).toLocaleString('vi-VN') : '—'}
                   </td>
-                  <td className="px-5 py-2 text-xs text-destructive truncate max-w-md" title={j.failedReason ?? ''}>
+                  <td
+                    className="px-5 py-2 text-xs text-destructive truncate max-w-md"
+                    title={j.failedReason ?? ''}
+                  >
                     {j.failedReason ?? ''}
                   </td>
                   <td className="px-5 py-2 text-right">

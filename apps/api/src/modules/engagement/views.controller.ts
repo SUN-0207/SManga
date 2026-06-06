@@ -1,7 +1,7 @@
 import { Controller, HttpCode, Param, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { EngagementService } from './engagement.service';
+import type { EngagementService } from './engagement.service';
 
 // ThrottlerModule is globally wired at 120/min in app.module.ts.
 // View endpoints are tightened to 30/min per IP to bound F5 spam.

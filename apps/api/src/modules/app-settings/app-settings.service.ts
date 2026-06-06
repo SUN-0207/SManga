@@ -1,19 +1,13 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-  OnModuleInit,
-} from '@nestjs/common';
+import { DRIZZLE } from '@/modules/db/db.provider';
+import { JOB_REFRESH_ALL_STORIES, QUEUE_CRAWLER } from '@/modules/queue/queue.constants';
 import { InjectQueue } from '@nestjs/bull';
+import { BadRequestException, Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import type { Database } from '@smanga/db';
+import { appSetting } from '@smanga/db/schema';
 import type { Queue } from 'bull';
 import { CronExpressionParser } from 'cron-parser';
 import { eq } from 'drizzle-orm';
-import { appSetting } from '@smanga/db/schema';
-import type { Database } from '@smanga/db';
-import { DRIZZLE } from '@/modules/db/db.provider';
-import { JOB_REFRESH_ALL_STORIES, QUEUE_CRAWLER } from '@/modules/queue/queue.constants';
-import { UpdateAutoRefreshDto } from './dto/update-auto-refresh.dto';
+import type { UpdateAutoRefreshDto } from './dto/update-auto-refresh.dto';
 
 const REPEATABLE_KEY = 'refresh-all-stories-cron';
 
