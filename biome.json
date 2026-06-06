@@ -9,11 +9,19 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "a11y": {
+        "useSemanticElements": "warn",
+        "useKeyWithClickEvents": "warn",
+        "noLabelWithoutControl": "warn"
+      },
+      "complexity": { "noForEach": "warn" },
+      "correctness": { "useExhaustiveDependencies": "warn" },
       "style": { "noNonNullAssertion": "warn", "useImportType": "error" },
-      "suspicious": { "noExplicitAny": "warn" }
+      "suspicious": { "noExplicitAny": "warn", "noArrayIndexKey": "warn" }
     }
   },
   "javascript": {
-    "formatter": { "quoteStyle": "single", "semicolons": "always", "trailingCommas": "all" }
+    "formatter": { "quoteStyle": "single", "semicolons": "always", "trailingCommas": "all" },
+    "parser": { "unsafeParameterDecoratorsEnabled": true }
   }
 }
