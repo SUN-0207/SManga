@@ -26,9 +26,9 @@ export function RecommendationCard({ item }: Props) {
       </div>
       <h3 className="mt-3 text-heading-md line-clamp-2">{item.title}</h3>
       <p className="mt-1 text-body-sm text-fg-muted truncate">{item.author ?? 'Khuyết danh'}</p>
-      <p className="mt-1 text-body-sm text-accent inline-flex items-center gap-1 truncate">
-        <Sparkles className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
-        {item.reason}
+      <p className="mt-1 flex items-center gap-1 text-body-sm text-accent">
+        <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span className="truncate">{item.reason}</span>
       </p>
     </Link>
   );
