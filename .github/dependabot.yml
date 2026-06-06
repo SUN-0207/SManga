@@ -41,3 +41,14 @@ updates:
       # Pin pnpm itself to the version in packageManager — bump explicitly
       # when ready (avoids mid-monorepo lockfile bitrot).
       - dependency-name: "pnpm"
+      # Major bumps with substantial breaking changes — bump manually in a
+      # dedicated commit when ready to do the migration. Minor/patch still
+      # come through automatically.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@biomejs/biome"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
