@@ -9,6 +9,7 @@ on:
       - 'packages/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/build-images.yml'
+  workflow_dispatch:  # manual trigger from Actions tab (e.g. retry after Docker Hub flake)
 
 permissions:
   contents: read
