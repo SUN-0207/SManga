@@ -143,7 +143,9 @@ export class AuthService {
           image: params.image,
         })
         .returning({ id: user.id });
-      userId = created[0]?.id;
+      const inserted = created[0];
+      if (!inserted) throw new Error('user insert returned no rows');
+      userId = inserted.id;
     }
 
     // 3. link the OAuth account

@@ -13,8 +13,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { browseCatalog, getAdapter, listAdapters, searchCatalog } from '@smanga/crawler';
-import type { SourceAdapter } from '@smanga/crawler';
 import type { Database } from '@smanga/db';
+import type { SourceAdapter } from '@smanga/shared';
 import { source } from '@smanga/db/schema';
 import type { Queue } from 'bull';
 import { asc, eq } from 'drizzle-orm';

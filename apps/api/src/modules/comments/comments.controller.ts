@@ -28,8 +28,8 @@ export class CommentsController {
   listComments(
     @Query('targetType') targetType: string,
     @Query('targetId') targetId: string,
-    @Query('page') page,
-    @Query('limit') limit,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
     @CurrentUser() user: { id: string } | null,
   ) {
     return this.svc.listComments(
