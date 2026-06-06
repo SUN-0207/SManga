@@ -14,7 +14,7 @@
     "@smanga/shared": "workspace:*",
     "cheerio": "1.2.0",
     "drizzle-orm": "0.45.2",
-    "pino": "9.5.0",
+    "pino": "10.3.1",
     "undici": "6.21.0",
     "zod": "3.23.8"
   },
