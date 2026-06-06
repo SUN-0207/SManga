@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "crawl": "tsx src/crawl.ts",
+    "health-probe": "tsx src/health-probe.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

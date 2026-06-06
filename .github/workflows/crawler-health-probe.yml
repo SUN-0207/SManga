@@ -1,0 +1,75 @@
+name: Crawler health probe
+
+# Daily probe against the live truyenfull.today site. Catches HTML
+# breaking changes BEFORE end-users see broken parsers. On failure,
+# files an issue with the workflow run link so the parser can be fixed.
+on:
+  schedule:
+    - cron: '0 20 * * *'  # 20:00 UTC = 03:00 GMT+7
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Probe truyenfull.today
+        id: probe
+        run: pnpm --filter @smanga/cli health-probe
+
+      - name: File issue on probe failure
+        if: failure() && steps.probe.conclusion == 'failure'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const today = new Date().toISOString().slice(0, 10);
+            const title = `🚨 Crawler probe failed (${today})`;
+            // Skip if an open issue with today's title already exists
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'crawler,bug',
+              per_page: 50,
+            });
+            if (existing.data.some((i) => i.title === title)) {
+              core.info('Already-open issue for today — skipping');
+              return;
+            }
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body: [
+                `The daily probe against truyenfull.today failed. The site likely changed its HTML — at least one of the three parsers (catalog / story / chapter list) no longer returns the expected shape.`,
+                ``,
+                `**Run log:** ${runUrl}`,
+                ``,
+                `**Next steps:**`,
+                `1. Open the run and read the probe step output to see which check broke.`,
+                `2. Visit the URL printed in the log and inspect the HTML.`,
+                `3. Update \`packages/crawler/src/sources/truyenfull/parsers.ts\` selectors.`,
+                `4. Re-capture fixtures under \`packages/crawler/__fixtures__/\` so unit tests catch this next time.`,
+                `5. Close this issue once a fix lands on main.`,
+              ].join('\n'),
+              labels: ['crawler', 'bug'],
+            });
+            core.info(`Opened issue: ${title}`);

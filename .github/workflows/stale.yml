@@ -1,0 +1,35 @@
+name: Stale issues + PRs
+
+# Mark inactive issues / PRs as stale after 60 days, close 7 days later.
+# Dependabot PRs and 'pinned' issues are exempt.
+on:
+  schedule:
+    - cron: '30 1 * * *'  # 01:30 UTC daily
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-stale: 60
+          days-before-close: 7
+          stale-issue-message: |
+            No activity in 60 days — marking stale. Closing in 7 days
+            if no further activity. Reopen if still relevant.
+          stale-pr-message: |
+            No activity in 60 days — marking stale. Closing in 7 days
+            if no further activity. Reopen and rebase if still relevant.
+          close-issue-message: 'Closing due to inactivity.'
+          close-pr-message: 'Closing due to inactivity. Reopen + rebase if still relevant.'
+          stale-issue-label: 'stale'
+          stale-pr-label: 'stale'
+          exempt-issue-labels: 'pinned,security'
+          exempt-pr-labels: 'pinned,dependencies'
+          # Bound the per-run scan so a backlog doesn't burn the whole budget.
+          operations-per-run: 100

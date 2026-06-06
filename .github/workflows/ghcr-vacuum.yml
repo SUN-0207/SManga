@@ -1,0 +1,32 @@
+name: GHCR tag vacuum
+
+# Weekly cleanup of old per-SHA image versions in ghcr.io. Each push to
+# main creates new :<sha> tags via build-images.yml; without pruning,
+# they pile up forever and chew through the free-tier quota.
+#
+# Policy: keep :latest forever + the 5 most recent SHA tags. Anything
+# older gets deleted.
+on:
+  schedule:
+    - cron: '0 22 * * 0'  # Sunday 22:00 UTC = Monday 05:00 GMT+7
+  workflow_dispatch:
+
+permissions:
+  packages: write
+
+jobs:
+  vacuum:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [smanga-api, smanga-frontend]
+
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          owner: ${{ github.repository_owner }}
+          package-name: ${{ matrix.package }}
+          package-type: container
+          min-versions-to-keep: 5
+          ignore-versions: '^latest$'
