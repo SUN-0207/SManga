@@ -46,7 +46,7 @@ export function buildBookSchema(story: StoryForBook): Record<string, unknown> {
     genre: story.genres.map((g) => g.name),
     bookFormat: 'https://schema.org/EBook',
     isAccessibleForFree: true,
-    dateModified: story.updatedAt,
+    dateModified: new Date(story.updatedAt).toISOString(),
   };
   if (story.ratingCount > 0 && story.ratingAvg != null) {
     schema.aggregateRating = {
@@ -84,8 +84,8 @@ export function buildArticleSchema(
       url: absoluteUrl(`/truyen/${story.slug}`),
     },
     author: { '@type': 'Person', name: story.author ?? 'Khuyết danh' },
-    datePublished: story.discoveredAt ?? story.updatedAt,
-    dateModified: story.updatedAt,
+    datePublished: new Date(story.discoveredAt ?? story.updatedAt).toISOString(),
+    dateModified: new Date(story.updatedAt).toISOString(),
   };
 }
 

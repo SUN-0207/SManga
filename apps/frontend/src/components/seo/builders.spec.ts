@@ -96,7 +96,7 @@ describe('buildArticleSchema', () => {
   it('truncates articleBody to 500 chars', () => {
     const longBody = 'a'.repeat(1000);
     const schema = buildArticleSchema(
-      { title: 'S', slug: 'a', author: 'X', updatedAt: 'now', discoveredAt: null },
+      { title: 'S', slug: 'a', author: 'X', updatedAt: '2026-06-01T00:00:00Z', discoveredAt: null },
       { index: '1', title: 'Ch1', content: longBody },
     );
     expect((schema.articleBody as string).length).toBeLessThanOrEqual(500);
