@@ -10,7 +10,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import type { Database } from '@smanga/db';
 import { chapter, story } from '@smanga/db/schema';
 import type { Queue } from 'bull';
-import { and, asc, desc, eq, gt, inArray, lt } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, lt, sql } from 'drizzle-orm';
 import { CrawlChaptersDto } from './dto/crawl.dto';
 
 @Injectable()
@@ -31,6 +31,10 @@ export class ChaptersService {
         storySlug: story.slug,
         storyTitle: story.title,
         storyTotalChapters: story.totalChapters,
+        storyAuthor: story.author,
+        storyUpdatedAt: story.updatedAt,
+        storyDiscoveredAt: story.discoveredAt,
+        storyHasCover: sql<boolean>`${story.cover} IS NOT NULL`,
         chapterId: chapter.id,
         chapterViewCount: chapter.viewCount,
       })
@@ -69,6 +73,10 @@ export class ChaptersService {
         slug: row.storySlug,
         title: row.storyTitle,
         totalChapters: row.storyTotalChapters,
+        author: row.storyAuthor,
+        updatedAt: row.storyUpdatedAt?.toISOString() ?? new Date().toISOString(),
+        discoveredAt: row.storyDiscoveredAt?.toISOString() ?? null,
+        hasCover: row.storyHasCover,
       },
       chapter: {
         id: row.chapterId, // UUID string — used by useTrackChapterView

@@ -1,7 +1,16 @@
 import { api } from '@/lib/api-client';
 
 export interface ChapterContent {
-  story: { id: string; slug: string; title: string; totalChapters: number };
+  story: {
+    id: string;
+    slug: string;
+    title: string;
+    totalChapters: number;
+    author: string | null;
+    updatedAt: string;
+    discoveredAt: string | null;
+    hasCover: boolean;
+  };
   chapter: {
     id: string; // Plan D: UUID for POST /views/chapter/:chapterId
     index: number;

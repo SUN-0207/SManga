@@ -1,6 +1,8 @@
 import { getChapterContent } from '@/api/chapters';
 import { CommentSection } from '@/components/comments/CommentSection';
 import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
+import { SEO } from '@/components/seo/SEO';
+import { buildArticleSchema, buildBreadcrumbSchema } from '@/components/seo/builders';
 import { useReadingSessionTracker } from '@/hooks/use-reading-session-tracker';
 import { useTrackChapterView } from '@/hooks/use-track-view';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
@@ -147,8 +149,38 @@ function ChapterReader() {
     return <p key={i}>{para}</p>;
   }
 
+  const chapterNumber = Number.parseInt(index, 10);
+  const robots: 'index' | 'noindex, follow' =
+    chapterNumber <= 3 ? 'index' : 'noindex, follow';
+
+  const ld =
+    chapterNumber <= 3
+      ? [
+          buildArticleSchema(story, {
+            index,
+            title: chapter.title,
+            content: chapter.content ?? '',
+          }),
+          buildBreadcrumbSchema([
+            { name: 'Trang chủ', url: '/' },
+            { name: story.title, url: `/truyen/${story.slug}` },
+            { name: `Chương ${index}` },
+          ]),
+        ]
+      : undefined;
+
   return (
     <div className="min-h-screen bg-bg text-fg">
+      <SEO
+        title={`${story.title} - Chương ${index}: ${chapter.title} | SManga`}
+        description={`Đọc chương ${index} truyện ${story.title} của ${story.author ?? 'Khuyết danh'} miễn phí tại SManga.`}
+        canonical={`/truyen/${story.slug}/chuong/${index}`}
+        robots={robots}
+        ogType="article"
+        ogImage={story.hasCover ? `/api/v1/cover/${story.id}` : undefined}
+        jsonLd={ld}
+      />
+
       {/* Auto-save reading progress after 5s (non-visual, non-critical) */}
       <ReadingProgressTracker storyId={story.id} chapterIndex={chapter.index} />
 
