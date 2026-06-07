@@ -33,8 +33,11 @@ await check('catalog', async () => {
   return `${page.items.length} items, hasNextPage=${page.hasNextPage}`;
 });
 
-// 2. Known popular story — should never go away
-const STORY_URL = 'https://truyenfull.today/dau-pha-thuong-khung/';
+// 2. Known popular story — should never go away.
+// Note: truyenfull changed URL pattern from /<slug>/ to /truyen-<slug>/
+// in mid-2026. Use the current pattern; the old one 301-redirects but the
+// fetched HTML is the new layout that the parser already handles.
+const STORY_URL = 'https://truyenfull.today/truyen-dau-pha-thuong-khung/';
 await check('story metadata', async () => {
   const html = await fetchHtml(STORY_URL);
   const meta = await adapter.parseStoryFromUrl(STORY_URL, html);

@@ -4,7 +4,10 @@
 FROM node:20-alpine AS builder
 WORKDIR /repo
 
-RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+# python3 + make + g++ are needed by node-gyp to compile native modules
+# pulled in by transitive devDeps (e.g. ssh2 via testcontainers).
+RUN apk add --no-cache python3 make g++ \
+ && corepack enable && corepack prepare pnpm@9.15.9 --activate
 
 # Copy lockfile + workspace manifests for cache-friendly install
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
