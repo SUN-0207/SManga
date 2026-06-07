@@ -1,5 +1,5 @@
+import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { render, waitFor } from '@testing-library/react';
-import { HelmetProvider } from 'react-helmet-async';
 import { describe, expect, it } from 'vitest';
 import { SEO } from './SEO';
 
