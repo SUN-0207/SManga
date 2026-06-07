@@ -32,7 +32,12 @@ export const truyenfullAdapter: SourceAdapter = {
   baseUrl: BASE,
   hostnames: ['truyenfull.today', 'www.truyenfull.today'],
   requiresJs: false,
-  rateLimit: { rps: 1 },
+  // 0.5 rps (one request every 2 seconds) — observed truyenfull returning
+  // 503 in burst conditions at 1 rps because multiple processor types
+  // (import / discover-chapters / fetch-chapter / refresh-all) share the
+  // same per-source token bucket. 0.5 keeps sustained traffic below their
+  // per-IP cap so concurrent processors don't spike.
+  rateLimit: { rps: 0.5 },
 
   catalogFeeds: CATALOG_FEEDS,
 
