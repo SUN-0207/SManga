@@ -15,23 +15,25 @@ export class JobsService {
   async list(limit = 100) {
     const states: JobStatus[] = ['waiting', 'active', 'completed', 'failed', 'delayed'];
     const jobs = await this.queue.getJobs(states, 0, limit - 1, false);
-    return jobs.map((j) => ({
-      id: String(j.id),
-      name: j.name,
-      state: j.failedReason
-        ? 'failed'
-        : j.finishedOn
-          ? 'completed'
-          : j.processedOn
-            ? 'active'
-            : 'waiting',
-      attemptsMade: j.attemptsMade,
-      timestamp: j.timestamp,
-      processedOn: j.processedOn,
-      finishedOn: j.finishedOn,
-      failedReason: j.failedReason ?? null,
-      data: j.data,
-    }));
+    // Use Bull's authoritative state (one Redis call per job) so the list
+    // classifications match `getJobCounts()`. Deriving from j.failedReason +
+    // j.finishedOn alone misclassifies a failed-but-delayed job as 'failed'
+    // even though Bull counts it in the 'delayed' bucket — the page card
+    // counter and the row badge then disagree.
+    const rows = await Promise.all(
+      jobs.map(async (j) => ({
+        id: String(j.id),
+        name: j.name,
+        state: await j.getState(),
+        attemptsMade: j.attemptsMade,
+        timestamp: j.timestamp,
+        processedOn: j.processedOn,
+        finishedOn: j.finishedOn,
+        failedReason: j.failedReason ?? null,
+        data: j.data,
+      })),
+    );
+    return rows;
   }
 
   async retry(id: string) {
