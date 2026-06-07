@@ -6,7 +6,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { ForYouQueryDto } from './dto/for-you-query.dto';
 import type { SimilarQueryDto } from './dto/similar-query.dto';
-import type { RecommendationsService } from './recommendations.service';
+import { RecommendationsService } from './recommendations.service';
 
 /**
  * GET /api/v1/recommendations/similar?storyId=:uuid&limit=8

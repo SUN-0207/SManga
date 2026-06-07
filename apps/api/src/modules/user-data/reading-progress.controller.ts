@@ -16,7 +16,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import type { ReadingProgressDto } from './dto/reading-progress.dto';
 import type { SessionSecondsDto } from './dto/session-seconds.dto';
-import type { ReadingProgressService } from './reading-progress.service';
+import { ReadingProgressService } from './reading-progress.service';
 
 @ApiTags('reading-progress')
 @Controller({ path: 'me/reading-progress', version: '1' })

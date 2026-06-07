@@ -8,7 +8,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { JwtService } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 import type { Database } from '@smanga/db';
 import { account, user } from '@smanga/db/schema';
 import * as bcrypt from 'bcryptjs';

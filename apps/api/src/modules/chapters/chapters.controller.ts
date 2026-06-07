@@ -2,7 +2,7 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { ChaptersService } from './chapters.service';
+import { ChaptersService } from './chapters.service';
 import type { CrawlChaptersDto } from './dto/crawl.dto';
 
 @ApiTags('chapters')

@@ -23,5 +23,17 @@
   "javascript": {
     "formatter": { "quoteStyle": "single", "semicolons": "always", "trailingCommas": "all" },
     "parser": { "unsafeParameterDecoratorsEnabled": true }
-  }
+  },
+  "overrides": [
+    {
+      "include": ["apps/api/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useImportType": "off"
+          }
+        }
+      }
+    }
+  ]
 }

@@ -8,7 +8,7 @@ import {
 import { AuthGuard, PassportStrategy } from '@nestjs/passport';
 import type { Request } from 'express';
 import { type Profile, Strategy, type StrategyOptions } from 'passport-google-oauth20';
-import type { AuthService } from './auth.service';
+import { AuthService } from './auth.service';
 
 export const GOOGLE_STRATEGY_NAME = 'google';
 

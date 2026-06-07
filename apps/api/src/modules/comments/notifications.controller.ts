@@ -3,7 +3,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Get, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsUUID } from 'class-validator';
-import type { NotificationsService } from './notifications.service';
+import { NotificationsService } from './notifications.service';
 
 class MarkReadDto {
   @IsOptional()

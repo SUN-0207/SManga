@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { GenresService } from './genres.service';
+import { GenresService } from './genres.service';
 
 @ApiTags('genres')
 @Controller({ path: 'genres', version: '1' })

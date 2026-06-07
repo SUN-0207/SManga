@@ -2,7 +2,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { BookmarksService } from './bookmarks.service';
+import { BookmarksService } from './bookmarks.service';
 import type { BookmarkDto } from './dto/bookmark.dto';
 
 @ApiTags('bookmarks')

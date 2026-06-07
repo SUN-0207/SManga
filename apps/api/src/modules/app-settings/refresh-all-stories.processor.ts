@@ -11,7 +11,7 @@ import type { Database } from '@smanga/db';
 import { appSetting, story } from '@smanga/db/schema';
 import type { Job, Queue } from 'bull';
 import { and, eq } from 'drizzle-orm';
-import type { AppSettingsService } from './app-settings.service';
+import { AppSettingsService } from './app-settings.service';
 
 @Processor(QUEUE_CRAWLER)
 export class RefreshAllStoriesProcessor {

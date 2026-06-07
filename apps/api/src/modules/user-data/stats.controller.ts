@@ -3,7 +3,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { ReadingEtaDto } from './dto/reading-eta.dto';
-import type { StatsService } from './stats.service';
+import { StatsService } from './stats.service';
 
 @ApiTags('stats')
 @Controller({ path: 'me/stats', version: '1' })

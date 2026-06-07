@@ -4,7 +4,7 @@ import { Body, Controller, Delete, Get, HttpCode, Param, Put, UseGuards } from '
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { RateStoryDto } from './dto/rate-story.dto';
-import type { EngagementService } from './engagement.service';
+import { EngagementService } from './engagement.service';
 
 // GET /ratings/* rides the global OptionalJwtGuard — no @UseGuards needed.
 // PUT/DELETE /ratings/* require a valid JWT — @UseGuards(JwtAuthGuard) overrides

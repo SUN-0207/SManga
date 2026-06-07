@@ -20,7 +20,7 @@ import type {
   DiscoverAllSourceDto,
   UpdateSourceDto,
 } from './dto/create-source.dto';
-import type { SourcesService } from './sources.service';
+import { SourcesService } from './sources.service';
 
 @ApiTags('sources')
 @Controller({ path: 'sources', version: '1' })

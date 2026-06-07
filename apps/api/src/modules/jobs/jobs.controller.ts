@@ -2,7 +2,7 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { JobsService } from './jobs.service';
+import { JobsService } from './jobs.service';
 
 @ApiTags('jobs')
 @Controller({ path: 'jobs', version: '1' })

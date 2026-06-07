@@ -8,7 +8,7 @@ import type { ImportStoryBulkDto, ImportStoryDto } from './dto/import-story.dto'
 import type { ListStoriesDto } from './dto/list-stories.dto';
 import type { SetAutoRefreshDto } from './dto/set-auto-refresh.dto';
 import type { SetFeaturedDto } from './dto/set-featured.dto';
-import type { StoriesService } from './stories.service';
+import { StoriesService } from './stories.service';
 
 @ApiTags('stories')
 @Controller({ path: 'stories', version: '1' })

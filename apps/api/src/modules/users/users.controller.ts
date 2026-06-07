@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { UpdateRoleDto } from './dto/update-role.dto';
-import type { UsersService } from './users.service';
+import { UsersService } from './users.service';
 
 @ApiTags('admin/users')
 @Controller({ path: 'admin/users', version: '1' })

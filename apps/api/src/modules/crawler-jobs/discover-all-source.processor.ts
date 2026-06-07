@@ -6,7 +6,7 @@ import {
   JOB_DISCOVER_ALL_SOURCE,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
-import type { StoriesService } from '@/modules/stories/stories.service';
+import { StoriesService } from '@/modules/stories/stories.service';
 import { Process, Processor } from '@nestjs/bull';
 import { BadRequestException, ConflictException, Inject, Logger } from '@nestjs/common';
 import { browseCatalog, getAdapter } from '@smanga/crawler';
