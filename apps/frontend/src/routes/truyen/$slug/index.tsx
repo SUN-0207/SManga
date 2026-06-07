@@ -6,6 +6,8 @@ import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
 import { ChapterList } from '@/components/reader/ChapterList';
 import { ReadingInsights } from '@/components/reader/ReadingInsights';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
+import { SEO } from '@/components/seo/SEO';
+import { buildBookSchema, stripAndTruncate } from '@/components/seo/builders';
 import { StoryCover } from '@/components/ui/StoryCover';
 import { useTrackStoryView } from '@/hooks/use-track-view';
 import { useQuery } from '@tanstack/react-query';
@@ -67,6 +69,17 @@ function StoryDetail() {
 
   return (
     <div>
+      <SEO
+        title={`${s.title} - ${s.author ?? 'Khuyết danh'} | SManga`}
+        description={
+          stripAndTruncate(s.description, 160) ||
+          `Đọc ${s.title} - ${s.author ?? 'Khuyết danh'} miễn phí tại SManga.`
+        }
+        canonical={`/truyen/${s.slug}`}
+        ogType="book"
+        ogImage={s.hasCover ? `/api/v1/cover/${s.id}` : undefined}
+        jsonLd={buildBookSchema(s)}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
         {s.hasCover && (
