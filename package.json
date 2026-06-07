@@ -29,5 +29,11 @@
     "lefthook": "1.8.5",
     "typescript": "5.9.3",
     "vitest": "2.1.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "react-helmet-async>react": "^19.0.0",
+      "react-helmet-async>react-dom": "^19.0.0"
+    }
   }
 }
