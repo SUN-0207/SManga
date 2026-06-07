@@ -18,6 +18,7 @@ import { QueueModule } from './modules/queue/queue.module';
 import { RankingsModule } from './modules/rankings/rankings.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 import { SearchModule } from './modules/search/search.module';
+import { SeoModule } from './modules/seo/seo.module';
 import { SourcesModule } from './modules/sources/sources.module';
 import { StoriesModule } from './modules/stories/stories.module';
 import { UserDataModule } from './modules/user-data/user-data.module';
@@ -60,6 +61,7 @@ import { UsersModule } from './modules/users/users.module';
     RankingsModule,
     CommentsModule,
     RecommendationsModule,
+    SeoModule,
   ],
 })
 export class AppModule {}
