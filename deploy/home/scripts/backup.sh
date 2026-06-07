@@ -8,7 +8,7 @@ STAMP=$(date +%Y-%m-%d)
 HDD_DIR=/mnt/hdd/backups
 OFFSITE_REMOTE=gdrive:smanga-backups
 DUMP="${HDD_DIR}/smanga-${STAMP}.dump"
-COMPOSE_FILE=/home/smanga/smanga/docker-compose.prod.yml
+COMPOSE_FILE=/home/smanga/smanga/deploy/home/docker-compose.prod.yml
 
 # Refuse to write if HDD isn't mounted — better to alert than to write
 # nightly backups into /mnt/hdd as a plain root-fs directory that fills up.
