@@ -1,7 +1,4 @@
 # SManga
-
-Vietnamese novel reader. Crawls from [`truyenfull.today`](https://truyenfull.today/) (multi-source-capable), persists in Postgres, serves to readers + an admin operator.
-
 [![CI](https://github.com/SUN-0207/SManga/actions/workflows/ci.yml/badge.svg)](https://github.com/SUN-0207/SManga/actions/workflows/ci.yml)
 [![Build images](https://github.com/SUN-0207/SManga/actions/workflows/build-images.yml/badge.svg)](https://github.com/SUN-0207/SManga/actions/workflows/build-images.yml)
 [![Crawler health](https://github.com/SUN-0207/SManga/actions/workflows/crawler-health-probe.yml/badge.svg)](https://github.com/SUN-0207/SManga/actions/workflows/crawler-health-probe.yml)
