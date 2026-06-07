@@ -209,6 +209,7 @@ export class StoriesService {
       discovery_status: string;
       discovery_error: string | null;
       discovered_at: string | null;
+      updated_at: string;
       view_count: number;
       rating_avg: string | null;
       rating_count: string;
@@ -217,7 +218,7 @@ export class StoriesService {
         s.id, s.slug, s.title, s.author, s.description, s.status,
         s.total_chapters, s.view_count, s.featured,
         (s.cover IS NOT NULL)  AS has_cover,
-        s.discovery_status, s.discovery_error, s.discovered_at,
+        s.discovery_status, s.discovery_error, s.discovered_at, s.updated_at,
         r.avg                  AS rating_avg,
         COALESCE(r.cnt, 0)     AS rating_count
       FROM story s
@@ -245,6 +246,7 @@ export class StoriesService {
       discovery_status: string;
       discovery_error: string | null;
       discovered_at: string | null;
+      updated_at: string;
       view_count: number;
       rating_avg: string | null;
       rating_count: string;
@@ -265,6 +267,7 @@ export class StoriesService {
       discoveryStatus: row.discovery_status,
       discoveryError: row.discovery_error ?? null,
       discoveredAt: row.discovered_at ?? null,
+      updatedAt: row.updated_at,
       viewCount: Number(row.view_count ?? 0),
       ratingAvg: row.rating_avg != null ? Number(row.rating_avg) : null,
       ratingCount: Number(row.rating_count ?? 0),
