@@ -7,7 +7,7 @@
 
 ## Stack
 
-NestJS 11 · Vite + React 19 · Drizzle + Postgres 17 · Bull + Redis 7 · Tailwind 3 · Biome 1 · pnpm workspace · Docker Compose · Cloudflare Tunnel (planned)
+NestJS 11 · Vite + React 19 · Drizzle + Postgres 17 · Bull + Redis 7 · Tailwind 3 · Biome 1 · pnpm workspace · Docker Compose · Cloudflare Tunnel
 
 ## Quick start
 

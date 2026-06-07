@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Post-execution amendment (2026-06-07):** Plan completed AND the Vercel staging tier was retired same day. The text below still describes Vercel as the staging environment because that was the planned architecture — it is no longer accurate. SManga runs as a **single environment** (laptop prod only). When reading the rest of this file: any mention of "Vercel staging", "staging URL", Task 18 ("disable staging auto-refresh"), and the rollback-to-Vercel section under Emergency procedures is HISTORICAL — staging no longer exists. See `CLAUDE.md` § State of play for the authoritative current architecture.
+
 **Spec:** [docs/superpowers/specs/2026-06-05-plan-9-laptop-self-host-design.md](../specs/2026-06-05-plan-9-laptop-self-host-design.md)
 
 **Goal:** Move SManga production from the managed Vercel + Railway + Neon + Upstash stack onto a home laptop with Cloudflare Tunnel ingress. Vercel becomes the staging environment at `<deployment>.vercel.app`.

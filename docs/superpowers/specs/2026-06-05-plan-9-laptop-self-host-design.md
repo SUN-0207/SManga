@@ -3,6 +3,8 @@
 > **Status:** Design spec (2026-06-05). Implementation plan to follow via `superpowers:writing-plans`.
 >
 > **Prerequisites:** Plan 6 (managed deploy on Vercel + Railway + Neon + Upstash) and Plan 7 (catalog discovery) shipped. Cloudflare account with `smanga.shop` zone active. Old laptop with ≥8GB RAM, ≥i5 (2018+), 256GB SSD, 1TB HDD available.
+>
+> **Amendment 2026-06-07:** Plan executed AND the Vercel staging tier was killed the same day per user decision. The spec below still describes a two-tier architecture (laptop=prod, Vercel=staging) because that is what was designed — it is no longer accurate. SManga runs as a **single environment** (laptop prod only). Components table row 9 ("Vercel staging — unchanged") and every "staging" reference is HISTORICAL. See `CLAUDE.md` § State of play for the authoritative current architecture.
 
 ## Goal
 
