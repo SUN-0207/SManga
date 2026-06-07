@@ -2,13 +2,14 @@
 
 Vietnamese novel reader. Crawls from `truyenfull.today` (multi-source-capable via `SourceAdapter` interface), persists in Postgres, serves to readers + an admin operator. Owned by `son.cu@opswat.com`.
 
-## State of play (last updated 2026-06-05)
+## State of play (last updated 2026-06-07)
 
-- **Plans 1-3 complete** on `main`. Working end-to-end with Next.js full-stack `apps/web` + pg-boss `services/crawler-worker`.
-- **Plan 4 (NestJS rework) complete.** `apps/api` (NestJS 11) + `apps/frontend` (Vite+React) replace the legacy `apps/web` + `services/crawler-worker` (both deleted in Task 13).
+- **Production lives on a home laptop** (Ubuntu 24.04, `sunny-server`) at `https://smanga.shop`, exposed via Cloudflare Tunnel → caddy → 5-container docker compose (`postgres17 + redis7 + api + frontend + watchtower`). Nightly pg_dump backup runs at 02:30 to `/mnt/hdd/backups/` (30d retention) + Google Drive `gdrive:smanga-backups` (14d).
+- **Plan 9 (Laptop self-host) LIVE** — see `docs/superpowers/plans/2026-06-05-plan-9-laptop-self-host.md`. Vercel + Railway + Neon + Upstash stack from Plan 6 has been retired.
+- **Plans 1-4 historical.** Plan 4 (NestJS rework) replaced the original Next.js full-stack (`apps/web` + `services/crawler-worker` both deleted). Current stack = `apps/api` (NestJS 11) + `apps/frontend` (Vite + React 19).
 - All plans live in `docs/superpowers/plans/`. Read the relevant plan file in full before touching code in its scope.
-- Test count: 23 unit tests pass (5 db + 16 crawler + 2 shared). E2E specs written but last verified manually by user.
-- **Plan 9 (Laptop self-host) — Phase A+H scaffolded 2026-06-05.** Repo files for laptop deploy ready: `deploy/home/` (compose + Caddy + cloudflared template + backup script + systemd units), `apps/frontend/Dockerfile` + `nginx.conf`, `.github/workflows/build-images.yml`, `docs/home-runbook.md`. Phase B-G require user's laptop hardware + Cloudflare dashboard access; NOT executed.
+- Test count: 30 unit tests pass (db + crawler + shared + recommendations).
+- **CI/CD:** push to `main` → GitHub Actions builds `ghcr.io/sun-0207/smanga-{api,frontend}:latest` → Watchtower on the laptop polls every 5 min, pulls + restarts containers automatically. Migrations run on every api boot via the entrypoint (idempotent through drizzle journal table).
 
 ## Monorepo layout
 
@@ -108,12 +109,13 @@ Email must contain a real TLD — Zod `.email()` rejects bare `admin@test`.
 
 ## Architectural decisions (the why)
 
-- **Postgres + Drizzle** (not MongoDB+Prisma): join-heavy relational domain (story-chapter-source-genre), full-text search for Vietnamese via `pg_trgm + immutable_unaccent`, hobby budget fits Neon free tier.
+- **Postgres + Drizzle** (not MongoDB+Prisma): join-heavy relational domain (story-chapter-source-genre), full-text search for Vietnamese via `pg_trgm + immutable_unaccent`. Self-hosted on the laptop's SSD — single source of truth.
 - **Bull + Redis** (Plan 4 onwards, replacing pg-boss): matches the `manga-crawler` reference project and is the canonical NestJS queue. Trade-off: +1 service.
 - **NestJS + Vite/React split** (Plan 4) vs Next.js full-stack (Plans 1-3): user chose BE/FE separation for clarity, independent scaling, and NestJS conventions. Cost: rework ~50% of Plan 2-3 UI work.
 - **shadcn/ui + Tailwind**: portable across Next.js → Vite, MIT-licensed code-in-tree (not a runtime dep).
 - **Cheerio-first crawler with Playwright fallback option**: truyenfull serves static HTML, so cheerio (50ms/request) beats Playwright (2s/request, 300MB Chromium). The `SourceAdapter.requiresJs` flag exists for future sources that need JS rendering.
-- **Cover stored as bytea in Postgres** (not R2): chose simplicity over CDN. ~50KB × 500 stories = 25MB, negligible. `/api/cover/[id]` route serves with `Cache-Control: public, max-age=31536000, immutable` + ETag — Vercel/CDN edge cache absorbs the load.
+- **Cover stored as bytea in Postgres** (not object storage): chose simplicity over CDN. ~50KB × 500 stories = 25MB, negligible. `/api/v1/cover/:id` serves with `Cache-Control: public, max-age=31536000, immutable` + ETag — Cloudflare edge cache absorbs the load.
+- **Self-host on a home laptop via Cloudflare Tunnel** (Plan 9) vs managed cloud (Plan 6 — retired): cost flips from $5-40/mo to ~$3/mo electricity. Tradeoffs: residential ISP downtime risk, single point of failure, no professional SLA — accepted as a hobby project. Cloudflare Tunnel removes the need for port forwarding or a public IP.
 
 ## What NOT to do
 

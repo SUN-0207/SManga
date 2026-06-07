@@ -1,9 +1,8 @@
 import axios from 'axios';
 
-// On Vercel we proxy `/api/*` to the Railway API via vercel.json rewrites,
-// keeping cookies first-party. For local dev Vite proxies the same path.
-// Override with VITE_API_BASE_URL when running against a different host
-// (e.g. previewing FE against a staging API or self-hosted backend).
+// `/api/*` is proxied to the NestJS api container by Caddy in prod (see
+// deploy/home/Caddyfile) and by Vite's dev proxy locally. Override with
+// VITE_API_BASE_URL when previewing the FE against a different API host.
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 export const api = axios.create({

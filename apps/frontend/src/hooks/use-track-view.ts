@@ -30,7 +30,7 @@ export function useTrackStoryView(storyId: string | undefined): void {
     ls?.setItem(key, '1');
     // NOTE: fetch() bypasses the axios api-client, so VITE_API_BASE_URL overrides
     // (used by axios) do NOT apply here. In dev, /api/v1 is proxied by vite.config.ts
-    // to localhost:3010. In production, Vercel rewrites handle /api/* → Railway.
+    // to localhost:3010. In prod, caddy reverse-proxies /api/* to the api container.
     // Known limitation: non-default VITE_API_BASE_URL deployments must also update
     // this path or extract: const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
     void fetch(`/api/v1/views/story/${storyId}`, {

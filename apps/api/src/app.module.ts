@@ -27,9 +27,9 @@ import { UsersModule } from './modules/users/users.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      // Repo root .env (monorepo single source of truth). On Railway env vars are
-      // injected directly, so a missing file is fine — `ignoreEnvFile` not needed
-      // because dotenv silently skips when the file isn't present.
+      // Repo root .env (monorepo single source of truth). In Docker the env
+      // vars are injected via `docker-compose.prod.yml`, so a missing file is
+      // fine — dotenv silently skips when the file isn't present.
       envFilePath: ['../../.env'],
     }),
     LoggerModule.forRoot({

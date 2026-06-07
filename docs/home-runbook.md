@@ -67,15 +67,25 @@ docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml exec -T postgres 
 docker compose -f ~/smanga/deploy/home/docker-compose.prod.yml start api
 ```
 
-## Rollback to Vercel-Railway-Neon
+## Recovery when the laptop is unavailable
 
-If the laptop deploy breaks badly:
+The managed-cloud rollback (Vercel + Railway + Neon) from earlier plans is no
+longer an option — that stack was retired 2026-06-07. If the laptop is dead
+or unreachable, the path to restore service is:
 
-1. Cloudflare Dashboard → DNS → find CNAME `smanga.shop` → tunnel UUID → **Delete**.
-2. Create CNAME `smanga.shop` → `<vercel-staging-url>.vercel.app`, proxy ON.
-3. TTL 120s. Users land on the old Vercel stack within ~2 min.
+1. Provision a replacement host (another laptop, mini PC, or rented VPS).
+2. Follow the Plan 9 install order (Phase B → E) from `docs/superpowers/plans/2026-06-05-plan-9-laptop-self-host.md`.
+3. Restore the latest Google Drive dump into the new host's postgres:
+   ```bash
+   rclone copy gdrive:smanga-backups/<latest>.dump.gz /tmp/
+   gunzip /tmp/<latest>.dump.gz
+   docker compose -f deploy/home/docker-compose.prod.yml exec -T postgres \
+     pg_restore -U smanga -d smanga --clean --if-exists < /tmp/<latest>.dump
+   ```
+4. Point `smanga.shop` at the new host's cloudflared tunnel (`cloudflared tunnel route dns --overwrite-dns smanga-prod smanga.shop`).
+5. End-to-end smoke; remove the broken host.
 
-Note: laptop fresh DB users lose progress on rollback (accepted hobby tradeoff).
+If the laptop is just temporarily down (router reboot, planned outage), users see Cloudflare 522 until the tunnel reconnects — usually within seconds of the laptop coming back online. No manual intervention needed.
 
 ## Common failures
 

@@ -8,11 +8,13 @@ import { QUEUE_CRAWLER } from './queue.constants';
     BullModule.forRootAsync({
       useFactory: () => {
         const url = new URL(loadEnv().REDIS_URL);
-        // Upstash and other managed Redis exposes rediss:// (TLS) on the
-        // standard 6379 port. ioredis defaults to plain TCP unless `tls` is
-        // an object, so we MUST set it when the scheme is `rediss:` —
-        // otherwise the socket handshake hangs forever and every Bull op
-        // (queue.add, getJobCounts, getJobs) blocks indefinitely.
+        // Managed Redis providers expose rediss:// (TLS) on 6379. ioredis
+        // defaults to plain TCP unless `tls` is an object, so we MUST set
+        // it when the scheme is `rediss:` — otherwise the socket handshake
+        // hangs forever and every Bull op blocks indefinitely. Local Redis
+        // (current laptop self-host) uses plain redis:// so the branch is a
+        // no-op; the workaround stays in case the deploy target ever flips
+        // back to a managed TLS-only provider.
         const isTls = url.protocol === 'rediss:';
         return {
           redis: {

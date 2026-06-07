@@ -49,7 +49,7 @@ RUN pnpm install --prod --frozen-lockfile --filter @smanga/api... \
 
 EXPOSE 3001
 
-# Health check — Railway can also be configured to hit /api/v1/health
+# Health check — also surfaced via the docker-compose service healthcheck
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD wget -qO- http://localhost:${PORT:-3001}/api/v1/health || exit 1
 

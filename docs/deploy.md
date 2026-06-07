@@ -1,4 +1,11 @@
-# SManga Deploy Runbook (Phase 1)
+# SManga Deploy Runbook (Phase 1) — DEPRECATED
+
+> ⚠️ **This deploy target is retired.** The Vercel + Railway + Neon + Upstash
+> stack was the live prod until 2026-06-07; SManga is now self-hosted on a
+> home laptop via Cloudflare Tunnel (Plan 9). See [`home-runbook.md`](home-runbook.md)
+> for the current operational guide.
+>
+> This doc is kept as historical reference for the managed-cloud setup.
 
 Targets: **Vercel** (frontend) + **Railway** (API + Bull worker) + **Neon** (Postgres) + **Upstash** (Redis).
 

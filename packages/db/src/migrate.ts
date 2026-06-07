@@ -5,8 +5,8 @@ import postgres from 'postgres';
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error('DATABASE_URL is required');
 
-// Diagnostic: print host + db name (NOT password) so CI logs reveal which
-// Neon branch/db we actually connected to. Helps catch wrong-secret issues.
+// Diagnostic: print host + db name (NOT password) so logs reveal which
+// Postgres host/db we actually connected to. Helps catch wrong-secret issues.
 try {
   const parsed = new URL(url);
   console.log(`→ Connecting to ${parsed.hostname}${parsed.pathname}`);
