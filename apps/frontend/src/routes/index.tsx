@@ -5,6 +5,8 @@ import { RatingStars } from '@/components/engagement/RatingStars';
 import { ViewCount } from '@/components/engagement/ViewCount';
 import { HomeRankingsSection } from '@/components/rankings/HomeRankingsSection';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
+import { SEO } from '@/components/seo/SEO';
+import { buildWebSiteSchema } from '@/components/seo/builders';
 import { StoryCover } from '@/components/ui/StoryCover';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
@@ -30,18 +32,26 @@ function HomePage() {
   });
 
   return (
-    <div className="container py-8 lg:py-12 space-y-12 lg:space-y-16">
-      <FeaturedSlider
-        stories={storiesQ.data ?? []}
-        featuredStories={featuredQ.data ?? []}
-        isLoading={storiesQ.isLoading || featuredQ.isLoading}
+    <>
+      <SEO
+        title="SManga — Đọc truyện chữ Việt online miễn phí"
+        description="Thư viện truyện chữ Việt biên tập như tạp chí — ngôn tình, tiên hiệp, huyền huyễn, kiếm hiệp... đọc online không quảng cáo."
+        canonical="/"
+        jsonLd={buildWebSiteSchema()}
       />
-      {user && <LoggedInHero />}
-      <HomeRankingsSection />
-      <RecommendationSection kind="forYou" />
-      <UpdatedSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
-      <GenreSection />
-    </div>
+      <div className="container py-8 lg:py-12 space-y-12 lg:space-y-16">
+        <FeaturedSlider
+          stories={storiesQ.data ?? []}
+          featuredStories={featuredQ.data ?? []}
+          isLoading={storiesQ.isLoading || featuredQ.isLoading}
+        />
+        {user && <LoggedInHero />}
+        <HomeRankingsSection />
+        <RecommendationSection kind="forYou" />
+        <UpdatedSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
+        <GenreSection />
+      </div>
+    </>
   );
 }
 

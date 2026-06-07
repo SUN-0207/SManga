@@ -2,6 +2,7 @@ import { listGenres } from '@/api/genres';
 import { searchStories } from '@/api/search';
 import { type StorySummary, getStoriesCount, listStories } from '@/api/stories';
 import { StoryCard } from '@/components/reader/StoryCard';
+import { SEO } from '@/components/seo/SEO';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
 import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
@@ -93,105 +94,117 @@ function DiscoverPage() {
   }
 
   return (
-    <div className="container py-8 lg:py-12 space-y-8">
-      <header>
-        <p className="text-label uppercase text-fg-muted mb-2">DUYỆT</p>
-        <h1 className="text-display-sm sm:text-display-md">Khám phá truyện</h1>
-      </header>
+    <>
+      <SEO
+        title="Khám phá truyện chữ | SManga"
+        description="Khám phá truyện theo thể loại: ngôn tình, tiên hiệp, huyền huyễn, kiếm hiệp, đô thị, cổ đại..."
+        canonical="/kham-pha"
+      />
+      <div className="container py-8 lg:py-12 space-y-8">
+        <header>
+          <p className="text-label uppercase text-fg-muted mb-2">DUYỆT</p>
+          <h1 className="text-display-sm sm:text-display-md">Khám phá truyện</h1>
+        </header>
 
-      <form onSubmit={submit} role="search" aria-label="Tìm truyện" className="relative max-w-2xl">
-        <Search
-          aria-hidden
-          className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-subtle pointer-events-none"
-        />
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Tìm truyện, tác giả..."
-          className="w-full h-12 pl-11 pr-24 rounded-full bg-bg-elevated border border-border focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none text-body transition-colors duration-fast"
-        />
-        <button
-          type="submit"
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center h-9 px-5 rounded-full bg-accent-gradient text-white text-body-sm font-semibold shadow-glow-pink-soft hover:opacity-95 transition-opacity duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+        <form
+          onSubmit={submit}
+          role="search"
+          aria-label="Tìm truyện"
+          className="relative max-w-2xl"
         >
-          Tìm
-        </button>
-      </form>
+          <Search
+            aria-hidden
+            className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-subtle pointer-events-none"
+          />
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Tìm truyện, tác giả..."
+            className="w-full h-12 pl-11 pr-24 rounded-full bg-bg-elevated border border-border focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none text-body transition-colors duration-fast"
+          />
+          <button
+            type="submit"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex items-center h-9 px-5 rounded-full bg-accent-gradient text-white text-body-sm font-semibold shadow-glow-pink-soft hover:opacity-95 transition-opacity duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+          >
+            Tìm
+          </button>
+        </form>
 
-      <div className="flex flex-wrap gap-2" role="list" aria-label="Lọc theo thể loại">
-        <Link
-          to="/kham-pha"
-          search={{ q, page: 1, genre: undefined }}
-          role="listitem"
-          className={`inline-flex items-center h-8 px-3 rounded-full text-body-sm transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-            !genre
-              ? 'bg-fg text-bg'
-              : 'border border-border text-fg-muted hover:bg-bg-subtle hover:text-fg'
-          }`}
-        >
-          Tất cả
-        </Link>
-        {chips.map((g) => (
+        <div className="flex flex-wrap gap-2" role="list" aria-label="Lọc theo thể loại">
           <Link
-            key={g.slug}
             to="/kham-pha"
-            search={{ q, page: 1, genre: g.slug }}
+            search={{ q, page: 1, genre: undefined }}
             role="listitem"
-            title={`${g.name} · ${g.storyCount} truyện`}
             className={`inline-flex items-center h-8 px-3 rounded-full text-body-sm transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-              genre === g.slug
+              !genre
                 ? 'bg-fg text-bg'
                 : 'border border-border text-fg-muted hover:bg-bg-subtle hover:text-fg'
             }`}
           >
-            {g.name}
+            Tất cả
           </Link>
-        ))}
-      </div>
+          {chips.map((g) => (
+            <Link
+              key={g.slug}
+              to="/kham-pha"
+              search={{ q, page: 1, genre: g.slug }}
+              role="listitem"
+              title={`${g.name} · ${g.storyCount} truyện`}
+              className={`inline-flex items-center h-8 px-3 rounded-full text-body-sm transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                genre === g.slug
+                  ? 'bg-fg text-bg'
+                  : 'border border-border text-fg-muted hover:bg-bg-subtle hover:text-fg'
+              }`}
+            >
+              {g.name}
+            </Link>
+          ))}
+        </div>
 
-      {activeQ.isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" aria-busy="true">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="aspect-[3/4] rounded-xl bg-bg-subtle animate-pulse" />
-          ))}
-        </div>
-      ) : items.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8">
-          {items.map((s) => (
-            <StoryCard
-              key={s.id}
-              id={s.id}
-              slug={s.slug}
-              title={s.title}
-              author={s.author}
-              status={s.status}
-              totalChapters={s.totalChapters}
-              hasCover={s.hasCover}
-              ratingAvg={s.ratingAvg}
-              ratingCount={s.ratingCount}
-              viewCount={s.viewCount}
-            />
-          ))}
-        </div>
-      ) : (
-        <DiscoverEmptyState
-          onReset={() =>
-            void navigate({ to: '/kham-pha', search: { q: '', page: 1, genre: undefined } })
-          }
+        {activeQ.isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" aria-busy="true">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] rounded-xl bg-bg-subtle animate-pulse" />
+            ))}
+          </div>
+        ) : items.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8">
+            {items.map((s) => (
+              <StoryCard
+                key={s.id}
+                id={s.id}
+                slug={s.slug}
+                title={s.title}
+                author={s.author}
+                status={s.status}
+                totalChapters={s.totalChapters}
+                hasCover={s.hasCover}
+                ratingAvg={s.ratingAvg}
+                ratingCount={s.ratingCount}
+                viewCount={s.viewCount}
+              />
+            ))}
+          </div>
+        ) : (
+          <DiscoverEmptyState
+            onReset={() =>
+              void navigate({ to: '/kham-pha', search: { q: '', page: 1, genre: undefined } })
+            }
+          />
+        )}
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          isLoading={activeQ.isFetching}
+          onChange={(p) => {
+            void navigate({ to: '/kham-pha', search: { q, page: p, genre } });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         />
-      )}
-
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        isLoading={activeQ.isFetching}
-        onChange={(p) => {
-          void navigate({ to: '/kham-pha', search: { q, page: p, genre } });
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-      />
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -2,6 +2,7 @@ import { type RankItem, type RankTab, rankingsApi } from '@/api/rankings';
 import { formatCompact } from '@/components/engagement/ViewCount';
 import { RankList } from '@/components/rankings/RankList';
 import { RankTabs } from '@/components/rankings/RankTabs';
+import { SEO } from '@/components/seo/SEO';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
 import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
@@ -104,47 +105,54 @@ function BangXepHangPage() {
     ) : null;
 
   return (
-    <div className="container py-8 lg:py-12">
-      {/* Page header */}
-      <header className="mb-8">
-        <p className="text-label text-fg-muted uppercase mb-2">DUYỆT</p>
-        <div className="flex items-center gap-2">
-          <h1 className="text-display-sm lg:text-display-md font-prose font-semibold">
-            Bảng xếp hạng
-          </h1>
-          <span
-            title="Dữ liệu được cập nhật mỗi 5 phút (staleTime React Query)"
-            className="text-fg-subtle cursor-help"
-          >
-            <Info className="h-4 w-4" aria-hidden />
-          </span>
+    <>
+      <SEO
+        title="Bảng xếp hạng truyện hot | SManga"
+        description="Truyện hot tuần, xem nhiều nhất, rating cao nhất — cập nhật mỗi ngày."
+        canonical="/bang-xep-hang"
+      />
+      <div className="container py-8 lg:py-12">
+        {/* Page header */}
+        <header className="mb-8">
+          <p className="text-label text-fg-muted uppercase mb-2">DUYỆT</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-display-sm lg:text-display-md font-prose font-semibold">
+              Bảng xếp hạng
+            </h1>
+            <span
+              title="Dữ liệu được cập nhật mỗi 5 phút (staleTime React Query)"
+              className="text-fg-subtle cursor-help"
+            >
+              <Info className="h-4 w-4" aria-hidden />
+            </span>
+          </div>
+        </header>
+
+        {/* Tab nav */}
+        <RankTabs activeTab={tab} onTabChange={handleTabChange} />
+
+        {/* List */}
+        <div className="mt-4">
+          <RankList
+            items={items}
+            metricFormatter={formatter}
+            isLoading={rankQ.isLoading}
+            emptyState={tab === 'hot' ? hotEmptyState : undefined}
+            skeletonCount={10}
+          />
+          {ratingFooterHint}
         </div>
-      </header>
 
-      {/* Tab nav */}
-      <RankTabs activeTab={tab} onTabChange={handleTabChange} />
-
-      {/* List */}
-      <div className="mt-4">
-        <RankList
-          items={items}
-          metricFormatter={formatter}
-          isLoading={rankQ.isLoading}
-          emptyState={tab === 'hot' ? hotEmptyState : undefined}
-          skeletonCount={10}
-        />
-        {ratingFooterHint}
+        {/* Pagination — hot tab never paginates */}
+        {!isHot && (
+          <Pagination
+            page={effectivePage}
+            totalPages={totalPages}
+            isLoading={rankQ.isFetching}
+            onChange={handlePageChange}
+          />
+        )}
       </div>
-
-      {/* Pagination — hot tab never paginates */}
-      {!isHot && (
-        <Pagination
-          page={effectivePage}
-          totalPages={totalPages}
-          isLoading={rankQ.isFetching}
-          onChange={handlePageChange}
-        />
-      )}
-    </div>
+    </>
   );
 }
