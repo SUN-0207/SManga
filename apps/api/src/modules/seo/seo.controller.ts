@@ -13,6 +13,10 @@ function setSeoHeaders(res: Response, body: string, contentType: string): void {
 }
 
 @ApiTags('seo')
+// VERSION_NEUTRAL: main.ts sets `defaultVersion: '1'`, which would inject /v1/
+// into every route. SEO crawlers expect /sitemap.xml + /robots.txt at the root,
+// not /v1/sitemap.xml. main.ts also excludes these paths from the global /api
+// prefix; together those two pieces produce the unprefixed root URLs.
 @Controller({ version: VERSION_NEUTRAL })
 export class SeoController {
   constructor(private readonly seo: SeoService) {}
