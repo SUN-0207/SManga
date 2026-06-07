@@ -6,6 +6,7 @@ import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
 import { ChapterList } from '@/components/reader/ChapterList';
 import { ReadingInsights } from '@/components/reader/ReadingInsights';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
+import { StoryCover } from '@/components/ui/StoryCover';
 import { useTrackStoryView } from '@/hooks/use-track-view';
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
@@ -81,15 +82,7 @@ function StoryDetail() {
         <div className="container py-10 lg:py-16 grid lg:grid-cols-[240px_1fr] gap-8 items-start">
           {/* Cover */}
           <div className="relative aspect-[3/4] w-full max-w-[240px] rounded-lg overflow-hidden border border-border-strong shadow-elev">
-            {s.hasCover ? (
-              <img
-                src={`/api/v1/cover/${s.id}`}
-                alt={`Bìa ${s.title}`}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-accent-gradient" />
-            )}
+            <StoryCover storyId={s.id} title={s.title} hasCover={s.hasCover} loading="eager" />
           </div>
           {/* Info */}
           <div>

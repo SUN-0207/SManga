@@ -1,7 +1,7 @@
 import { RatingStars } from '@/components/engagement/RatingStars';
 import { ViewCount } from '@/components/engagement/ViewCount';
+import { StoryCover } from '@/components/ui/StoryCover';
 import { Link } from '@tanstack/react-router';
-import { BookText } from 'lucide-react';
 
 export interface StoryCardProps {
   id: string;
@@ -42,19 +42,12 @@ export function StoryCard(props: StoryCardProps) {
       className="group flex flex-col gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-bg-subtle shadow-elev transition-shadow duration-fast group-hover:shadow-glow-pink-soft">
-        {props.hasCover ? (
-          <img
-            src={`/api/v1/cover/${props.id}`}
-            alt={`Bìa ${props.title}`}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-fg-muted gap-2">
-            <BookText className="h-6 w-6" />
-            <span className="text-[10px] uppercase tracking-widest">Không có bìa</span>
-          </div>
-        )}
+        <StoryCover
+          storyId={props.id}
+          title={props.title}
+          hasCover={props.hasCover}
+          imgClassName="transition-transform duration-500 group-hover:scale-[1.04]"
+        />
         <span
           className={`absolute top-2 left-2 inline-flex items-center h-5 px-2 rounded-full text-[10px] font-medium tracking-wide ${statusTone}`}
         >

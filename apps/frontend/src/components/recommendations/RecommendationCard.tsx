@@ -1,4 +1,5 @@
 import type { RecommendationItem } from '@/api/recommendations';
+import { StoryCover } from '@/components/ui/StoryCover';
 import { Link } from '@tanstack/react-router';
 import { Sparkles } from 'lucide-react';
 
@@ -15,14 +16,13 @@ export function RecommendationCard({ item }: Props) {
       className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md cursor-pointer"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">
-        {item.hasCover ? (
-          <img
-            src={`/api/v1/cover/${item.id}`}
-            alt={`Bìa ${item.title}`}
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-          />
-        ) : null}
+        <StoryCover
+          storyId={item.id}
+          title={item.title}
+          hasCover={item.hasCover}
+          decorative
+          imgClassName="absolute inset-0 transition-transform duration-200 group-hover:scale-105"
+        />
       </div>
       <h3 className="mt-3 text-heading-md line-clamp-2">{item.title}</h3>
       <p className="mt-1 text-body-sm text-fg-muted truncate">{item.author ?? 'Khuyết danh'}</p>

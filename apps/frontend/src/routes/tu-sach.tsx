@@ -5,6 +5,7 @@ import { RatingStars } from '@/components/engagement/RatingStars';
 import { ViewCount } from '@/components/engagement/ViewCount';
 import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { StoryCover } from '@/components/ui/StoryCover';
 import { EmptyBookshelf } from '@/components/ui/illustrations/EmptyBookshelf';
 import { EmptyFolder } from '@/components/ui/illustrations/EmptyFolder';
 import { useAuthStore } from '@/stores/auth-store';
@@ -162,14 +163,11 @@ function LibraryCard({ item }: { item: ShelfItem }) {
       className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">
-        <img
-          src={`/api/v1/cover/${item.storyId}`}
-          alt=""
-          loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = 'none';
-          }}
+        <StoryCover
+          storyId={item.storyId}
+          title={item.title}
+          decorative
+          imgClassName="absolute inset-0"
         />
         {item.progress && item.progress > 0 ? (
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-bg/40">

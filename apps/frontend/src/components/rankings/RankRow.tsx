@@ -1,4 +1,5 @@
 import type { RankItem } from '@/api/rankings';
+import { StoryCover } from '@/components/ui/StoryCover';
 // apps/frontend/src/components/rankings/RankRow.tsx
 import { Link } from '@tanstack/react-router';
 import type { LucideIcon } from 'lucide-react';
@@ -63,14 +64,7 @@ export function RankRow({ item, metricFormatter, compact = false }: RankRowProps
       <div
         className={`${coverBase} ${coverDesktop} flex-shrink-0 rounded-md border border-border bg-bg-subtle overflow-hidden`}
       >
-        {item.hasCover && (
-          <img
-            src={`/api/v1/cover/${item.id}`}
-            alt=""
-            loading="lazy"
-            className="w-full h-full object-cover"
-          />
-        )}
+        <StoryCover storyId={item.id} title={item.title} hasCover={item.hasCover} decorative />
       </div>
 
       {/* Text content */}

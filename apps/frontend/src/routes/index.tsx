@@ -5,6 +5,7 @@ import { RatingStars } from '@/components/engagement/RatingStars';
 import { ViewCount } from '@/components/engagement/ViewCount';
 import { HomeRankingsSection } from '@/components/rankings/HomeRankingsSection';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
+import { StoryCover } from '@/components/ui/StoryCover';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
@@ -137,14 +138,15 @@ function FeaturedSlider({
                 i === active ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
             >
-              {story.hasCover && (
-                <img
-                  src={`/api/v1/cover/${story.id}`}
-                  alt=""
+              <div className="absolute right-6 sm:right-10 top-8 sm:top-12 h-[52%] sm:h-[58%] aspect-[3/4] rounded-md shadow-elev overflow-hidden transition-transform duration-300 ease-out group-hover:scale-[1.02]">
+                <StoryCover
+                  storyId={story.id}
+                  title={story.title}
+                  hasCover={story.hasCover}
+                  decorative
                   loading={i === 0 ? 'eager' : 'lazy'}
-                  className="absolute right-6 sm:right-10 top-8 sm:top-12 h-[52%] sm:h-[58%] w-auto aspect-[3/4] object-cover rounded-md shadow-elev transition-transform duration-300 ease-out group-hover:scale-[1.02]"
                 />
-              )}
+              </div>
               <div className="relative max-w-[58%]">
                 <p className="text-label text-fg-muted uppercase tracking-[0.18em]">
                   {fromFeaturedPool ? 'TRUYỆN NỔI BẬT' : 'MỚI CẬP NHẬT'}
@@ -236,14 +238,14 @@ function LoggedInHero() {
         className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-accent/20 blur-3xl"
       />
       <div className="relative flex flex-col sm:flex-row gap-6 sm:items-center">
-        {cr.hasCover && (
-          <img
-            src={`/api/v1/cover/${cr.storyId}`}
-            alt=""
-            loading="lazy"
-            className="hidden sm:block h-32 w-24 rounded-md object-cover border border-border flex-shrink-0"
+        <div className="hidden sm:block h-32 w-24 rounded-md overflow-hidden border border-border flex-shrink-0">
+          <StoryCover
+            storyId={cr.storyId}
+            title={cr.storyTitle}
+            hasCover={cr.hasCover}
+            decorative
           />
-        )}
+        </div>
         <div className="flex-1 min-w-0">
           <p className="text-label text-accent uppercase mb-2 flex items-center gap-1.5">
             <BookOpen className="h-3.5 w-3.5" aria-hidden />
@@ -321,14 +323,13 @@ function HomeStoryCard({ story }: { story: StorySummary }) {
       className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">
-        {story.hasCover && (
-          <img
-            src={`/api/v1/cover/${story.id}`}
-            alt=""
-            loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-          />
-        )}
+        <StoryCover
+          storyId={story.id}
+          title={story.title}
+          hasCover={story.hasCover}
+          decorative
+          imgClassName="absolute inset-0 transition-transform duration-200 group-hover:scale-105"
+        />
       </div>
       <h3 className="mt-3 text-heading-md line-clamp-2">{story.title}</h3>
       <p className="mt-1 text-body-sm text-fg-muted truncate">{story.author ?? 'Khuyết danh'}</p>
