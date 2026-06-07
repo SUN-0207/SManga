@@ -48,10 +48,10 @@ export class SeoService {
       index: string;
       updated_at: string;
     }>(sql`
-      SELECT s.slug, c.index, c.updated_at
+      SELECT s.slug, (c.index::int)::text AS index, c.updated_at
       FROM chapter c
       JOIN story s ON s.id = c.story_id
-      WHERE c.index IN ('1','2','3')
+      WHERE c.index IN (1, 2, 3)
         AND s.discovery_status = 'complete'
       ORDER BY s.updated_at DESC, c.index ASC
     `);
