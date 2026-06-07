@@ -14,8 +14,8 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
-import type { ReadingProgressDto } from './dto/reading-progress.dto';
-import type { SessionSecondsDto } from './dto/session-seconds.dto';
+import { ReadingProgressDto } from './dto/reading-progress.dto';
+import { SessionSecondsDto } from './dto/session-seconds.dto';
 import { ReadingProgressService } from './reading-progress.service';
 
 @ApiTags('reading-progress')

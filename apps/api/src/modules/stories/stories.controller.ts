@@ -3,11 +3,11 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { BulkActionDto } from './dto/bulk-action.dto';
-import type { ImportStoryBulkDto, ImportStoryDto } from './dto/import-story.dto';
-import type { ListStoriesDto } from './dto/list-stories.dto';
-import type { SetAutoRefreshDto } from './dto/set-auto-refresh.dto';
-import type { SetFeaturedDto } from './dto/set-featured.dto';
+import { BulkActionDto } from './dto/bulk-action.dto';
+import { ImportStoryBulkDto, ImportStoryDto } from './dto/import-story.dto';
+import { ListStoriesDto } from './dto/list-stories.dto';
+import { SetAutoRefreshDto } from './dto/set-auto-refresh.dto';
+import { SetFeaturedDto } from './dto/set-featured.dto';
 import { StoriesService } from './stories.service';
 
 @ApiTags('stories')

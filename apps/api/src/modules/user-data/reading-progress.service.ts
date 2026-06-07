@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Database } from '@smanga/db';
 import { readingProgress, story } from '@smanga/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
-import type { SessionSecondsDto } from './dto/session-seconds.dto';
+import { SessionSecondsDto } from './dto/session-seconds.dto';
 
 @Injectable()
 export class ReadingProgressService {

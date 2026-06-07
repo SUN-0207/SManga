@@ -7,7 +7,7 @@ import { appSetting } from '@smanga/db/schema';
 import type { Queue } from 'bull';
 import { CronExpressionParser } from 'cron-parser';
 import { eq } from 'drizzle-orm';
-import type { UpdateAutoRefreshDto } from './dto/update-auto-refresh.dto';
+import { UpdateAutoRefreshDto } from './dto/update-auto-refresh.dto';
 
 const REPEATABLE_KEY = 'refresh-all-stories-cron';
 

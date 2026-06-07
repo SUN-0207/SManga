@@ -3,7 +3,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Delete, Get, HttpCode, Param, Put, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { RateStoryDto } from './dto/rate-story.dto';
+import { RateStoryDto } from './dto/rate-story.dto';
 import { EngagementService } from './engagement.service';
 
 // GET /ratings/* rides the global OptionalJwtGuard — no @UseGuards needed.

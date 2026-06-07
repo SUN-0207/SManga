@@ -18,10 +18,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import type { ChangePasswordDto } from './dto/change-password.dto';
-import type { LoginDto } from './dto/login.dto';
-import type { RegisterDto } from './dto/register.dto';
-import type { UpdateMeDto } from './dto/update-me.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 import { GOOGLE_STRATEGY_NAME, GoogleAuthGuard, isGoogleEnabled } from './google.strategy';
 
 @ApiTags('auth')

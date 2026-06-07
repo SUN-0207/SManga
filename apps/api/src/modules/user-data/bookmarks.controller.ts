@@ -3,7 +3,7 @@ import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { BookmarksService } from './bookmarks.service';
-import type { BookmarkDto } from './dto/bookmark.dto';
+import { BookmarkDto } from './dto/bookmark.dto';
 
 @ApiTags('bookmarks')
 @Controller({ path: 'me/bookmarks', version: '1' })

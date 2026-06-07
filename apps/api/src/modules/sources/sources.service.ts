@@ -18,7 +18,7 @@ import { source } from '@smanga/db/schema';
 import type { SourceAdapter } from '@smanga/shared';
 import type { Queue } from 'bull';
 import { asc, eq } from 'drizzle-orm';
-import type { CreateSourceDto, UpdateSourceDto } from './dto/create-source.dto';
+import { CreateSourceDto, UpdateSourceDto } from './dto/create-source.dto';
 
 @Injectable()
 export class SourcesService {

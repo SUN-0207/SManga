@@ -15,8 +15,8 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CommentsService } from './comments.service';
-import type { CreateCommentDto } from './dto/create-comment.dto';
-import type { UpdateCommentDto } from './dto/update-comment.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @ApiTags('comments')
 @Controller({ path: 'comments', version: '1' })

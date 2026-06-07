@@ -3,7 +3,7 @@ import { Roles } from '@/common/decorators/roles.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Body, Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { UpdateRoleDto } from './dto/update-role.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
 import { UsersService } from './users.service';
 
 @ApiTags('admin/users')

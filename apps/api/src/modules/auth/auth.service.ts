@@ -14,10 +14,10 @@ import { account, user } from '@smanga/db/schema';
 import * as bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 import { and } from 'drizzle-orm';
-import type { ChangePasswordDto } from './dto/change-password.dto';
-import type { LoginDto } from './dto/login.dto';
-import type { RegisterDto } from './dto/register.dto';
-import type { UpdateMeDto } from './dto/update-me.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 
 export interface JwtPayload {
   sub: string;

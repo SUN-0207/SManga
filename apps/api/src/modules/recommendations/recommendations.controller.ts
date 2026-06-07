@@ -4,8 +4,8 @@ import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { ForYouQueryDto } from './dto/for-you-query.dto';
-import type { SimilarQueryDto } from './dto/similar-query.dto';
+import { ForYouQueryDto } from './dto/for-you-query.dto';
+import { SimilarQueryDto } from './dto/similar-query.dto';
 import { RecommendationsService } from './recommendations.service';
 
 /**

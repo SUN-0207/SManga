@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { SearchQueryDto } from './dto/search-query.dto';
+import { SearchQueryDto } from './dto/search-query.dto';
 import { SearchService } from './search.service';
 
 @ApiTags('search')

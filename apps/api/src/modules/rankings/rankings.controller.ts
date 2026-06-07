@@ -2,7 +2,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { RankingsQueryDto } from './dto/rankings-query.dto';
+import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { RankingsService } from './rankings.service';
 
 /**

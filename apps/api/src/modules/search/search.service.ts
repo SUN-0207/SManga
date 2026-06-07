@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Database } from '@smanga/db';
 import { genre, story, storyGenre } from '@smanga/db/schema';
 import { and, desc, eq, sql } from 'drizzle-orm';
-import type { SearchQueryDto } from './dto/search-query.dto';
+import { SearchQueryDto } from './dto/search-query.dto';
 
 @Injectable()
 export class SearchService {

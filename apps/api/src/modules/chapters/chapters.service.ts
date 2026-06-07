@@ -11,7 +11,7 @@ import type { Database } from '@smanga/db';
 import { chapter, story } from '@smanga/db/schema';
 import type { Queue } from 'bull';
 import { and, asc, desc, eq, gt, inArray, lt } from 'drizzle-orm';
-import type { CrawlChaptersDto } from './dto/crawl.dto';
+import { CrawlChaptersDto } from './dto/crawl.dto';
 
 @Injectable()
 export class ChaptersService {
