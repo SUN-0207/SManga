@@ -34,7 +34,7 @@ export class SeoService {
     `);
     return rowsOf<{ slug: string; updated_at: string }>(r).map((row) => ({
       slug: row.slug,
-      updatedAt: row.updated_at,
+      updatedAt: new Date(row.updated_at).toISOString(),
     }));
   }
 
@@ -48,7 +48,7 @@ export class SeoService {
       index: string;
       updated_at: string;
     }>(sql`
-      SELECT s.slug, (c.index::int)::text AS index, c.updated_at
+      SELECT s.slug, (c.index::int)::text AS index, COALESCE(c.crawled_at, s.updated_at) AS updated_at
       FROM chapter c
       JOIN story s ON s.id = c.story_id
       WHERE c.index IN (1, 2, 3)
@@ -58,7 +58,7 @@ export class SeoService {
     return rowsOf<{ slug: string; index: string; updated_at: string }>(r).map((row) => ({
       slug: row.slug,
       chapterIndex: row.index,
-      updatedAt: row.updated_at,
+      updatedAt: new Date(row.updated_at).toISOString(),
     }));
   }
 
