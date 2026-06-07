@@ -1,11 +1,12 @@
 #!/bin/bash
-# Dual-tier backup: nightly pg_dump → HDD (30d retention) → R2 (14d retention).
+# Dual-tier backup: nightly pg_dump → HDD (30d) → Google Drive (14d).
 # Install: copy to /home/smanga/scripts/backup.sh, chmod +x.
+# rclone remote 'gdrive' must be configured (see docs/home-runbook.md).
 set -euo pipefail
 
 STAMP=$(date +%Y-%m-%d)
 HDD_DIR=/mnt/hdd/backups
-R2_REMOTE=r2:smanga-backups
+OFFSITE_REMOTE=gdrive:smanga-backups
 DUMP="${HDD_DIR}/smanga-${STAMP}.dump"
 COMPOSE_FILE=/home/smanga/smanga/docker-compose.prod.yml
 
@@ -25,10 +26,10 @@ docker compose -f "$COMPOSE_FILE" exec -T postgres \
 # Tier 1 retention
 find "$HDD_DIR" -name 'smanga-*.dump' -mtime +30 -delete
 
-# Tier 2: stream-gzip to R2 (no temp file on root fs)
-gzip -c "$DUMP" | rclone rcat "${R2_REMOTE}/smanga-${STAMP}.dump.gz" --quiet
+# Tier 2: stream-gzip to GDrive (no temp file on root fs)
+gzip -c "$DUMP" | rclone rcat "${OFFSITE_REMOTE}/smanga-${STAMP}.dump.gz" --quiet
 
 # Tier 2 retention
-rclone delete "$R2_REMOTE" --min-age 14d --include 'smanga-*.dump.gz' --quiet
+rclone delete "$OFFSITE_REMOTE" --min-age 14d --include 'smanga-*.dump.gz' --quiet
 
-echo "[$(date)] backup OK — HDD: $(stat -c %s "$DUMP")B, R2 uploaded"
+echo "[$(date)] backup OK — HDD: $(stat -c %s "$DUMP")B, GDrive uploaded"
