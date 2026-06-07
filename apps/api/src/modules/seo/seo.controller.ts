@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Res, VERSION_NEUTRAL } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { SeoService } from './seo.service';
@@ -13,7 +13,7 @@ function setSeoHeaders(res: Response, body: string, contentType: string): void {
 }
 
 @ApiTags('seo')
-@Controller()
+@Controller({ version: VERSION_NEUTRAL })
 export class SeoController {
   constructor(private readonly seo: SeoService) {}
 
