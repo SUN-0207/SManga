@@ -1,4 +1,5 @@
 import { me } from '@/api/auth';
+import { SEO } from '@/components/seo/SEO';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
 import { Link, Outlet, createFileRoute, redirect, useRouterState } from '@tanstack/react-router';
@@ -53,6 +54,7 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen flex bg-bg">
+      <SEO title="Admin | SManga" description="" canonical="/admin" robots="noindex" />
       {/* Desktop sidebar: persistent on md+ */}
       <aside className="sticky top-0 hidden h-screen w-60 flex-col self-start border-r border-border bg-bg md:flex">
         <SidebarBrand />

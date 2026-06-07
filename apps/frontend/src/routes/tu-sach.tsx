@@ -4,6 +4,7 @@ import { type ReadingProgressRow, readingProgressApi } from '@/api/reading-progr
 import { RatingStars } from '@/components/engagement/RatingStars';
 import { ViewCount } from '@/components/engagement/ViewCount';
 import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
+import { SEO } from '@/components/seo/SEO';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StoryCover } from '@/components/ui/StoryCover';
 import { EmptyBookshelf } from '@/components/ui/illustrations/EmptyBookshelf';
@@ -90,6 +91,7 @@ function LibraryPage() {
 
   return (
     <div className="container py-8 lg:py-12 space-y-8">
+      <SEO title="Tủ sách | SManga" description="" canonical="/tu-sach" robots="noindex" />
       <header>
         <p className="text-label text-fg-muted uppercase mb-2">CỦA BẠN</p>
         <h1 className="text-display-sm lg:text-display-md">Tủ sách</h1>

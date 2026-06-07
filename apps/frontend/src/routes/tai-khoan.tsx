@@ -1,5 +1,6 @@
 import { type User, changePassword, me, updateMe } from '@/api/auth';
 import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
+import { SEO } from '@/components/seo/SEO';
 import { resizeToDataUrl } from '@/lib/image-resize';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQueryClient } from '@tanstack/react-query';
@@ -20,6 +21,7 @@ function AccountPage() {
   const user = useAuthStore((s) => s.user)!;
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <SEO title="Tài khoản | SManga" description="" canonical="/tai-khoan" robots="noindex" />
       <header className="mb-8 space-y-2">
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fg-muted">
           TÀI KHOẢN

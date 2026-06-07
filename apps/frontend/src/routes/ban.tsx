@@ -1,5 +1,6 @@
 import { logout as logoutApi, me } from '@/api/auth';
 import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
+import { SEO } from '@/components/seo/SEO';
 import { useAuthStore } from '@/stores/auth-store';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { Link, createFileRoute, redirect } from '@tanstack/react-router';
@@ -32,6 +33,7 @@ function BanPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10 sm:px-6 sm:py-14 space-y-8">
+      <SEO title="Bạn | SManga" description="" canonical="/ban" robots="noindex" />
       <header className="space-y-2">
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fg-muted">CỦA BẠN</p>
         <div className="flex items-center gap-4">

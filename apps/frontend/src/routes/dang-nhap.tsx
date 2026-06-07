@@ -1,6 +1,7 @@
 import { login as apiLogin } from '@/api/auth';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
+import { SEO } from '@/components/seo/SEO';
 import { useAuthStore } from '@/stores/auth-store';
 import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -46,6 +47,7 @@ function SignInPage() {
 
   return (
     <AuthShell>
+      <SEO title="Đăng nhập | SManga" description="" canonical="/dang-nhap" robots="noindex" />
       <div className="space-y-8">
         <header className="space-y-2">
           <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-fg-muted">
