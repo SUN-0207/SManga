@@ -105,7 +105,7 @@ function SignUpPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="block h-11 w-full rounded-md border border-border bg-bg-elevated px-3.5 text-body text-fg placeholder:text-fg-subtle transition-shadow duration-fast focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:shadow-glow-pink-soft"
-              placeholder="ban@example.com"
+              placeholder="you@example.com"
             />
           </div>
 

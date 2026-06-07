@@ -12,20 +12,13 @@ export function GoogleButton({ redirect, label }: { redirect: string; label: str
   if (!providersQ.data?.google) return null;
 
   return (
-    <div className="space-y-4">
-      <a
-        href={googleLoginUrl(redirect)}
-        className="w-full inline-flex items-center justify-center gap-2.5 h-11 rounded-md border border-border bg-background text-sm font-medium hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      >
-        <GoogleGlyph />
-        {label}
-      </a>
-      <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-        <span aria-hidden className="h-px flex-1 bg-border" />
-        hoặc
-        <span aria-hidden className="h-px flex-1 bg-border" />
-      </div>
-    </div>
+    <a
+      href={googleLoginUrl(redirect)}
+      className="w-full inline-flex items-center justify-center gap-2.5 h-11 rounded-md border border-border bg-background text-sm font-medium hover:border-foreground/40 hover:bg-muted/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <GoogleGlyph />
+      {label}
+    </a>
   );
 }
 
