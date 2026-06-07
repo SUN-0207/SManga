@@ -8,7 +8,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "prepare": "lefthook install",
+    "prepare": "node -e \"try{require('child_process').execSync('lefthook install',{stdio:'inherit'})}catch{}\"",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
