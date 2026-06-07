@@ -74,7 +74,7 @@ export class ChaptersService {
         title: row.storyTitle,
         totalChapters: row.storyTotalChapters,
         author: row.storyAuthor,
-        updatedAt: row.storyUpdatedAt?.toISOString() ?? new Date().toISOString(),
+        updatedAt: row.storyUpdatedAt.toISOString(),
         discoveredAt: row.storyDiscoveredAt?.toISOString() ?? null,
         hasCover: row.storyHasCover,
       },

@@ -153,12 +153,12 @@ function ChapterReader() {
   const robots: 'index' | 'noindex, follow' =
     chapterNumber <= 3 ? 'index' : 'noindex, follow';
 
-  const ld =
+  const jsonLd =
     chapterNumber <= 3
       ? [
           buildArticleSchema(story, {
             index,
-            title: chapter.title,
+            title: cleanTitle || chapter.title,
             content: chapter.content ?? '',
           }),
           buildBreadcrumbSchema([
@@ -178,7 +178,7 @@ function ChapterReader() {
         robots={robots}
         ogType="article"
         ogImage={story.hasCover ? `/api/v1/cover/${story.id}` : undefined}
-        jsonLd={ld}
+        jsonLd={jsonLd}
       />
 
       {/* Auto-save reading progress after 5s (non-visual, non-critical) */}
