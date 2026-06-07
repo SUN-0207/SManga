@@ -1,18 +1,21 @@
 import { type BulkAction, discoverApi } from '@/api/discover';
-import { listStories } from '@/api/stories';
+import { getStoriesCount, listStories } from '@/api/stories';
 import { ImportStoryForm } from '@/components/admin/ImportStoryForm';
 import { StubBadge } from '@/components/admin/StubBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Pagination } from '@/components/ui/Pagination';
 import { EmptyFolder } from '@/components/ui/illustrations/EmptyFolder';
 import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { ChevronRight, Compass, Download, Loader2, Search, X, Zap } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 export const Route = createFileRoute('/admin/stories/')({
   component: AdminStoriesPage,
 });
+
+const PAGE_SIZE = 50;
 
 const STATUS_LABEL: Record<string, string> = {
   ongoing: 'Đang ra',
@@ -32,28 +35,47 @@ type Filter = 'all' | 'full' | 'stub';
 
 function AdminStoriesPage() {
   const qc = useQueryClient();
-  const { data: stories = [], isLoading } = useQuery({
-    queryKey: ['stories', { page: 1, limit: 100 }],
-    queryFn: () => listStories(1, 100),
-  });
-
   const [filter, setFilter] = useState<Filter>('all');
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const stubCount = stories.filter((s) => s.discoveryStatus !== 'complete').length;
-  const fullCount = stories.length - stubCount;
+  // Translate UI filter → server param. 'all' = no filter on discovery_status.
+  const discoveryParam = filter === 'full' ? 'complete' : filter === 'stub' ? 'stub' : undefined;
 
-  const filtered = useMemo(
-    () =>
-      stories.filter((s) => {
-        if (filter === 'full') return s.discoveryStatus === 'complete';
-        if (filter === 'stub') return s.discoveryStatus !== 'complete';
-        return true;
-      }),
-    [stories, filter],
-  );
+  const { data: stories = [], isLoading } = useQuery({
+    queryKey: ['admin-stories', 'list', { page, limit: PAGE_SIZE, filter }],
+    queryFn: () => listStories(page, PAGE_SIZE, undefined, undefined, discoveryParam),
+    placeholderData: (prev) => prev,
+  });
 
-  const visibleIds = filtered.map((s) => s.id);
+  // Three count queries run in parallel — drive the filter-pill badges with
+  // the real DB totals instead of `.length` of the current page (which was
+  // capped at the page size and made "Tất cả (100)" misleading).
+  const totalAllQ = useQuery({
+    queryKey: ['admin-stories', 'count', 'all'],
+    queryFn: () => getStoriesCount(undefined, undefined),
+  });
+  const totalFullQ = useQuery({
+    queryKey: ['admin-stories', 'count', 'full'],
+    queryFn: () => getStoriesCount(undefined, 'complete'),
+  });
+  const totalStubQ = useQuery({
+    queryKey: ['admin-stories', 'count', 'stub'],
+    queryFn: () => getStoriesCount(undefined, 'stub'),
+  });
+
+  const totalAll = totalAllQ.data ?? 0;
+  const totalFull = totalFullQ.data ?? 0;
+  const totalStub = totalStubQ.data ?? 0;
+  const activeTotal = filter === 'full' ? totalFull : filter === 'stub' ? totalStub : totalAll;
+  const totalPages = Math.max(1, Math.ceil(activeTotal / PAGE_SIZE));
+
+  function changeFilter(next: Filter) {
+    setFilter(next);
+    setPage(1);
+  }
+
+  const visibleIds = stories.map((s) => s.id);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
   const someVisibleSelected = visibleIds.some((id) => selected.has(id)) && !allVisibleSelected;
 
@@ -61,9 +83,9 @@ function AdminStoriesPage() {
     setSelected((prev) => {
       const next = new Set(prev);
       if (allVisibleSelected) {
-        visibleIds.forEach((id) => next.delete(id));
+        for (const id of visibleIds) next.delete(id);
       } else {
-        visibleIds.forEach((id) => next.add(id));
+        for (const id of visibleIds) next.add(id);
       }
       return next;
     });
@@ -118,20 +140,20 @@ function AdminStoriesPage() {
             <h2 className="font-sans font-semibold text-heading-md text-fg mr-2">
               Danh sách truyện
             </h2>
-            <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
-              Tất cả ({stories.length})
+            <FilterChip active={filter === 'all'} onClick={() => changeFilter('all')}>
+              Tất cả ({totalAll.toLocaleString('vi-VN')})
             </FilterChip>
-            <FilterChip active={filter === 'full'} onClick={() => setFilter('full')}>
-              Đã có chapter ({fullCount})
+            <FilterChip active={filter === 'full'} onClick={() => changeFilter('full')}>
+              Đã có chapter ({totalFull.toLocaleString('vi-VN')})
             </FilterChip>
-            <FilterChip active={filter === 'stub'} onClick={() => setFilter('stub')}>
-              Chỉ metadata ({stubCount})
+            <FilterChip active={filter === 'stub'} onClick={() => changeFilter('stub')}>
+              Chỉ metadata ({totalStub.toLocaleString('vi-VN')})
             </FilterChip>
           </div>
         </div>
         {isLoading ? (
           <p className="text-body-sm text-fg-muted p-8 text-center">Đang tải...</p>
-        ) : filtered.length === 0 ? (
+        ) : stories.length === 0 ? (
           <StoriesEmptyState filter={filter} />
         ) : (
           <div className="overflow-x-auto">
@@ -172,7 +194,7 @@ function AdminStoriesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r) => {
+                {stories.map((r) => {
                   const isStub = r.discoveryStatus !== 'complete';
                   const isChecked = selected.has(r.id);
                   return (
@@ -230,6 +252,18 @@ function AdminStoriesPage() {
           </div>
         )}
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        isLoading={isLoading}
+        onChange={(p) => {
+          setPage(p);
+          // page change leaves the previous-page selection ambiguous; clear it
+          // so bulk-action operates only on visible rows.
+          setSelected(new Set());
+        }}
+      />
 
       <BulkActionBar
         ids={[...selected]}

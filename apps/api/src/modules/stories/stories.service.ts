@@ -34,16 +34,20 @@ export class StoriesService {
   ) {}
 
   async storageStats() {
+    // content_text is gzipped bytea (see CLAUDE.md note 11), so octet_length on
+    // it returns the COMPRESSED size — useless for a "library size" display.
+    // content_byte_size stores the UNCOMPRESSED length explicitly for stats.
     const result = await this.db.execute(sql`
       SELECT
-        COALESCE(SUM(octet_length(content_text)), 0)::bigint AS content_bytes,
+        COALESCE(SUM(content_byte_size), 0)::bigint AS content_bytes,
         COUNT(*) FILTER (WHERE content_text IS NOT NULL)::bigint AS chapters_with_content
       FROM chapter
     `);
     const coverResult = await this.db.execute(sql`
       SELECT
         COALESCE(SUM(octet_length(cover)), 0)::bigint AS cover_bytes,
-        COUNT(*) FILTER (WHERE cover IS NOT NULL)::bigint AS stories_with_cover
+        COUNT(*) FILTER (WHERE cover IS NOT NULL)::bigint AS stories_with_cover,
+        COALESCE(SUM(total_chapters), 0)::bigint AS chapter_target_total
       FROM story
     `);
     const chapterRow =
@@ -60,31 +64,60 @@ export class StoriesService {
       totalBytes: contentBytes + coverBytes,
       chaptersWithContent: Number(chapterRow?.chapters_with_content ?? 0),
       storiesWithCover: Number(coverRow?.stories_with_cover ?? 0),
+      chapterTargetTotal: Number(coverRow?.chapter_target_total ?? 0),
     };
   }
 
-  async count(genreSlug?: string): Promise<{ total: number }> {
+  async count(
+    genreSlug?: string,
+    discoveryStatus?: 'complete' | 'stub',
+  ): Promise<{ total: number }> {
+    // `discovery_status` enum: 'pending' | 'running' | 'complete' | 'failed'.
+    // 'stub' = anything not yet complete (everything except 'complete').
+    const discoveryFilter =
+      discoveryStatus === 'complete'
+        ? sql`AND s.discovery_status = 'complete'`
+        : discoveryStatus === 'stub'
+          ? sql`AND s.discovery_status <> 'complete'`
+          : sql``;
+
     if (genreSlug) {
       const r = await this.db.execute<{ c: string }>(sql`
         SELECT COUNT(DISTINCT s.id)::int AS c
         FROM story s
         INNER JOIN story_genre sg ON sg.story_id = s.id
         INNER JOIN genre g        ON g.id = sg.genre_id AND g.slug = ${genreSlug}
+        WHERE 1=1 ${discoveryFilter}
       `);
       const arr = rowsOf<{ c: string | number }>(r);
       return { total: Number(arr[0]?.c ?? 0) };
     }
-    const r = await this.db.select({ c: count() }).from(story);
-    return { total: Number(r[0]?.c ?? 0) };
+    const r = await this.db.execute<{ c: string | number }>(sql`
+      SELECT COUNT(*)::int AS c FROM story s WHERE 1=1 ${discoveryFilter}
+    `);
+    const arr = rowsOf<{ c: string | number }>(r);
+    return { total: Number(arr[0]?.c ?? 0) };
   }
 
-  async list(page = 1, limit = 48, genreSlug?: string, featuredOnly?: boolean) {
+  async list(
+    page = 1,
+    limit = 48,
+    genreSlug?: string,
+    featuredOnly?: boolean,
+    discoveryStatus?: 'complete' | 'stub',
+  ) {
     const genreJoin = genreSlug
       ? sql`INNER JOIN story_genre sg ON sg.story_id = s.id
             INNER JOIN genre g        ON g.id = sg.genre_id AND g.slug = ${genreSlug}`
       : sql``;
 
     const featuredFilter = featuredOnly ? sql`AND s.featured = true` : sql``;
+    const discoveryFilter =
+      discoveryStatus === 'complete'
+        ? sql`AND s.discovery_status = 'complete'`
+        : discoveryStatus === 'stub'
+          ? sql`AND s.discovery_status <> 'complete'`
+          : sql``;
 
     const rawRows = await this.db.execute<{
       id: string;
@@ -120,7 +153,7 @@ export class StoriesService {
         FROM rating
         GROUP BY story_id
       ) r ON r.story_id = s.id
-      WHERE 1=1 ${featuredFilter}
+      WHERE 1=1 ${featuredFilter} ${discoveryFilter}
       ORDER BY s.updated_at DESC
       LIMIT ${limit} OFFSET ${(page - 1) * limit}
     `);
@@ -216,9 +249,8 @@ export class StoriesService {
       rating_avg: string | null;
       rating_count: string;
     }>(rawRows);
-    if (arr.length === 0) throw new NotFoundException();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const row = arr[0]!;
+    const row = arr[0];
+    if (!row) throw new NotFoundException();
 
     const s = {
       id: row.id,

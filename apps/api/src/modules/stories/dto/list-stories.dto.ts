@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class ListStoriesDto {
   @IsOptional()
@@ -24,4 +24,13 @@ export class ListStoriesDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   featured?: boolean;
+
+  /**
+   * Filter by Plan 7 discovery state.
+   * - `complete` → stories whose chapter index finished discovering
+   * - `stub` → metadata-only stories (`pending` | `running` | `failed`)
+   */
+  @IsOptional()
+  @IsIn(['complete', 'stub'])
+  discoveryStatus?: 'complete' | 'stub';
 }

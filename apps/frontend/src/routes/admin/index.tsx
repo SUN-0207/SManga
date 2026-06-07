@@ -1,6 +1,6 @@
 import { jobsApi } from '@/api/jobs';
 import { sourcesApi } from '@/api/sources';
-import { getStorageStats, listStories } from '@/api/stories';
+import { getStorageStats, getStoriesCount } from '@/api/stories';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
@@ -35,9 +35,12 @@ function AdminDashboard() {
     enabled: isLoggedIn,
     retry: false,
   });
-  const storiesQ = useQuery({
-    queryKey: ['stories', { page: 1, limit: 1000 }],
-    queryFn: () => listStories(1, 1000),
+  // Use the dedicated count endpoint instead of `.length` on a paginated list —
+  // listStories(1, 1000) caps the visible total at 1000 and lies once the
+  // catalog grows past that. count() runs SELECT COUNT(*) on the story table.
+  const storiesCountQ = useQuery({
+    queryKey: ['admin-stories', 'count', 'all'],
+    queryFn: () => getStoriesCount(),
     enabled: isLoggedIn,
     retry: false,
   });
@@ -57,9 +60,9 @@ function AdminDashboard() {
   });
 
   const stats = jobsStatsQ.data;
-  const chapterCount = storiesQ.data
-    ? storiesQ.data.reduce((sum, s) => sum + (s.totalChapters ?? 0), 0)
-    : null;
+  // chapterTargetTotal is summed server-side across the WHOLE story table,
+  // not the paginated frontend slice — accurate at any catalog size.
+  const chapterCount = storageQ.data?.chapterTargetTotal ?? null;
 
   return (
     <div className="space-y-10">
@@ -78,12 +81,7 @@ function AdminDashboard() {
           value={sourcesQ.data?.length}
           href="/admin/sources"
         />
-        <StatCard
-          icon={BookOpen}
-          label="Truyện"
-          value={storiesQ.data?.length}
-          href="/admin/stories"
-        />
+        <StatCard icon={BookOpen} label="Truyện" value={storiesCountQ.data} href="/admin/stories" />
         <StatCard
           icon={FileText}
           label="Chapter (tổng)"

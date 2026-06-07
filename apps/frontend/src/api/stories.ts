@@ -27,6 +27,7 @@ export async function listStories(
   limit = 48,
   genre?: string,
   featured?: boolean,
+  discoveryStatus?: 'complete' | 'stub',
 ): Promise<StorySummary[]> {
   const res = await api.get<StorySummary[]>('/stories', {
     params: {
@@ -34,6 +35,7 @@ export async function listStories(
       limit,
       ...(genre ? { genre } : {}),
       ...(featured === undefined ? {} : { featured: String(featured) }),
+      ...(discoveryStatus ? { discoveryStatus } : {}),
     },
   });
   return res.data;
@@ -43,9 +45,15 @@ export async function setFeatured(storyId: string, featured: boolean): Promise<v
   await api.patch(`/stories/${storyId}/featured`, { featured });
 }
 
-export async function getStoriesCount(genre?: string): Promise<number> {
+export async function getStoriesCount(
+  genre?: string,
+  discoveryStatus?: 'complete' | 'stub',
+): Promise<number> {
   const res = await api.get<{ total: number }>('/stories/count', {
-    params: genre ? { genre } : undefined,
+    params: {
+      ...(genre ? { genre } : {}),
+      ...(discoveryStatus ? { discoveryStatus } : {}),
+    },
   });
   return res.data.total;
 }
@@ -85,6 +93,8 @@ export interface StorageStats {
   totalBytes: number;
   chaptersWithContent: number;
   storiesWithCover: number;
+  /** Sum of story.total_chapters — the discovery TARGET, not the crawled count. */
+  chapterTargetTotal: number;
 }
 
 export async function getStorageStats(): Promise<StorageStats> {
