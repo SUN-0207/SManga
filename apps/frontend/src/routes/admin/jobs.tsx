@@ -3,7 +3,7 @@ import { JobsTable } from '@/components/admin/JobsTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EmptyQueue } from '@/components/ui/illustrations/EmptyQueue';
 import { useAuthStore } from '@/stores/auth-store';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
   AlertTriangle,
@@ -12,8 +12,10 @@ import {
   Loader2,
   PauseCircle,
   RefreshCw,
+  RotateCcw,
   Timer,
 } from 'lucide-react';
+import { useState } from 'react';
 
 export const Route = createFileRoute('/admin/jobs')({
   component: AdminJobsPage,
@@ -55,6 +57,23 @@ function AdminJobsPage() {
 
   const stats = (statsQ.data ?? {}) as Record<string, number>;
   const jobs = jobsQ.data ?? [];
+  const failedCount = stats.failed ?? 0;
+
+  const queryClient = useQueryClient();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const retryAll = useMutation({
+    mutationFn: jobsApi.retryAllFailed,
+    onSuccess: (data) => {
+      setConfirmOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      window.alert(
+        `Đã enqueue lại ${data.retried} job${data.skipped > 0 ? ` (bỏ qua ${data.skipped})` : ''}.`,
+      );
+    },
+    onError: () => {
+      window.alert('Retry thất bại. Xem log api để biết chi tiết.');
+    },
+  });
 
   return (
     <div className="space-y-8">
@@ -68,18 +87,66 @@ function AdminJobsPage() {
             Theo dõi và retry job crawl. Tự động cập nhật mỗi 5 giây.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            void statsQ.refetch();
-            void jobsQ.refetch();
-          }}
-          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-border hover:border-fg/40 hover:bg-bg-subtle/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Làm mới
-        </button>
+        <div className="flex items-center gap-2">
+          {failedCount > 0 && (
+            <button
+              type="button"
+              disabled={retryAll.isPending}
+              onClick={() => setConfirmOpen(true)}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              {retryAll.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="h-4 w-4" />
+              )}
+              Retry tất cả thất bại ({failedCount.toLocaleString('vi-VN')})
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              void statsQ.refetch();
+              void jobsQ.refetch();
+            }}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-border hover:border-fg/40 hover:bg-bg-subtle/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Làm mới
+          </button>
+        </div>
       </div>
+
+      {confirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-bg border border-border p-6 shadow-elev">
+            <h3 className="font-sans font-semibold text-lg">Retry {failedCount} job thất bại?</h3>
+            <p className="mt-2 text-sm text-fg-muted">
+              Tất cả job ở trạng thái <strong>Thất bại</strong> sẽ được enqueue lại. Token bucket 1
+              rps vẫn áp dụng, nên ước tính ~{Math.ceil(failedCount / 60)} phút để chạy xong.
+            </p>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={retryAll.isPending}
+                onClick={() => setConfirmOpen(false)}
+                className="inline-flex items-center h-9 px-3 rounded-md text-sm border border-border hover:bg-bg-subtle/60 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={retryAll.isPending}
+                onClick={() => retryAll.mutate()}
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-60 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                {retryAll.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                Xác nhận retry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {STAT_ORDER.map((state) => {

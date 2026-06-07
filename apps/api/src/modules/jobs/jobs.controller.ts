@@ -25,4 +25,9 @@ export class JobsController {
   retry(@Param('id') id: string) {
     return this.jobs.retry(id);
   }
+
+  @Post('retry-failed')
+  retryAllFailed() {
+    return this.jobs.retryAllFailed();
+  }
 }

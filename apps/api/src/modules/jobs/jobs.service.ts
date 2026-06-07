@@ -56,4 +56,37 @@ export class JobsService {
       return { ok: true, requeued: true, newId: String(cloned.id) };
     }
   }
+
+  /**
+   * Bulk-retry every job currently in 'failed' state. Loops Bull's failed set
+   * via `getJobs(['failed'])` and calls `.retry()` on each. The token-bucket
+   * rate limiter in the crawler engine still enforces 1 rps per source so
+   * burst-re-enqueueing does not hammer the upstream site.
+   */
+  async retryAllFailed(): Promise<{ retried: number; skipped: number }> {
+    const failed = await this.queue.getJobs(['failed'], 0, -1);
+    let retried = 0;
+    let skipped = 0;
+    for (const job of failed) {
+      try {
+        await job.retry();
+        retried += 1;
+      } catch {
+        // Same fall-through as single-job retry: if Bull refuses (e.g. attempts
+        // exhausted + state already shifted), re-enqueue a clone so the user's
+        // "retry all" intent is honored.
+        try {
+          await this.queue.add(job.name, job.data, {
+            attempts: job.opts.attempts ?? 3,
+            backoff: job.opts.backoff,
+          });
+          await job.remove().catch(() => {});
+          retried += 1;
+        } catch {
+          skipped += 1;
+        }
+      }
+    }
+    return { retried, skipped };
+  }
 }
