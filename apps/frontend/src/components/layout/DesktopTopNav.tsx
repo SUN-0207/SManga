@@ -13,6 +13,11 @@ const NAV = [
     label: 'Khám phá',
     match: (p: string) => p.startsWith('/kham-pha') || p.startsWith('/tim-kiem'),
   },
+  {
+    to: '/bang-xep-hang' as const,
+    label: 'Bảng xếp hạng',
+    match: (p: string) => p.startsWith('/bang-xep-hang'),
+  },
   { to: '/tu-sach' as const, label: 'Tủ sách', match: (p: string) => p.startsWith('/tu-sach') },
 ] as const;
 

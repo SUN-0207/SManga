@@ -2,7 +2,6 @@ import { listGenres } from '@/api/genres';
 import { meApi } from '@/api/me';
 import { type StorySummary, listStories } from '@/api/stories';
 import { TwoColumnSection } from '@/components/home/TwoColumnSection';
-import { HomeRankingsSection } from '@/components/rankings/HomeRankingsSection';
 import { SEO } from '@/components/seo/SEO';
 import { buildWebSiteSchema } from '@/components/seo/builders';
 import { StoryCover } from '@/components/ui/StoryCover';
@@ -47,7 +46,6 @@ function HomePage() {
           isLoading={storiesQ.isLoading || featuredQ.isLoading}
         />
         <TwoColumnSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
-        <HomeRankingsSection />
         <GenreSection />
       </div>
     </>
