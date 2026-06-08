@@ -130,3 +130,18 @@ describe('truyenfull parseChapterContentHtml', () => {
     expect(c.title.length).toBeGreaterThan(0);
   });
 });
+
+describe('parseChapterContentHtml — paragraph separation', () => {
+  it('emits \\n\\n between adjacent <p> blocks so FE split("\\n\\n") produces real paragraphs', () => {
+    const html =
+      '<h2><a class="chapter-title">Chương 1: Test</a></h2>' +
+      '<div id="chapter-c" class="chapter-c">' +
+      '<p>Hello world.</p>' +
+      '<p>Second paragraph.</p>' +
+      '<p>Third one.</p>' +
+      '</div>';
+    const result = parseChapterContentHtml(html);
+    expect(result.text).toBe('Hello world.\n\nSecond paragraph.\n\nThird one.');
+    expect(result.text.split('\n\n')).toHaveLength(3);
+  });
+});

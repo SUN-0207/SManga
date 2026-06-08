@@ -248,7 +248,7 @@ export function parseChapterContentHtml(html: string): ChapterContent {
   // Fix 3: insert block separators before extracting text so adjacent <p> blocks
   // don't fuse together (e.g. "hồn...\"Tiêu" or ".Theo").
   contentEl.find('p, div, h1, h2, h3, h4, h5, h6, li, br').each((_, el) => {
-    $(el).append('\n');
+    $(el).append('\n\n');
   });
   const text = contentEl
     .text()
