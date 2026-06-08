@@ -150,8 +150,7 @@ function ChapterReader() {
   }
 
   const chapterNumber = Number.parseInt(index, 10);
-  const robots: 'index' | 'noindex, follow' =
-    chapterNumber <= 3 ? 'index' : 'noindex, follow';
+  const robots: 'index' | 'noindex, follow' = chapterNumber <= 3 ? 'index' : 'noindex, follow';
 
   const jsonLd =
     chapterNumber <= 3

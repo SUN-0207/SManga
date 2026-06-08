@@ -3,10 +3,10 @@
  * Run: node scripts/generate-og-default.mjs
  * Output: apps/frontend/public/og-default.png (1200x630, <200KB)
  */
-import sharp from 'sharp';
 import { writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outputPath = join(__dirname, '..', 'apps', 'frontend', 'public', 'og-default.png');
