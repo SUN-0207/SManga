@@ -3,10 +3,12 @@ import { JwtAuthGuard } from '@/common/guards/jwt.guard';
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   HttpCode,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -28,15 +30,15 @@ export class CommentsController {
   listComments(
     @Query('targetType') targetType: string,
     @Query('targetId') targetId: string,
-    @Query('page') page: string,
-    @Query('limit') limit: string,
+    @Query('page', new DefaultValuePipe(1), new ParseIntPipe()) page: number,
+    @Query('limit', new DefaultValuePipe(20), new ParseIntPipe()) limit: number,
     @CurrentUser() user: { id: string } | null,
   ) {
     return this.svc.listComments(
       targetType,
       targetId,
-      Math.max(1, Number(page)),
-      Math.min(50, Math.max(1, Number(limit))),
+      Math.max(1, page),
+      Math.min(50, Math.max(1, limit)),
       user?.id ?? null,
     );
   }
