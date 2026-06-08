@@ -38,14 +38,16 @@ function HomePage() {
         jsonLd={buildWebSiteSchema()}
       />
       <div className="container py-8 lg:py-12 space-y-12 lg:space-y-16">
+        {/* Returning reader gets resume CTA above the fold; LoggedInHero
+            self-hides when no continue-reading state exists. */}
+        {user && <LoggedInHero />}
         <FeaturedSlider
           stories={storiesQ.data ?? []}
           featuredStories={featuredQ.data ?? []}
           isLoading={storiesQ.isLoading || featuredQ.isLoading}
         />
-        {user && <LoggedInHero />}
-        <HomeRankingsSection />
         <TwoColumnSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
+        <HomeRankingsSection />
         <GenreSection />
       </div>
     </>
