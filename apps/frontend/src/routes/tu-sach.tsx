@@ -40,14 +40,17 @@ interface ShelfItem {
 }
 
 function LibraryPage() {
+  const user = useAuthStore((s) => s.user);
   const [tab, setTab] = useState<ShelfTab>('reading');
   const bookmarksQ = useQuery({
     queryKey: ['me', 'bookmarks'],
     queryFn: () => bookmarksApi.list(),
+    enabled: !!user,
   });
   const progressQ = useQuery({
     queryKey: ['me', 'reading-progress'],
     queryFn: () => readingProgressApi.list(),
+    enabled: !!user,
   });
 
   const { reading, saved, completed } = useMemo(() => {

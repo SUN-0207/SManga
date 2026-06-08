@@ -224,10 +224,12 @@ function SliderSkeleton() {
 }
 
 function LoggedInHero() {
+  const user = useAuthStore((s) => s.user);
   const q = useQuery({
     queryKey: ['me', 'continue-reading'],
     queryFn: () => meApi.continueReading(),
     staleTime: 60_000,
+    enabled: !!user,
   });
   if (q.isLoading) {
     return (
