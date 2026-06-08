@@ -4,6 +4,7 @@ import {
   type FetchChapterJobData,
   JOB_DISCOVER_CHAPTERS,
   JOB_FETCH_CHAPTER,
+  JOB_PRIORITY,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
 import { InjectQueue, Process, Processor } from '@nestjs/bull';
@@ -45,6 +46,7 @@ export class DiscoverChaptersProcessor {
           const payload: FetchChapterJobData = { chapterId: r.id };
           await this.queue.add(JOB_FETCH_CHAPTER, payload, {
             jobId: `fetch-chapter:${r.id}`,
+            priority: JOB_PRIORITY.FETCH_CHAPTER,
           });
         }
         this.logger.log(

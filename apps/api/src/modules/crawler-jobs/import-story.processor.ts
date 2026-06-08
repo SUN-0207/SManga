@@ -4,6 +4,7 @@ import {
   type ImportStoryJobData,
   JOB_DISCOVER_CHAPTERS,
   JOB_IMPORT_STORY,
+  JOB_PRIORITY,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
 import { InjectQueue, Process, Processor } from '@nestjs/bull';
@@ -37,6 +38,7 @@ export class ImportStoryProcessor {
         const payload: DiscoverChaptersJobData = { storyId, requestedBy, autoCrawl: true };
         await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
           jobId: `discover-chapters:${storyId}`,
+          priority: JOB_PRIORITY.DISCOVER_CHAPTERS,
         });
         this.logger.log(`import-story chained discover-chapters for ${storyId} (autoCrawl)`);
       }

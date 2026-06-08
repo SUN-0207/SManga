@@ -2,6 +2,7 @@ import { DRIZZLE } from '@/modules/db/db.provider';
 import {
   type FetchChapterJobData,
   JOB_FETCH_CHAPTER,
+  JOB_PRIORITY,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
 import { InjectQueue } from '@nestjs/bull';
@@ -131,7 +132,12 @@ export class JobsService {
       name: JOB_FETCH_CHAPTER,
       data: { chapterId: c.id } satisfies FetchChapterJobData,
       opts: {
-        jobId: `fetch-chapter-${c.id}`,
+        // Colon separator matches the rest of the codebase (chapters/stories
+        // services, discover-chapters processor). Hyphen was a pre-existing
+        // typo that broke idempotency cross-path — two enqueues for the same
+        // chapter via different code paths would create two jobs.
+        jobId: `fetch-chapter:${c.id}`,
+        priority: JOB_PRIORITY.FETCH_CHAPTER,
         attempts: 3,
         backoff: { type: 'exponential' as const, delay: 30_000 },
       },

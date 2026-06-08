@@ -2,6 +2,7 @@ import { DRIZZLE } from '@/modules/db/db.provider';
 import {
   type DiscoverChaptersJobData,
   JOB_DISCOVER_CHAPTERS,
+  JOB_PRIORITY,
   JOB_REFRESH_ALL_STORIES,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
@@ -64,6 +65,9 @@ export class RefreshAllStoriesProcessor {
         };
         await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
           jobId: `discover-chapters:${r.id}`,
+          // Scheduled refresh defers behind all user-initiated work via a
+          // dedicated low priority rung — see JOB_PRIORITY in queue.constants.
+          priority: JOB_PRIORITY.REFRESH_ALL_STORIES,
         });
         enqueued += 1;
       } catch {

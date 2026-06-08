@@ -5,6 +5,7 @@ import {
   JOB_DISCOVER_CHAPTERS,
   JOB_FETCH_CHAPTER,
   JOB_IMPORT_STORY,
+  JOB_PRIORITY,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
 import { InjectQueue } from '@nestjs/bull';
@@ -374,7 +375,9 @@ export class StoriesService {
       throw new BadRequestException('no adapter registered for that hostname');
     }
     const payload: ImportStoryJobData = { url, requestedBy, autoCrawl };
-    const job = await this.queue.add(JOB_IMPORT_STORY, payload);
+    const job = await this.queue.add(JOB_IMPORT_STORY, payload, {
+      priority: JOB_PRIORITY.IMPORT_STORY,
+    });
     return { jobId: String(job.id) };
   }
 
@@ -403,7 +406,9 @@ export class StoriesService {
         continue;
       }
       const payload: ImportStoryJobData = { url, requestedBy, skipDiscovery: true, autoCrawl };
-      const job = await this.queue.add(JOB_IMPORT_STORY, payload);
+      const job = await this.queue.add(JOB_IMPORT_STORY, payload, {
+        priority: JOB_PRIORITY.IMPORT_STORY,
+      });
       queued.push({ url, jobId: String(job.id) });
     }
     return { queued, skipped, cap: BULK_IMPORT_CAP, autoCrawl };
@@ -430,6 +435,7 @@ export class StoriesService {
     const payload: DiscoverChaptersJobData = { storyId, requestedBy, autoCrawl };
     const job = await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
       jobId: `discover-chapters:${storyId}`,
+      priority: JOB_PRIORITY.DISCOVER_CHAPTERS,
     });
     return { jobId: String(job.id) };
   }
@@ -475,6 +481,7 @@ export class StoriesService {
         };
         await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
           jobId: `discover-chapters:${storyId}`,
+          priority: JOB_PRIORITY.DISCOVER_CHAPTERS,
         });
         queued.push({ storyId, jobs: 1 });
         continue;
@@ -493,7 +500,7 @@ export class StoriesService {
         await this.queue.add(
           JOB_FETCH_CHAPTER,
           { chapterId: r.id },
-          { jobId: `fetch-chapter:${r.id}` },
+          { jobId: `fetch-chapter:${r.id}`, priority: JOB_PRIORITY.FETCH_CHAPTER },
         );
       }
       queued.push({ storyId, jobs: rows.length });

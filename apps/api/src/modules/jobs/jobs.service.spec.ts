@@ -1,4 +1,4 @@
-import { JOB_FETCH_CHAPTER } from '@/modules/queue/queue.constants';
+import { JOB_FETCH_CHAPTER, JOB_PRIORITY } from '@/modules/queue/queue.constants';
 import { describe, expect, it, vi } from 'vitest';
 import { JobsService } from './jobs.service';
 
@@ -20,11 +20,12 @@ describe('JobsService.refetchAllChapters', () => {
       name: JOB_FETCH_CHAPTER,
       data: { chapterId: 'c1' },
       opts: expect.objectContaining({
-        jobId: 'fetch-chapter-c1',
+        jobId: 'fetch-chapter:c1',
+        priority: JOB_PRIORITY.FETCH_CHAPTER,
         attempts: 3,
       }),
     });
-    expect(jobs[1].opts.jobId).toBe('fetch-chapter-c2');
+    expect(jobs[1].opts.jobId).toBe('fetch-chapter:c2');
   });
 
   it('returns { enqueued: 0 } and does not call addBulk when DB has no crawled chapters', async () => {

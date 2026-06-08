@@ -3,6 +3,7 @@ import { DRIZZLE } from '@/modules/db/db.provider';
 import {
   type FetchChapterJobData,
   JOB_FETCH_CHAPTER,
+  JOB_PRIORITY,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
 import { InjectQueue } from '@nestjs/bull';
@@ -135,6 +136,7 @@ export class ChaptersService {
       const payload: FetchChapterJobData = { chapterId };
       await this.queue.add(JOB_FETCH_CHAPTER, payload, {
         jobId: `fetch-chapter:${chapterId}`,
+        priority: JOB_PRIORITY.FETCH_CHAPTER,
       });
       enqueued += 1;
     }
