@@ -33,6 +33,14 @@ const STATUS_TONE: Record<string, string> = {
 
 type Filter = 'all' | 'full' | 'stub';
 
+function formatDateVN(iso: string): string {
+  return new Intl.DateTimeFormat('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(iso));
+}
+
 function AdminStoriesPage() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState<Filter>('all');
@@ -239,7 +247,7 @@ function AdminStoriesPage() {
                         {isStub ? <span className="text-fg-muted">—</span> : r.totalChapters}
                       </td>
                       <td className="px-3 py-3 text-[11px] text-fg-muted tabular-nums">
-                        {new Date(r.updatedAt).toLocaleDateString('vi-VN')}
+                        {formatDateVN(r.updatedAt)}
                       </td>
                       <td className="px-3 py-3 text-right">
                         <ChevronRight className="h-4 w-4 inline text-fg-subtle transition-all duration-fast group-hover:text-fg group-hover:translate-x-0.5" />

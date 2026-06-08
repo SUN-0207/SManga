@@ -51,6 +51,7 @@ export function SourceForm() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
+            placeholder="TruyenFull"
             required
             className={INPUT_CLS}
           />

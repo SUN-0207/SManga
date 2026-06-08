@@ -184,7 +184,14 @@ function ChapterReader() {
       <ReadingProgressTracker storyId={story.id} chapterIndex={chapter.index} />
 
       {/* Scroll progress bar — fixed top, 2px pink gradient */}
-      <div aria-hidden className="fixed top-0 left-0 right-0 h-0.5 bg-bg-subtle z-50">
+      <div
+        role="progressbar"
+        aria-valuenow={Math.round(scrollProgress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Tiến độ đọc"
+        className="fixed top-0 left-0 right-0 h-0.5 bg-bg-subtle z-50"
+      >
         <div
           className="h-full bg-accent-gradient shadow-glow-pink-soft"
           style={{
@@ -279,8 +286,8 @@ function ChapterReader() {
             ← Ch.{prev.index}
           </Link>
         ) : (
-          <span className="inline-flex items-center h-9 px-4 rounded-full text-body-sm text-fg-subtle opacity-40 select-none">
-            ← Ch.{Number(chapter.index) - 1}
+          <span aria-hidden className="invisible inline-flex items-center h-9 px-4 rounded-full text-body-sm select-none">
+            ← Ch.0
           </span>
         )}
         {next ? (

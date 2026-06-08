@@ -1,9 +1,9 @@
-import { login as apiLogin } from '@/api/auth';
+import { login as apiLogin, me } from '@/api/auth';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { GoogleButton } from '@/components/auth/GoogleButton';
 import { SEO } from '@/components/seo/SEO';
 import { useAuthStore } from '@/stores/auth-store';
-import { Link, createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
+import { Link, createFileRoute, redirect, useNavigate, useRouter } from '@tanstack/react-router';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 
@@ -12,6 +12,10 @@ export const Route = createFileRoute('/dang-nhap')({
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === 'string' ? search.redirect : '/tu-sach',
   }),
+  beforeLoad: async ({ search }) => {
+    const u = await me();
+    if (u) throw redirect({ to: (search as { redirect: string }).redirect ?? '/' });
+  },
 });
 
 function SignInPage() {
