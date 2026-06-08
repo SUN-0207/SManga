@@ -90,6 +90,16 @@ describe('buildBookSchema', () => {
     });
     expect(schema.genre).toEqual(['Tiên Hiệp', 'Huyền Huyễn']);
   });
+
+  it('includes image when hasCover is true', () => {
+    const schema = buildBookSchema({ ...baseStory, hasCover: true });
+    expect(schema.image).toBe('https://smanga.shop/api/v1/cover/s1');
+  });
+
+  it('omits image when hasCover is false', () => {
+    const schema = buildBookSchema({ ...baseStory, hasCover: false });
+    expect(schema.image).toBeUndefined();
+  });
 });
 
 describe('buildArticleSchema', () => {

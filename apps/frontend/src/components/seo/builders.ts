@@ -40,7 +40,7 @@ export function buildBookSchema(story: StoryForBook): Record<string, unknown> {
       name: story.author ?? 'Khuyết danh',
     },
     url: absoluteUrl(`/truyen/${story.slug}`),
-    image: absoluteUrl(`/api/v1/cover/${story.id}`),
+    ...(story.hasCover ? { image: absoluteUrl(`/api/v1/cover/${story.id}`) } : {}),
     inLanguage: 'vi',
     numberOfPages: story.totalChapters,
     genre: story.genres.map((g) => g.name),

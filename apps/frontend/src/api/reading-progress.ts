@@ -8,6 +8,7 @@ export interface ReadingProgressRow {
   title: string;
   author: string | null;
   totalChapters: number;
+  hasCover: boolean;
 }
 
 export const readingProgressApi = {

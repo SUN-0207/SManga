@@ -33,6 +33,7 @@ export class BookmarksService {
         viewCount: story.viewCount,
         ratingAvg: ratingAgg.ratingAvg,
         ratingCount: sql<number>`coalesce(${ratingAgg.ratingCount}, 0)`,
+        hasCover: sql<boolean>`${story.cover} IS NOT NULL`,
       })
       .from(bookmark)
       .innerJoin(story, eq(story.id, bookmark.storyId))

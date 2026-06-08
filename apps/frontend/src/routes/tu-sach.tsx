@@ -37,6 +37,7 @@ interface ShelfItem {
   viewCount?: number;
   ratingAvg?: number | null;
   ratingCount?: number;
+  hasCover: boolean;
 }
 
 function LibraryPage() {
@@ -71,6 +72,7 @@ function LibraryPage() {
         totalChapters: total,
         chapterIndex: chapter,
         progress: total > 0 ? Math.min(100, Math.round((chapter / total) * 100)) : 0,
+        hasCover: p.hasCover,
       };
       (isDone ? completedItems : readingItems).push(item);
     }
@@ -84,6 +86,7 @@ function LibraryPage() {
       viewCount: b.viewCount,
       ratingAvg: b.ratingAvg,
       ratingCount: b.ratingCount,
+      hasCover: b.hasCover,
     }));
 
     return { reading: readingItems, saved: savedItems, completed: completedItems };
@@ -171,6 +174,7 @@ function LibraryCard({ item }: { item: ShelfItem }) {
         <StoryCover
           storyId={item.storyId}
           title={item.title}
+          hasCover={item.hasCover}
           decorative
           imgClassName="absolute inset-0"
         />

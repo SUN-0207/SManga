@@ -12,6 +12,7 @@ export interface BookmarkRow {
   viewCount: number;
   ratingAvg: number | null;
   ratingCount: number;
+  hasCover: boolean;
 }
 
 export const bookmarksApi = {

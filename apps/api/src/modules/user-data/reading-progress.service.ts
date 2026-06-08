@@ -56,6 +56,7 @@ export class ReadingProgressService {
         title: story.title,
         author: story.author,
         totalChapters: story.totalChapters,
+        hasCover: sql<boolean>`${story.cover} IS NOT NULL`,
       })
       .from(readingProgress)
       .innerJoin(story, eq(story.id, readingProgress.storyId))
