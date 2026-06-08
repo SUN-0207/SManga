@@ -116,10 +116,13 @@ export class JobsService {
    * source friendly during the drain.
    */
   async refetchAllChapters(): Promise<{ enqueued: number }> {
+    // The chapter table does NOT have an updated_at column — use crawled_at
+    // (timestamp when content was last fetched). NULLS FIRST puts never-crawled
+    // edge rows ahead so any straggler gets re-attempted promptly.
     const r = await this.db.execute<{ id: string }>(sql`
       SELECT id FROM chapter
       WHERE status = 'crawled'
-      ORDER BY updated_at ASC
+      ORDER BY crawled_at ASC NULLS FIRST
     `);
     const rows = rowsOf<{ id: string }>(r);
     if (rows.length === 0) return { enqueued: 0 };
