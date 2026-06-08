@@ -1,11 +1,24 @@
-import { QUEUE_CRAWLER } from '@/modules/queue/queue.constants';
+import { DRIZZLE } from '@/modules/db/db.provider';
+import {
+  type FetchChapterJobData,
+  JOB_FETCH_CHAPTER,
+  QUEUE_CRAWLER,
+} from '@/modules/queue/queue.constants';
 import { InjectQueue } from '@nestjs/bull';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Database } from '@smanga/db';
 import type { JobStatus, Queue } from 'bull';
+import { sql } from 'drizzle-orm';
+
+const rowsOf = <T>(r: unknown): T[] =>
+  Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
 
 @Injectable()
 export class JobsService {
-  constructor(@InjectQueue(QUEUE_CRAWLER) private readonly queue: Queue) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
+    @InjectQueue(QUEUE_CRAWLER) private readonly queue: Queue,
+  ) {}
 
   async stats() {
     const counts = await this.queue.getJobCounts(); // { waiting, active, completed, failed, delayed, paused }
@@ -93,5 +106,35 @@ export class JobsService {
       }
     }
     return { retried, skipped };
+  }
+
+  /**
+   * Enqueue a fetch-chapter job for every chapter currently in `crawled`
+   * status, so the new parser logic regenerates the stored prose. Idempotent
+   * via `jobId` — Bull skips duplicate-id enqueues in the waiting state. The
+   * engine's per-source token bucket (0.5 rps for truyenfull) keeps the
+   * source friendly during the drain.
+   */
+  async refetchAllChapters(): Promise<{ enqueued: number }> {
+    const r = await this.db.execute<{ id: string }>(sql`
+      SELECT id FROM chapter
+      WHERE status = 'crawled'
+      ORDER BY updated_at ASC
+    `);
+    const rows = rowsOf<{ id: string }>(r);
+    if (rows.length === 0) return { enqueued: 0 };
+
+    const jobs = rows.map((c) => ({
+      name: JOB_FETCH_CHAPTER,
+      data: { chapterId: c.id } satisfies FetchChapterJobData,
+      opts: {
+        jobId: `fetch-chapter-${c.id}`,
+        attempts: 3,
+        backoff: { type: 'exponential' as const, delay: 30_000 },
+      },
+    }));
+
+    await this.queue.addBulk(jobs);
+    return { enqueued: jobs.length };
   }
 }
