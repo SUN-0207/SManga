@@ -183,9 +183,14 @@ function ChapterReader() {
       {/* Auto-save reading progress after 5s (non-visual, non-critical) */}
       <ReadingProgressTracker storyId={story.id} chapterIndex={chapter.index} />
 
-      {/* Scroll progress bar — fixed top, 2px pink gradient */}
+      {/* Scroll progress bar — fixed top, 2px pink gradient.
+       *  tabIndex=-1 makes the progressbar focusable programmatically
+       *  (satisfies WAI-ARIA + biome's useFocusableInteractive) without
+       *  pulling it into the Tab order — readers don't need to step
+       *  through a passive progress indicator. */}
       <div
         role="progressbar"
+        tabIndex={-1}
         aria-valuenow={Math.round(scrollProgress)}
         aria-valuemin={0}
         aria-valuemax={100}
@@ -286,7 +291,10 @@ function ChapterReader() {
             ← Ch.{prev.index}
           </Link>
         ) : (
-          <span aria-hidden className="invisible inline-flex items-center h-9 px-4 rounded-full text-body-sm select-none">
+          <span
+            aria-hidden
+            className="invisible inline-flex items-center h-9 px-4 rounded-full text-body-sm select-none"
+          >
             ← Ch.0
           </span>
         )}
