@@ -135,6 +135,7 @@ export class StoriesService {
       rating_avg: string | null;
       rating_count: string;
       featured: boolean;
+      latest_chapter_index: string | null;
     }>(sql`
       SELECT
         s.id, s.slug, s.title, s.author, s.status,
@@ -143,7 +144,8 @@ export class StoriesService {
         s.discovery_status, s.discovery_error, s.discovered_at,
         s.featured,
         r.avg                  AS rating_avg,
-        COALESCE(r.cnt, 0)     AS rating_count
+        COALESCE(r.cnt, 0)     AS rating_count,
+        c.latest_chapter_index AS latest_chapter_index
       FROM story s
       ${genreJoin}
       LEFT JOIN (
@@ -153,6 +155,13 @@ export class StoriesService {
         FROM rating
         GROUP BY story_id
       ) r ON r.story_id = s.id
+      LEFT JOIN (
+        SELECT story_id,
+               MAX(index) AS latest_chapter_index
+        FROM chapter
+        WHERE status = 'crawled'
+        GROUP BY story_id
+      ) c ON c.story_id = s.id
       WHERE 1=1 ${featuredFilter} ${discoveryFilter}
       ORDER BY s.updated_at DESC
       LIMIT ${limit} OFFSET ${(page - 1) * limit}
@@ -174,6 +183,7 @@ export class StoriesService {
       rating_avg: string | null;
       rating_count: string;
       featured: boolean;
+      latest_chapter_index: string | null;
     }>(rawRows);
 
     return arr.map((row) => ({
@@ -192,6 +202,11 @@ export class StoriesService {
       ratingAvg: row.rating_avg != null ? Number(row.rating_avg) : null,
       ratingCount: Number(row.rating_count ?? 0),
       featured: Boolean(row.featured),
+      // numeric(10,2) comes back as a string from drizzle/pg. Floor the integer
+      // part so the "Ch.N" pill never renders "Ch.47.50". null when no chapter
+      // is in 'crawled' status yet — FE hides the pill in that case.
+      latestChapterIndex:
+        row.latest_chapter_index != null ? Math.floor(Number(row.latest_chapter_index)) : null,
     }));
   }
 

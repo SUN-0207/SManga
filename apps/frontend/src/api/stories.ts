@@ -20,6 +20,9 @@ export interface StorySummary {
   ratingCount: number;
   /** Feature #2: admin-curated featured flag. */
   featured: boolean;
+  /** Floor of MAX(chapter.index) WHERE status='crawled'. null when no chapter
+   * is crawled yet — UI hides the "Ch.N" pill in that case. */
+  latestChapterIndex: number | null;
 }
 
 export async function listStories(

@@ -1,10 +1,8 @@
 import { listGenres } from '@/api/genres';
 import { meApi } from '@/api/me';
 import { type StorySummary, listStories } from '@/api/stories';
-import { RatingStars } from '@/components/engagement/RatingStars';
-import { ViewCount } from '@/components/engagement/ViewCount';
+import { TwoColumnSection } from '@/components/home/TwoColumnSection';
 import { HomeRankingsSection } from '@/components/rankings/HomeRankingsSection';
-import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
 import { SEO } from '@/components/seo/SEO';
 import { buildWebSiteSchema } from '@/components/seo/builders';
 import { StoryCover } from '@/components/ui/StoryCover';
@@ -47,8 +45,7 @@ function HomePage() {
         />
         {user && <LoggedInHero />}
         <HomeRankingsSection />
-        <RecommendationSection kind="forYou" />
-        <UpdatedSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
+        <TwoColumnSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
         <GenreSection />
       </div>
     </>
@@ -290,69 +287,6 @@ function LoggedInHero() {
         </div>
       </div>
     </section>
-  );
-}
-
-function UpdatedSection({ stories, isLoading }: { stories: StorySummary[]; isLoading: boolean }) {
-  return (
-    <section>
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <p className="text-label text-fg-muted uppercase mb-2">THƯ VIỆN</p>
-          <h2 className="text-heading-lg">Mới cập nhật</h2>
-        </div>
-        <Link
-          to="/kham-pha"
-          search={{ q: '', page: 1, genre: undefined }}
-          className="text-body-sm text-fg-muted hover:text-fg transition-colors duration-fast"
-        >
-          Xem tất cả →
-        </Link>
-      </div>
-      {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="aspect-[3/4] rounded-md bg-bg-subtle animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {stories.map((s) => (
-            <HomeStoryCard key={s.id} story={s} />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function HomeStoryCard({ story }: { story: StorySummary }) {
-  return (
-    <Link
-      to="/truyen/$slug"
-      params={{ slug: story.slug }}
-      search={{ page: 1, commentsPage: 1 }}
-      className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
-    >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">
-        <StoryCover
-          storyId={story.id}
-          title={story.title}
-          hasCover={story.hasCover}
-          decorative
-          imgClassName="absolute inset-0 transition-transform duration-200 group-hover:scale-105"
-        />
-      </div>
-      <h3 className="mt-3 text-heading-md line-clamp-2">{story.title}</h3>
-      <p className="mt-1 text-body-sm text-fg-muted truncate">{story.author ?? 'Khuyết danh'}</p>
-      {/* Plan D: micro engagement — render only when at least one signal is non-zero */}
-      {(story.ratingCount > 0 || story.viewCount > 0) && (
-        <div className="mt-1 flex items-center gap-2 flex-wrap">
-          {story.ratingCount > 0 && <RatingStars value={story.ratingAvg} size="sm" />}
-          {story.viewCount > 0 && <ViewCount count={story.viewCount} />}
-        </div>
-      )}
-    </Link>
   );
 }
 
