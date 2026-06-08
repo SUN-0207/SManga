@@ -42,6 +42,9 @@ function extractDescription($: cheerio.CheerioAPI): string {
     .replace(/ /g, ' ') // nbsp → space
     .replace(/[\t ]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
+    .replace(/Giới\s+Thiệu\s+Truyện\s*-\s*/gi, '') // strip site-template header prefix
+    .replace(/^\s*-\s+/gm, '') // strip leading dash bullets
+    .replace(/^-?\s*Tags:\s*.*$/gim, '') // strip "- Tags: ..." footer line
     .trim();
 }
 
@@ -74,8 +77,11 @@ export function parseStoryHtml(html: string, url: string): StoryMetadata {
   const src = imgEl.attr('src') ?? imgEl.attr('data-src') ?? null;
   if (src) coverUrl = new URL(src, url).toString();
 
+  // Fix 1: scope genre selector to .info only to avoid picking up the site-wide
+  // genre navigation and "top stories" sidebar widgets that also carry
+  // itemprop="genre" on their links.
   const genres: string[] = [];
-  $('a[itemprop="genre"], .info a[href*="/the-loai/"]').each((_, el) => {
+  $('.info a[href*="/the-loai/"]').each((_, el) => {
     const name = $(el).text().trim();
     if (name) genres.push(name);
   });
@@ -239,9 +245,14 @@ export function parseChapterContentHtml(html: string): ChapterContent {
   if (contentEl.length === 0) throw new ParserError('could not locate chapter content element');
 
   contentEl.find('script, style, ins, iframe').remove();
+  // Fix 3: insert block separators before extracting text so adjacent <p> blocks
+  // don't fuse together (e.g. "hồn...\"Tiêu" or ".Theo").
+  contentEl.find('p, div, h1, h2, h3, h4, h5, h6, li, br').each((_, el) => {
+    $(el).append('\n');
+  });
   const text = contentEl
     .text()
-    .replace(/ /g, ' ')
+    .replace(/ /g, ' ') // nbsp → space
     .replace(/\r\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
