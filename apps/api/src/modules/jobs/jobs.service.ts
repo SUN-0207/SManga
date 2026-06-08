@@ -21,17 +21,20 @@ export class JobsService {
     // even though Bull counts it in the 'delayed' bucket — the page card
     // counter and the row badge then disagree.
     const rows = await Promise.all(
-      jobs.map(async (j) => ({
-        id: String(j.id),
-        name: j.name,
-        state: await j.getState(),
-        attemptsMade: j.attemptsMade,
-        timestamp: j.timestamp,
-        processedOn: j.processedOn,
-        finishedOn: j.finishedOn,
-        failedReason: j.failedReason ?? null,
-        data: j.data,
-      })),
+      jobs.map(async (j) => {
+        const state = await j.getState();
+        return {
+          id: String(j.id),
+          name: j.name,
+          state,
+          attemptsMade: j.attemptsMade,
+          timestamp: j.timestamp,
+          processedOn: j.processedOn,
+          finishedOn: j.finishedOn,
+          failedReason: state === 'completed' ? null : (j.failedReason ?? null),
+          data: j.data,
+        };
+      }),
     );
     return rows;
   }
