@@ -75,6 +75,21 @@ function AdminJobsPage() {
     },
   });
 
+  const [refetchOpen, setRefetchOpen] = useState(false);
+  const refetchAll = useMutation({
+    mutationFn: jobsApi.refetchAllChapters,
+    onSuccess: (data) => {
+      setRefetchOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      window.alert(
+        `Đã enqueue ${data.enqueued.toLocaleString('vi-VN')} chapter để re-crawl. Theo dõi ở tab này.`,
+      );
+    },
+    onError: () => {
+      window.alert('Re-crawl thất bại. Xem log api để biết chi tiết.');
+    },
+  });
+
   return (
     <div className="space-y-8">
       <div className="flex items-end justify-between gap-4 flex-wrap">
@@ -103,6 +118,19 @@ function AdminJobsPage() {
               Retry tất cả thất bại ({failedCount.toLocaleString('vi-VN')})
             </button>
           )}
+          <button
+            type="button"
+            disabled={refetchAll.isPending}
+            onClick={() => setRefetchOpen(true)}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-border hover:border-fg/40 hover:bg-bg-subtle/60 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            {refetchAll.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Re-crawl tất cả chapter
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -142,6 +170,38 @@ function AdminJobsPage() {
               >
                 {retryAll.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Xác nhận retry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {refetchOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-bg border border-border p-6 shadow-elev">
+            <h3 className="font-sans font-semibold text-lg">Re-crawl tất cả chapter?</h3>
+            <p className="mt-2 text-sm text-fg-muted">
+              Toàn bộ chapter status=crawled sẽ được fetch lại từ source để áp dụng parser mới
+              (paragraph spacing). Rate limit 0.5 rps, nội dung cũ sẽ được ghi đè. Ước tính ~6 giờ
+              background cho ~10k chapter. Các operation crawl khác có thể chậm trong thời gian này.
+            </p>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={refetchAll.isPending}
+                onClick={() => setRefetchOpen(false)}
+                className="inline-flex items-center h-9 px-3 rounded-md text-sm border border-border hover:bg-bg-subtle/60 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={refetchAll.isPending}
+                onClick={() => refetchAll.mutate()}
+                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-60 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                {refetchAll.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                Xác nhận re-crawl
               </button>
             </div>
           </div>
