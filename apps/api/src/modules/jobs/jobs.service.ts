@@ -23,7 +23,21 @@ export class JobsService {
 
   async stats() {
     const counts = await this.queue.getJobCounts(); // { waiting, active, completed, failed, delayed, paused }
-    return counts;
+    // `failed` only counts jobs that exhausted ALL retry attempts. A job that
+    // errored once and is queued for retry sits in `waiting` with
+    // `failedReason` populated — invisible in the bucket counts but visible
+    // in the row list as red text, which makes the dashboard look like
+    // "0 thất bại" even when dozens of rows show errors. Surface the gap.
+    //
+    // Sample the next 200 waiting jobs (cheap, fixed cost) and count how many
+    // carry a `failedReason`. This is an approximation — true count would
+    // require scanning all waiting jobs — but the sample is large enough to
+    // signal "errors are accumulating" vs "queue is healthy". For very large
+    // queues (>200), the proportion still surfaces a problem at a glance.
+    const sample = await this.queue.getJobs(['waiting'], 0, 199, false);
+    const erroring = sample.filter((j) => j.failedReason != null).length;
+    const erroringSampled = sample.length;
+    return { ...counts, erroring, erroringSampled };
   }
 
   async list(limit = 100) {

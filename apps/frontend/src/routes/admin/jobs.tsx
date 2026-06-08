@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
+  AlertCircle,
   AlertTriangle,
   CheckCircle2,
   Clock,
@@ -29,11 +30,15 @@ const STAT_META: Record<
   active: { label: 'Đang chạy', icon: Loader2, tone: 'neutral' },
   completed: { label: 'Hoàn thành', icon: CheckCircle2, tone: 'positive' },
   failed: { label: 'Thất bại', icon: AlertTriangle, tone: 'warning' },
+  // "Đang lỗi" = jobs waiting for retry that already failed at least one
+  // attempt (failedReason set, state='waiting'). Surfaces what Bull's
+  // failed bucket misses — see jobs.service.stats() for the sampling.
+  erroring: { label: 'Đang lỗi', icon: AlertCircle, tone: 'warning' },
   delayed: { label: 'Delay', icon: Timer, tone: 'neutral' },
   paused: { label: 'Dừng', icon: PauseCircle, tone: 'neutral' },
 };
 
-const STAT_ORDER = ['waiting', 'active', 'completed', 'failed', 'delayed', 'paused'];
+const STAT_ORDER = ['waiting', 'active', 'completed', 'failed', 'erroring', 'delayed', 'paused'];
 
 function AdminJobsPage() {
   // Only poll while we have an admin session — prevents stray 403s during logout unmount
@@ -208,13 +213,19 @@ function AdminJobsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
         {STAT_ORDER.map((state) => {
           const meta = STAT_META[state] ?? { label: state, icon: Clock, tone: 'neutral' as const };
           const count = stats[state] ?? 0;
           const Icon = meta.icon;
           const valueClass =
             meta.tone === 'warning' && count > 0 ? 'text-[var(--accent)]' : 'text-fg';
+          // For the "Đang lỗi" card, append the sampled denominator so the
+          // reader knows this is an approximation (e.g. "13 / 200 mẫu").
+          const sampleHint =
+            state === 'erroring' && (stats.erroringSampled ?? 0) > 0
+              ? `/${(stats.erroringSampled ?? 0).toLocaleString('vi-VN')} mẫu`
+              : null;
           return (
             <div key={state} className="rounded-xl border border-border bg-bg p-4">
               <div className="flex items-center gap-1.5 text-fg-muted">
@@ -223,6 +234,11 @@ function AdminJobsPage() {
               </div>
               <div className={`mt-2 font-sans font-bold text-2xl tabular-nums ${valueClass}`}>
                 {count.toLocaleString('vi-VN')}
+                {sampleHint && (
+                  <span className="ml-1 text-[10px] font-normal text-fg-muted tracking-normal">
+                    {sampleHint}
+                  </span>
+                )}
               </div>
             </div>
           );

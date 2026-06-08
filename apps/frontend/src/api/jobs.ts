@@ -12,8 +12,22 @@ export interface JobRow {
   data: unknown;
 }
 
+export interface JobStats {
+  waiting: number;
+  active: number;
+  completed: number;
+  failed: number;
+  delayed: number;
+  paused: number;
+  /** Count of waiting jobs that errored at least once and are queued for retry.
+   * Sampled from the next `erroringSampled` waiting jobs (cap 200) — an
+   * approximation that surfaces the "0 thất bại nhưng có lỗi đỏ" mismatch. */
+  erroring: number;
+  erroringSampled: number;
+}
+
 export const jobsApi = {
-  stats: () => api.get<Record<string, number>>('/jobs/stats').then((r) => r.data),
+  stats: () => api.get<JobStats>('/jobs/stats').then((r) => r.data),
   list: () => api.get<JobRow[]>('/jobs').then((r) => r.data),
   retry: (id: string) => api.post(`/jobs/${id}/retry`).then((r) => r.data),
   retryAllFailed: () =>
