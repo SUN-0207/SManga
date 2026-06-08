@@ -18,4 +18,6 @@ export const jobsApi = {
   retry: (id: string) => api.post(`/jobs/${id}/retry`).then((r) => r.data),
   retryAllFailed: () =>
     api.post<{ retried: number; skipped: number }>('/jobs/retry-failed').then((r) => r.data),
+  refetchAllChapters: () =>
+    api.post<{ enqueued: number }>('/jobs/refetch-all-chapters').then((r) => r.data),
 };
