@@ -1,6 +1,6 @@
 import { Roles } from '@/common/decorators/roles.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { JobsService } from './jobs.service';
 
@@ -29,5 +29,16 @@ export class JobsController {
   @Post('retry-failed')
   retryAllFailed() {
     return this.jobs.retryAllFailed();
+  }
+
+  /**
+   * One-click re-crawl of every chapter in 'crawled' status. Returns 202
+   * Accepted because the work is asynchronous — the Bull queue drains over
+   * hours, not within this request.
+   */
+  @Post('refetch-all-chapters')
+  @HttpCode(202)
+  refetchAllChapters() {
+    return this.jobs.refetchAllChapters();
   }
 }

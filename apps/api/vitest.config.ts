@@ -30,11 +30,29 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.?(c|m)[jt]s?(x)', 'test/**/*.e2e-spec.?(c|m)[jt]s?(x)'],
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-      '@smanga/db': path.resolve(__dirname, '../../packages/db/src/index.ts'),
-      '@smanga/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
-      '@smanga/crawler': path.resolve(__dirname, '../../packages/crawler/src/index.ts'),
-    },
+    // Use array form so more-specific entries (e.g. @smanga/db/schema) are
+    // checked before the shorter @smanga/db prefix. Object-form aliases are
+    // iterated in insertion order and the first match wins; putting
+    // @smanga/db before @smanga/db/schema would incorrectly rewrite the
+    // sub-path to "index.ts/schema".
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, 'src') },
+      {
+        find: '@smanga/db/schema',
+        replacement: path.resolve(__dirname, '../../packages/db/src/schema/index.ts'),
+      },
+      {
+        find: '@smanga/db',
+        replacement: path.resolve(__dirname, '../../packages/db/src/index.ts'),
+      },
+      {
+        find: '@smanga/shared',
+        replacement: path.resolve(__dirname, '../../packages/shared/src/index.ts'),
+      },
+      {
+        find: '@smanga/crawler',
+        replacement: path.resolve(__dirname, '../../packages/crawler/src/index.ts'),
+      },
+    ],
   },
 });
