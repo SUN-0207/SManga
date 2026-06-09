@@ -16,13 +16,18 @@ function isFreshlyUpdated(updatedAt: string): boolean {
  * Home grid story card — cover with badge + chapter pill overlay, plain title below.
  * - MỚI green pill (top-left): story.updatedAt within last 7 days
  * - FULL red pill (top-right): story.status === 'completed'
- * - Ch.N pill (bottom-left, on cover): floor(MAX(chapter.index)) from API
+ * - "Ch.N" pill (bottom-left, on cover): chapter count signal. Prefers
+ *   latestChapterIndex (highest CRAWLED chapter — meaningful for actively-
+ *   read stories) and falls back to totalChapters (discovered count) for
+ *   freshly-imported stories where no chapter has been crawled yet. The
+ *   original implementation only used latestChapterIndex, which left every
+ *   not-yet-crawled story without a chapter signal on the home grid.
  * Hides any badge whose data is missing.
  */
 export function StoryGridCard({ story }: { story: StorySummary }) {
   const isNew = isFreshlyUpdated(story.updatedAt);
   const isCompleted = story.status === 'completed';
-  const ch = story.latestChapterIndex;
+  const chapterNum = story.latestChapterIndex ?? story.totalChapters ?? 0;
 
   return (
     <Link
@@ -55,10 +60,10 @@ export function StoryGridCard({ story }: { story: StorySummary }) {
         )}
 
         {/* Bottom-left chapter pill */}
-        {ch != null && (
+        {chapterNum > 0 && (
           <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-md bg-black/55 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
             <BookOpen className="h-3 w-3" aria-hidden />
-            Ch.{ch}
+            Ch.{chapterNum}
           </span>
         )}
       </div>
