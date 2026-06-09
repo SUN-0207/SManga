@@ -1,3 +1,4 @@
+import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth-store';
 import { Link, useRouterState } from '@tanstack/react-router';
 import { BookOpen, Compass, Library, Trophy, User, X } from 'lucide-react';
@@ -78,12 +79,8 @@ export function MobileNavDrawer({ open, onClose }: { open: boolean; onClose: () 
         }`}
       >
         <div className="flex items-center justify-between h-12 px-4 border-b border-border">
-          <Link
-            to="/"
-            onClick={onClose}
-            className="font-sans font-extrabold text-heading-lg tracking-tight"
-          >
-            SManga
+          <Link to="/" onClick={onClose} aria-label="SManga - Trang chủ">
+            <Logo size={22} />
           </Link>
           <button
             type="button"

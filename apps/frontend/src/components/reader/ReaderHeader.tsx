@@ -1,5 +1,6 @@
 import { MobileNavDrawer } from '@/components/layout/MobileNavDrawer';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth-store';
 import { Link } from '@tanstack/react-router';
 import { Menu, Search as SearchIcon } from 'lucide-react';
@@ -31,8 +32,8 @@ export function ReaderHeader() {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <Link to="/" className="font-sans font-extrabold text-heading-lg tracking-tight">
-              SManga
+            <Link to="/" aria-label="SManga - Trang chủ">
+              <Logo size={22} />
             </Link>
           </div>
           <div className="flex items-center gap-1">

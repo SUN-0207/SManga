@@ -1,6 +1,7 @@
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { AvatarMenu } from '@/components/reader/AvatarMenu';
 import { ReaderSettingsDrawer } from '@/components/reader/ReaderSettingsDrawer';
+import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth-store';
 // apps/frontend/src/components/layout/DesktopTopNav.tsx
 import { Link, useRouterState } from '@tanstack/react-router';
@@ -29,8 +30,8 @@ export function DesktopTopNav() {
     <>
       <header className="sticky top-0 z-30 bg-bg/85 backdrop-blur-md border-b border-border/60">
         <div className="container flex items-center h-14 gap-8">
-          <Link to="/" className="font-sans font-extrabold text-heading-lg tracking-tight">
-            SManga
+          <Link to="/" aria-label="SManga - Trang chủ">
+            <Logo size={28} />
           </Link>
           <nav className="flex items-center gap-6 flex-1" aria-label="Điều hướng chính">
             {NAV.map((n) => {

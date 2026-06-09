@@ -1,3 +1,4 @@
+import { Logo } from '@/components/ui/Logo';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -37,9 +38,10 @@ export function AuthShell({
         <div className="relative z-10">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-white/90 transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            aria-label="SManga - Trang chủ"
+            className="inline-flex items-center transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded"
           >
-            <span className="font-sans text-2xl font-semibold tracking-tight">SManga</span>
+            <Logo size={32} tone="light" />
           </Link>
         </div>
 
@@ -65,9 +67,10 @@ export function AuthShell({
         <header className="flex items-center justify-between border-b border-border px-6 py-5 lg:hidden">
           <Link
             to="/"
-            className="font-sans text-xl font-semibold tracking-tight text-fg transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            aria-label="SManga - Trang chủ"
+            className="inline-flex items-center transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
           >
-            SManga
+            <Logo size={22} />
           </Link>
           <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-muted">
             {eyebrow}
