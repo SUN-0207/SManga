@@ -69,7 +69,7 @@ function StoryDetail() {
   return (
     <div>
       <SEO
-        title={`${s.title} - ${s.author ?? 'Khuyết danh'} | SManga`}
+        title={`${s.title} - Đọc truyện ${s.genres?.[0]?.name ?? 'online'} full | SManga`}
         description={
           stripAndTruncate(s.description, 160) ||
           `Đọc ${s.title} - ${s.author ?? 'Khuyết danh'} miễn phí tại SManga.`
