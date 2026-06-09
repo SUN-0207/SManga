@@ -5,6 +5,7 @@ import { SEO } from '@/components/seo/SEO';
 import { buildArticleSchema, buildBreadcrumbSchema } from '@/components/seo/builders';
 import { useReadingSessionTracker } from '@/hooks/use-reading-session-tracker';
 import { useTrackChapterView } from '@/hooks/use-track-view';
+import { cleanChapterTitle } from '@/lib/chapter-title';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -95,7 +96,7 @@ function ChapterReader() {
   const { chapter, story, prev, next } = data;
 
   // Strip redundant "Chương N:" prefix from title for clean display
-  const cleanTitle = chapter.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '');
+  const cleanTitle = cleanChapterTitle(chapter.title);
 
   const fontSizeClass =
     (
