@@ -44,4 +44,15 @@ export class JobsController {
   refetchAllChapters() {
     return this.jobs.refetchAllChapters();
   }
+
+  /**
+   * Fan out an import-story job per stub story (cover_mime_type IS NULL) so
+   * the engine's heal path re-downloads each missing cover. 202 Accepted —
+   * jobs drain asynchronously via the existing crawler queue.
+   */
+  @Post('backfill-covers')
+  @HttpCode(202)
+  backfillCovers() {
+    return this.jobs.backfillCovers();
+  }
 }

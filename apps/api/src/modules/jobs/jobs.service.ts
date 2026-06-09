@@ -2,7 +2,9 @@ import { DRIZZLE } from '@/modules/db/db.provider';
 import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   type FetchChapterJobData,
+  type ImportStoryJobData,
   JOB_FETCH_CHAPTER,
+  JOB_IMPORT_STORY,
   JOB_PRIORITY,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
@@ -264,5 +266,59 @@ export class JobsService {
 
     await this.queue.addBulk(jobs);
     return { enqueued: jobs.length };
+  }
+
+  /**
+   * Cover-backfill operator trigger. Joins story to its primary story_source
+   * row and enqueues an import-story job (skipDiscovery=true) for every story
+   * whose cover_mime_type is NULL. The import processor's heal path
+   * (see crawler engine `backfilled cover on re-import` log) re-downloads the
+   * cover when an existing story is found without one — combined with the
+   * image/jpg mime fix, this drains the legacy stub population in one click.
+   *
+   * Idempotent on re-run: a second invocation re-enqueues the same set, and
+   * each job no-ops at the engine level if the cover was already filled in
+   * between calls. The per-source token bucket (1 rps for truyenfull) caps
+   * outbound fetch rate naturally, so we can fan out without throttling here.
+   */
+  async backfillCovers(): Promise<{ enqueued: number; totalNullCover: number }> {
+    await assertQueueCapacity(this.queue);
+    this.statsCache = null;
+
+    // Only consider stories that have an `is_primary=true` source row — that
+    // is the URL the import-story job needs to re-fetch metadata from. Stories
+    // without a primary source (shouldn't exist in current data, but cheap to
+    // guard) silently fall out of the result set.
+    const r = await this.db.execute<{ external_url: string }>(sql`
+      SELECT ss.external_url
+      FROM story s
+      INNER JOIN story_source ss
+              ON ss.story_id = s.id
+             AND ss.is_primary = true
+      WHERE s.cover_mime_type IS NULL
+    `);
+    const rows = rowsOf<{ external_url: string }>(r);
+    const totalNullCover = rows.length;
+    if (totalNullCover === 0) {
+      return { enqueued: 0, totalNullCover: 0 };
+    }
+
+    const jobs = rows.map((row) => ({
+      name: JOB_IMPORT_STORY,
+      data: {
+        url: row.external_url,
+        requestedBy: null,
+        skipDiscovery: true,
+        autoCrawl: false,
+      } satisfies ImportStoryJobData,
+      opts: {
+        priority: JOB_PRIORITY.IMPORT_STORY,
+        attempts: 3,
+        backoff: { type: 'exponential' as const, delay: 30_000 },
+      },
+    }));
+
+    await this.queue.addBulk(jobs);
+    return { enqueued: jobs.length, totalNullCover };
   }
 }
