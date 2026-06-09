@@ -107,6 +107,7 @@ export class StoriesService {
     genreSlug?: string,
     featuredOnly?: boolean,
     discoveryStatus?: 'complete' | 'stub',
+    author?: string,
   ) {
     const genreJoin = genreSlug
       ? sql`INNER JOIN story_genre sg ON sg.story_id = s.id
@@ -120,6 +121,7 @@ export class StoriesService {
         : discoveryStatus === 'stub'
           ? sql`AND s.discovery_status <> 'complete'`
           : sql``;
+    const authorFilter = author ? sql`AND s.author = ${author}` : sql``;
 
     const rawRows = await this.db.execute<{
       id: string;
@@ -164,7 +166,7 @@ export class StoriesService {
         WHERE status = 'crawled'
         GROUP BY story_id
       ) c ON c.story_id = s.id
-      WHERE 1=1 ${featuredFilter} ${discoveryFilter}
+      WHERE 1=1 ${featuredFilter} ${discoveryFilter} ${authorFilter}
       ORDER BY s.updated_at DESC
       LIMIT ${limit} OFFSET ${(page - 1) * limit}
     `);

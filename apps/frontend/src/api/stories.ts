@@ -31,6 +31,7 @@ export async function listStories(
   genre?: string,
   featured?: boolean,
   discoveryStatus?: 'complete' | 'stub',
+  author?: string,
 ): Promise<StorySummary[]> {
   const res = await api.get<StorySummary[]>('/stories', {
     params: {
@@ -39,6 +40,7 @@ export async function listStories(
       ...(genre ? { genre } : {}),
       ...(featured === undefined ? {} : { featured: String(featured) }),
       ...(discoveryStatus ? { discoveryStatus } : {}),
+      ...(author ? { author } : {}),
     },
   });
   return res.data;

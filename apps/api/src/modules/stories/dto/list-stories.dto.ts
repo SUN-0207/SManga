@@ -33,4 +33,9 @@ export class ListStoriesDto {
   @IsOptional()
   @IsIn(['complete', 'stub'])
   discoveryStatus?: 'complete' | 'stub';
+
+  /** Filter by exact author name (used by the "Cùng tác giả" rail). */
+  @IsOptional()
+  @IsString()
+  author?: string;
 }

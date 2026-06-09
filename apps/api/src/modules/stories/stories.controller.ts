@@ -17,7 +17,7 @@ export class StoriesController {
 
   @Get()
   list(@Query() q: ListStoriesDto) {
-    return this.stories.list(q.page, q.limit, q.genre, q.featured, q.discoveryStatus);
+    return this.stories.list(q.page, q.limit, q.genre, q.featured, q.discoveryStatus, q.author);
   }
 
   @Get('count')
