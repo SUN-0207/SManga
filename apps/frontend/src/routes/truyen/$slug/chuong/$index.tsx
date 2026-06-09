@@ -173,7 +173,7 @@ function ChapterReader() {
     <div className="min-h-screen bg-bg text-fg">
       <SEO
         title={`Chương ${index}: ${cleanTitle || chapter.title} | ${story.title} - SManga`}
-        description={`Đọc chương ${index} truyện ${story.title} của ${story.author ?? 'Khuyết danh'} miễn phí tại SManga.`}
+        description={`Đọc Chương ${index}: ${cleanTitle || chapter.title} truyện ${story.title} của ${story.author ?? 'Khuyết danh'} online miễn phí trên SManga.`}
         canonical={`/truyen/${story.slug}/chuong/${index}`}
         robots={robots}
         ogType="article"

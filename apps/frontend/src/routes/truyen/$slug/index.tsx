@@ -72,7 +72,7 @@ function StoryDetail() {
         title={`${s.title} - Đọc truyện ${s.genres?.[0]?.name ?? 'online'} full | SManga`}
         description={
           stripAndTruncate(s.description, 160) ||
-          `Đọc ${s.title} - ${s.author ?? 'Khuyết danh'} miễn phí tại SManga.`
+          `Đọc ${s.title} của ${s.author ?? 'Khuyết danh'} — ${s.totalChapters} chương, cập nhật ${new Date(s.updatedAt).toISOString().slice(0, 10)}. Đọc truyện chữ Việt online miễn phí trên SManga.`
         }
         canonical={`/truyen/${s.slug}`}
         ogType="book"
