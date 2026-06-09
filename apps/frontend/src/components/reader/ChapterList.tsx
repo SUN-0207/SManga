@@ -1,3 +1,4 @@
+import { cleanChapterTitle } from '@/lib/chapter-title';
 import { Link } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 
@@ -34,7 +35,7 @@ export function ChapterList({ slug, chapters, currentPage, totalPages }: Chapter
                   Chương {c.index}
                 </span>
                 <span className="text-sm leading-snug line-clamp-1 group-hover:underline underline-offset-[3px] decoration-fg/40 transition-all duration-200">
-                  {c.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '')}
+                  {cleanChapterTitle(c.title)}
                 </span>
               </Link>
             ) : (
@@ -44,7 +45,7 @@ export function ChapterList({ slug, chapters, currentPage, totalPages }: Chapter
                 </span>
                 <span className="text-sm leading-snug line-clamp-1 flex items-center gap-1.5">
                   <Clock className="h-3 w-3" />
-                  {c.title.replace(/^Chương\s*\d+(?:\.\d+)?\s*:?\s*/i, '')}
+                  {cleanChapterTitle(c.title)}
                 </span>
               </span>
             )}
