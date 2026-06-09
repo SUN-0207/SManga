@@ -6,7 +6,11 @@ import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
 import { ChapterList } from '@/components/reader/ChapterList';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
 import { SEO } from '@/components/seo/SEO';
-import { buildBookSchema, buildBreadcrumbSchema, stripAndTruncate } from '@/components/seo/builders';
+import {
+  buildBookSchema,
+  buildBreadcrumbSchema,
+  stripAndTruncate,
+} from '@/components/seo/builders';
 import { SimilarStoriesRail } from '@/components/story/SimilarStoriesRail';
 import { StoryCover } from '@/components/ui/StoryCover';
 import { useTrackStoryView } from '@/hooks/use-track-view';
@@ -80,10 +84,7 @@ function StoryDetail() {
         ogImage={s.hasCover ? `/api/v1/cover/${s.id}` : undefined}
         jsonLd={[
           buildBookSchema(s),
-          buildBreadcrumbSchema([
-            { name: 'Trang chủ', url: '/' },
-            { name: s.title },
-          ]),
+          buildBreadcrumbSchema([{ name: 'Trang chủ', url: '/' }, { name: s.title }]),
         ]}
       />
       {/* Hero */}
@@ -185,12 +186,7 @@ function StoryDetail() {
       </section>
 
       {s.author && s.author !== 'Khuyết danh' && (
-        <SimilarStoriesRail
-          title="Cùng tác giả"
-          by="author"
-          value={s.author}
-          excludeId={s.id}
-        />
+        <SimilarStoriesRail title="Cùng tác giả" by="author" value={s.author} excludeId={s.id} />
       )}
       {s.genres?.[0]?.slug && (
         <SimilarStoriesRail
