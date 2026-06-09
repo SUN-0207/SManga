@@ -21,7 +21,12 @@ export const useReaderPrefs = create<ReaderPrefs>()(
   persist(
     (set) => ({
       theme: 'light',
-      fontSize: '18',
+      // '20' = "To". Default chosen for VN long-form prose comfort on
+      // 1080p displays — '18' read too tight given Newsreader's x-height.
+      // Existing readers keep their persisted choice; new readers (and
+      // pre-v3 users whose theme migration nukes the persisted state) get
+      // the larger default.
+      fontSize: '20',
       fontFamily: 'serif',
       setTheme: (theme) => set({ theme }),
       setFontSize: (fontSize) => set({ fontSize }),

@@ -31,7 +31,9 @@ const FONT_FAMILIES = [
 ] as const satisfies readonly { value: ReaderFontFamily; label: string }[];
 
 const DEFAULT_THEME: ReaderTheme = 'light';
-const DEFAULT_SIZE: ReaderFontSize = '18';
+// '20' = "To". Mirrors the store default so the "Khôi phục mặc định"
+// button + the isDefault check stay in sync after the bump from '18'.
+const DEFAULT_SIZE: ReaderFontSize = '20';
 const DEFAULT_FAMILY: ReaderFontFamily = 'serif';
 
 export function ReaderSettings() {
