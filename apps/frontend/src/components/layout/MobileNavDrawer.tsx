@@ -119,13 +119,17 @@ export function MobileNavDrawer({ open, onClose }: { open: boolean; onClose: () 
 
         <div className="absolute inset-x-0 bottom-0 border-t border-border p-3">
           {user ? (
+            // /ban is the mobile-friendly "you" landing — avatar + reading
+            // stats + sub-nav to /tu-sach, /tai-khoan, settings, logout. Keep
+            // this as the single entry from the drawer so we don't fragment
+            // user-profile navigation between /ban and /tai-khoan.
             <Link
-              to="/tai-khoan"
+              to="/ban"
               onClick={onClose}
               className="flex items-center gap-3 h-11 px-3 rounded-md text-body font-semibold text-fg-muted hover:bg-bg-subtle hover:text-fg transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <User className="h-5 w-5" aria-hidden />
-              Tài khoản
+              Bạn
             </Link>
           ) : (
             <div className="flex flex-col gap-2">

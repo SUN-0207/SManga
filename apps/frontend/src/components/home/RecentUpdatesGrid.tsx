@@ -10,7 +10,7 @@ const SKELETON_KEYS = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'] as const;
  * MỚI/FULL badges + chapter pill via StoryGridCard. Replaces the old
  * UpdatedSection. Skeleton matches grid shape to avoid layout shift.
  */
-export function MoiCapNhatGrid({
+export function RecentUpdatesGrid({
   stories,
   isLoading,
 }: {

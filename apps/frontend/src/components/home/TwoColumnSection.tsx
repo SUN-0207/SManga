@@ -1,6 +1,6 @@
 import type { StorySummary } from '@/api/stories';
-import { MoiCapNhatGrid } from './MoiCapNhatGrid';
-import { TruyenGoiYSidebar } from './TruyenGoiYSidebar';
+import { RecentUpdatesGrid } from './RecentUpdatesGrid';
+import { SuggestedStoriesSidebar } from './SuggestedStoriesSidebar';
 
 /**
  * 2-column home section (metruyenchu-style):
@@ -18,8 +18,8 @@ export function TwoColumnSection({
 }) {
   return (
     <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-8 lg:gap-10 items-start">
-      <MoiCapNhatGrid stories={stories} isLoading={isLoading} />
-      <TruyenGoiYSidebar />
+      <RecentUpdatesGrid stories={stories} isLoading={isLoading} />
+      <SuggestedStoriesSidebar />
     </section>
   );
 }

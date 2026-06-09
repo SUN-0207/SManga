@@ -22,7 +22,7 @@ type SidebarItem = {
  * - Anonymous OR empty recs: fallback to /rankings/hot (no auth needed)
  * Hides itself if both queries return empty (extreme cold-start).
  */
-export function TruyenGoiYSidebar() {
+export function SuggestedStoriesSidebar() {
   const user = useAuthStore((s) => s.user);
 
   const recsQ = useQuery({
@@ -59,8 +59,16 @@ export function TruyenGoiYSidebar() {
         hasCover: r.hasCover,
       }));
 
+  // The rankings query is gated by recsQ being fetched, so during the brief
+  // window after recsQ resolves with 0 items but before rankQ has started,
+  // rankQ.isLoading is still false. Treat "rankings is enabled but hasn't
+  // finished" as loading so the sidebar doesn't flicker to "hidden" for a
+  // frame before the fallback kicks in.
+  const rankingsPending = rankingsEnabled && !rankQ.isFetched;
   const isLoading =
-    (!!user && recsQ.isLoading) || (rankingsEnabled && rankQ.isLoading && items.length === 0);
+    (!!user && recsQ.isLoading) ||
+    rankingsPending ||
+    (rankingsEnabled && rankQ.isLoading && items.length === 0);
 
   // Hide silently if both queries finished and there's nothing to show
   if (!isLoading && items.length === 0) return null;

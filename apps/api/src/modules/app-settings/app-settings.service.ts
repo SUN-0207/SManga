@@ -1,5 +1,9 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
-import { JOB_REFRESH_ALL_STORIES, QUEUE_CRAWLER } from '@/modules/queue/queue.constants';
+import {
+  JOB_PRIORITY,
+  JOB_REFRESH_ALL_STORIES,
+  QUEUE_CRAWLER,
+} from '@/modules/queue/queue.constants';
 import { InjectQueue } from '@nestjs/bull';
 import { BadRequestException, Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import type { Database } from '@smanga/db';
@@ -65,7 +69,11 @@ export class AppSettingsService implements OnModuleInit {
    * UI can link into /admin/jobs to watch it.
    */
   async runNow() {
-    const job = await this.queue.add(JOB_REFRESH_ALL_STORIES, { manual: true });
+    const job = await this.queue.add(
+      JOB_REFRESH_ALL_STORIES,
+      { manual: true },
+      { priority: JOB_PRIORITY.REFRESH_ALL_STORIES },
+    );
     return { jobId: String(job.id) };
   }
 
@@ -106,7 +114,11 @@ export class AppSettingsService implements OnModuleInit {
     await this.queue.add(
       JOB_REFRESH_ALL_STORIES,
       {},
-      { repeat: { cron, tz: 'Asia/Ho_Chi_Minh' }, jobId: REPEATABLE_KEY },
+      {
+        repeat: { cron, tz: 'Asia/Ho_Chi_Minh' },
+        jobId: REPEATABLE_KEY,
+        priority: JOB_PRIORITY.REFRESH_ALL_STORIES,
+      },
     );
     this.logger.log(`auto-refresh repeatable installed cron="${cron}" tz=Asia/Ho_Chi_Minh`);
   }

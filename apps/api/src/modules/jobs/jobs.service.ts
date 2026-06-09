@@ -80,6 +80,10 @@ export class JobsService {
       const cloned = await this.queue.add(job.name, job.data, {
         attempts: job.opts.attempts ?? 3,
         backoff: job.opts.backoff,
+        // Preserve priority so the cloned job sits in the same priority
+        // tier as the original — otherwise a retried fetch-chapter would
+        // lose its priority=1 and fall behind no-priority queue traffic.
+        priority: job.opts.priority,
       });
       try {
         await job.remove();
@@ -112,6 +116,7 @@ export class JobsService {
           await this.queue.add(job.name, job.data, {
             attempts: job.opts.attempts ?? 3,
             backoff: job.opts.backoff,
+            priority: job.opts.priority,
           });
           await job.remove().catch(() => {});
           retried += 1;

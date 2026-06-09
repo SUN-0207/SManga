@@ -2,6 +2,7 @@ import { DRIZZLE } from '@/modules/db/db.provider';
 import {
   type DiscoverAllSourceJobData,
   JOB_DISCOVER_ALL_SOURCE,
+  JOB_PRIORITY,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
 import { InjectQueue } from '@nestjs/bull';
@@ -163,6 +164,7 @@ export class SourcesService {
       jobId,
       removeOnComplete: true,
       removeOnFail: false,
+      priority: JOB_PRIORITY.DISCOVER_ALL_SOURCE,
     });
     return { jobId: String(job.id) };
   }

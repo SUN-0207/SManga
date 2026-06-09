@@ -15,13 +15,15 @@ export const JOB_DISCOVER_ALL_SOURCE = 'discover-all-source';
  *
  * The ordering reflects what we actually want the workers to do:
  *  1) Crawl chapter content (the only job that grows the visible library)
- *  5) Discover chapter lists (a prerequisite, but a single HTTP fetch — cheap)
+ *  5) Discover chapter lists (prerequisite, single HTTP fetch — cheap)
+ *  8) Discover a whole source feed (rare admin action, fans out into N imports)
  * 10) Import story metadata (largely a setup step, no user-visible payoff)
  * 20) Scheduled refresh (cron, deferrable behind anything user-initiated)
  */
 export const JOB_PRIORITY = {
   FETCH_CHAPTER: 1,
   DISCOVER_CHAPTERS: 5,
+  DISCOVER_ALL_SOURCE: 8,
   IMPORT_STORY: 10,
   REFRESH_ALL_STORIES: 20,
 } as const;
