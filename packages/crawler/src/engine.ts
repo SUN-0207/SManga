@@ -75,7 +75,27 @@ export async function importStoryMetadata(
     )
     .limit(1);
   if (existing[0]) {
-    return { storyId: existing[0].storyId, alreadyExisted: true };
+    const existingId = existing[0].storyId;
+    // Heal stub stories that were created before the image/jpg mime fix —
+    // their cover is NULL because downloadCover silently dropped the response.
+    // Re-attempt the download exactly once per re-import; on success patch
+    // the row, on failure log and short-circuit as before.
+    const [row] = await db
+      .select({ coverMimeType: story.coverMimeType })
+      .from(story)
+      .where(eq(story.id, existingId))
+      .limit(1);
+    if (row && row.coverMimeType === null && metadata.coverUrl) {
+      const cover = await downloadCover(metadata.coverUrl);
+      if (cover) {
+        await db
+          .update(story)
+          .set({ cover: cover.bytes, coverMimeType: cover.mimeType, updatedAt: new Date() })
+          .where(eq(story.id, existingId));
+        logger.info({ storyId: existingId }, 'backfilled cover on re-import');
+      }
+    }
+    return { storyId: existingId, alreadyExisted: true };
   }
 
   const cover = metadata.coverUrl ? await downloadCover(metadata.coverUrl) : null;
