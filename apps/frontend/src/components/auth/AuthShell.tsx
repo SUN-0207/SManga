@@ -12,7 +12,7 @@ type AuthShellProps = {
 
 export function AuthShell({
   children,
-  eyebrow = 'TẠP CHÍ TRUYỆN CHỮ VIỆT',
+  eyebrow = 'ĐỌC TRUYỆN CHỮ VIỆT',
   title = 'Đọc chậm. Đọc kỹ. Đọc lại.',
   subtitle = 'Một thư viện truyện chữ Việt biên tập như một tạp chí — không quảng cáo, không pop-up.',
 }: AuthShellProps) {

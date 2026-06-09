@@ -91,7 +91,7 @@ function FeaturedSlider({
             <span aria-hidden className="text-accent">
               ✦
             </span>
-            TẠP CHÍ TRUYỆN CHỮ VIỆT
+            ĐỌC TRUYỆN CHỮ VIỆT
           </p>
           <h1 className="relative text-display-sm sm:text-display-md lg:text-display-lg font-prose font-bold">
             Đọc truyện chữ,
