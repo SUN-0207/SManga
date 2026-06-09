@@ -4,7 +4,6 @@ import { RatingControl } from '@/components/engagement/RatingControl';
 import { ViewCount } from '@/components/engagement/ViewCount';
 import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
 import { ChapterList } from '@/components/reader/ChapterList';
-import { ReadingInsights } from '@/components/reader/ReadingInsights';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
 import { SEO } from '@/components/seo/SEO';
 import { buildBookSchema, stripAndTruncate } from '@/components/seo/builders';
@@ -149,11 +148,6 @@ function StoryDetail() {
           </div>
         </div>
       </section>
-
-      {/* Reading insights — shown only when logged in and user has reading progress on this story */}
-      <div className="container pt-4">
-        <ReadingInsights storyId={s.id} />
-      </div>
 
       {/* Chapter list */}
       <section id="muc-luc" className="container pb-20 scroll-mt-24">
