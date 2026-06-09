@@ -14,6 +14,64 @@ import { sql } from 'drizzle-orm';
 const rowsOf = <T>(r: unknown): T[] =>
   Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
 
+/** Bull v4 job state derivation without any Redis round-trips. Reads the
+ * fields Bull already populated on the in-memory Job object during the
+ * preceding HGETALL fetch. Reuses the same enum values getState() returns. */
+function deriveState(j: {
+  finishedOn?: number | null;
+  processedOn?: number | null;
+  failedReason?: string | null;
+  opts?: { delay?: number };
+  timestamp?: number;
+}): 'completed' | 'failed' | 'active' | 'delayed' | 'waiting' {
+  if (j.finishedOn) {
+    return j.failedReason ? 'failed' : 'completed';
+  }
+  if (j.processedOn) {
+    return 'active';
+  }
+  const delay = j.opts?.delay;
+  if (delay && (j.timestamp ?? 0) + delay > Date.now()) {
+    return 'delayed';
+  }
+  return 'waiting';
+}
+
+type StatsShape = {
+  waiting: number;
+  active: number;
+  completed: number;
+  failed: number;
+  delayed: number;
+  // Bull v4's getJobCounts() TS type omits `paused` even though the runtime
+  // payload includes it. Keep `paused` optional here so spreading the
+  // getJobCounts result into StatsShape doesn't fail typecheck; FE handles
+  // undefined as 0.
+  paused?: number;
+  erroring: number;
+  erroringSampled: number;
+};
+
+/** Cache TTL for stats() — admin /jobs polls every 15s, this caches between
+ * polls so two concurrent admin viewers (or a panel refresh + a load) collapse
+ * onto one Redis fetch. 30s is short enough that a queue drained event is
+ * surfaced within one cycle but long enough to shield Redis from the 200-job
+ * `erroring` sample being recomputed on every keystroke or page focus. */
+const STATS_CACHE_TTL_MS = 30_000;
+
+/** Cap the `erroring` sample at 50 (was 200) — when the wait list is huge
+ * (>50k), each HGETALL pays for traversal of the per-job hash; 200 in
+ * parallel under Redis contention from worker pulls is what spiked the box
+ * to 100% CPU on 2026-06-09. 50 jobs is still a representative sample for
+ * the "is there a wave of failures right now" signal we want to expose. */
+const ERRORING_SAMPLE_SIZE = 50;
+
+/** Skip the erroring sample entirely above this wait-list size — the sample
+ * ratio is meaningless against millions, and the extra Redis pressure isn't
+ * worth it. The dashboard cell falls back to "—" via FE when the API returns
+ * `erroringSampled = 0`. */
+const ERRORING_SAMPLE_SKIP_OVER = 100_000;
+
 @Injectable()
 export class JobsService {
   constructor(
@@ -21,55 +79,82 @@ export class JobsService {
     @InjectQueue(QUEUE_CRAWLER) private readonly queue: Queue,
   ) {}
 
-  async stats() {
+  private statsCache: { value: StatsShape; expiresAt: number } | null = null;
+
+  async stats(): Promise<StatsShape> {
+    const now = Date.now();
+    if (this.statsCache && this.statsCache.expiresAt > now) {
+      return this.statsCache.value;
+    }
+
     const counts = await this.queue.getJobCounts(); // { waiting, active, completed, failed, delayed, paused }
-    // `failed` only counts jobs that exhausted ALL retry attempts. A job that
-    // errored once and is queued for retry sits in `waiting` with
+
+    // `failed` only counts jobs that exhausted ALL retry attempts. Jobs that
+    // errored once and are queued for retry sit in `waiting` with
     // `failedReason` populated — invisible in the bucket counts but visible
-    // in the row list as red text, which makes the dashboard look like
-    // "0 thất bại" even when dozens of rows show errors. Surface the gap.
+    // as red text in the row list. The `erroring` field surfaces this gap.
     //
-    // Sample the next 200 waiting jobs (cheap, fixed cost) and count how many
-    // carry a `failedReason`. This is an approximation — true count would
-    // require scanning all waiting jobs — but the sample is large enough to
-    // signal "errors are accumulating" vs "queue is healthy". For very large
-    // queues (>200), the proportion still surfaces a problem at a glance.
-    const sample = await this.queue.getJobs(['waiting'], 0, 199, false);
-    const erroring = sample.filter((j) => j.failedReason != null).length;
-    const erroringSampled = sample.length;
-    return { ...counts, erroring, erroringSampled };
+    // Skip entirely on huge queues: when wait is >100k items, the sample
+    // ratio doesn't tell the operator anything actionable, and the extra
+    // 50 parallel HGETALL calls compound the Redis pressure already coming
+    // from worker pulls against the same giant list (this is the 2026-06-09
+    // 100% CPU lesson). FE handles `erroringSampled = 0` by hiding the
+    // sample denominator.
+    let erroring = 0;
+    let erroringSampled = 0;
+    if (counts.waiting <= ERRORING_SAMPLE_SKIP_OVER) {
+      const sample = await this.queue.getJobs(['waiting'], 0, ERRORING_SAMPLE_SIZE - 1, false);
+      erroring = sample.filter((j) => j.failedReason != null).length;
+      erroringSampled = sample.length;
+    }
+
+    const value: StatsShape = { ...counts, erroring, erroringSampled };
+    this.statsCache = { value, expiresAt: now + STATS_CACHE_TTL_MS };
+    return value;
   }
 
   async list(limit = 100) {
     const states: JobStatus[] = ['waiting', 'active', 'completed', 'failed', 'delayed'];
     const jobs = await this.queue.getJobs(states, 0, limit - 1, false);
-    // Use Bull's authoritative state (one Redis call per job) so the list
-    // classifications match `getJobCounts()`. Deriving from j.failedReason +
-    // j.finishedOn alone misclassifies a failed-but-delayed job as 'failed'
-    // even though Bull counts it in the 'delayed' bucket — the page card
-    // counter and the row badge then disagree.
-    const rows = await Promise.all(
-      jobs.map(async (j) => {
-        const state = await j.getState();
-        return {
-          id: String(j.id),
-          name: j.name,
-          state,
-          attemptsMade: j.attemptsMade,
-          timestamp: j.timestamp,
-          processedOn: j.processedOn,
-          finishedOn: j.finishedOn,
-          failedReason: state === 'completed' ? null : (j.failedReason ?? null),
-          data: j.data,
-        };
-      }),
-    );
+    // Derive state from j.opts + j.finishedOn + j.processedOn + j.failedReason
+    // INSTEAD of `await j.getState()` — getState issues up to 5 SISMEMBER /
+    // ZSCORE / LPOS round-trips per job, and 100 jobs × 5 ops × 5-second
+    // polling chewed Redis when the wait list grew to 3.7M (2026-06-09 incident).
+    //
+    // The mapping below covers Bull v4's state machine and matches what
+    // `j.getState()` would return for the cases we render in /admin/jobs:
+    //   finishedOn + failedReason → 'failed' (terminal) OR 'completed'
+    //   processedOn + !finishedOn → 'active'
+    //   opts.delay > now            → 'delayed'
+    //   otherwise                   → 'waiting'
+    //
+    // We tolerate a small classification gap: a job sitting in Bull's
+    // 'paused' set would show 'waiting' here. The admin UI doesn't surface
+    // 'paused' as a per-row badge — only as a top-level count — so this is
+    // fine. The bucket counts come from getJobCounts() which is authoritative.
+    const rows = jobs.map((j) => {
+      const state = deriveState(j);
+      return {
+        id: String(j.id),
+        name: j.name,
+        state,
+        attemptsMade: j.attemptsMade,
+        timestamp: j.timestamp,
+        processedOn: j.processedOn,
+        finishedOn: j.finishedOn,
+        failedReason: state === 'completed' ? null : (j.failedReason ?? null),
+        data: j.data,
+      };
+    });
     return rows;
   }
 
   async retry(id: string) {
     const job = await this.queue.getJob(id);
     if (!job) return { ok: false, reason: 'job not found' };
+    // Cache is bucket-count + erroring-sample based, both stale once we
+    // re-enqueue a job. Drop it so the next /stats poll re-fetches.
+    this.statsCache = null;
     try {
       await job.retry();
       return { ok: true };
@@ -101,6 +186,7 @@ export class JobsService {
    * burst-re-enqueueing does not hammer the upstream site.
    */
   async retryAllFailed(): Promise<{ retried: number; skipped: number }> {
+    this.statsCache = null;
     const failed = await this.queue.getJobs(['failed'], 0, -1);
     let retried = 0;
     let skipped = 0;
@@ -136,6 +222,7 @@ export class JobsService {
    * source friendly during the drain.
    */
   async refetchAllChapters(): Promise<{ enqueued: number }> {
+    this.statsCache = null;
     // The chapter table does NOT have an updated_at column — use crawled_at
     // (timestamp when content was last fetched). NULLS FIRST puts never-crawled
     // edge rows ahead so any straggler gets re-attempted promptly.

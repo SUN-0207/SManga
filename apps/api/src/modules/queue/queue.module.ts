@@ -37,7 +37,14 @@ import { QUEUE_CRAWLER } from './queue.constants';
             // real progress across multiple stories. Trimming still applies so
             // Redis memory stays bounded.
             removeOnComplete: { age: 7 * 86_400, count: 20_000 },
-            removeOnFail: false,
+            // Bound the failed set too. `false` lets failed jobs accumulate
+            // forever — under the 2026-06-09 scaling load (3.7M waiting +
+            // steady retry traffic), the failed ZSET kept growing and every
+            // Bull stalled-check / failed-bucket read got slower. Keep the
+            // last 24h × 5k for operator forensics; older entries trim. The
+            // "Retry tất cả thất bại" admin button still works on whatever
+            // is in the bucket at the moment.
+            removeOnFail: { age: 86_400, count: 5_000 },
           },
         };
       },

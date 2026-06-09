@@ -48,7 +48,11 @@ function AdminJobsPage() {
     queryKey: ['jobs', 'stats'],
     queryFn: jobsApi.stats,
     enabled: isLoggedIn,
-    refetchInterval: isLoggedIn ? 5000 : false,
+    // 15s instead of 5s — under the 2026-06-09 scaling incident,
+    // 5s × stats + list × 200+100 jobs sampled was the load that pushed
+    // Redis to 100% CPU. BE caches stats() for 30s so polling faster than
+    // that is wasted work anyway.
+    refetchInterval: isLoggedIn ? 15000 : false,
     retry: false,
   });
 
@@ -56,7 +60,11 @@ function AdminJobsPage() {
     queryKey: ['jobs', 'list'],
     queryFn: jobsApi.list,
     enabled: isLoggedIn,
-    refetchInterval: isLoggedIn ? 5000 : false,
+    // 15s instead of 5s — under the 2026-06-09 scaling incident,
+    // 5s × stats + list × 200+100 jobs sampled was the load that pushed
+    // Redis to 100% CPU. BE caches stats() for 30s so polling faster than
+    // that is wasted work anyway.
+    refetchInterval: isLoggedIn ? 15000 : false,
     retry: false,
   });
 
@@ -104,7 +112,7 @@ function AdminJobsPage() {
           </p>
           <h1 className="font-sans font-bold text-3xl sm:text-4xl tracking-tight">Jobs</h1>
           <p className="text-sm text-fg-muted mt-2">
-            Theo dõi và retry job crawl. Tự động cập nhật mỗi 5 giây.
+            Theo dõi và retry job crawl. Tự động cập nhật mỗi 15 giây.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -221,7 +229,12 @@ function AdminJobsPage() {
           const valueClass =
             meta.tone === 'warning' && count > 0 ? 'text-[var(--accent)]' : 'text-fg';
           // For the "Đang lỗi" card, append the sampled denominator so the
-          // reader knows this is an approximation (e.g. "13 / 200 mẫu").
+          // reader knows this is an approximation (e.g. "13 / 50 mẫu").
+          // When the BE skips sampling on huge queues (erroringSampled=0),
+          // show "—" so it's obvious the figure is unavailable rather than
+          // a true zero.
+          const erroringSkipped =
+            state === 'erroring' && (stats.waiting ?? 0) > 0 && (stats.erroringSampled ?? 0) === 0;
           const sampleHint =
             state === 'erroring' && (stats.erroringSampled ?? 0) > 0
               ? `/${(stats.erroringSampled ?? 0).toLocaleString('vi-VN')} mẫu`
@@ -233,7 +246,11 @@ function AdminJobsPage() {
                 <p className="text-[10px] uppercase tracking-[0.18em] font-medium">{meta.label}</p>
               </div>
               <div className={`mt-2 font-sans font-bold text-2xl tabular-nums ${valueClass}`}>
-                {count.toLocaleString('vi-VN')}
+                {erroringSkipped ? (
+                  <span title="Bỏ qua sampling vì hàng đợi quá lớn (>100k)">—</span>
+                ) : (
+                  count.toLocaleString('vi-VN')
+                )}
                 {sampleHint && (
                   <span className="ml-1 text-[10px] font-normal text-fg-muted tracking-normal">
                     {sampleHint}
