@@ -27,7 +27,13 @@ export interface JobStats {
 }
 
 export const jobsApi = {
-  stats: () => api.get<JobStats>('/jobs/stats').then((r) => r.data),
+  /** `fresh=true` bypasses the server-side 30s cache. Use it from the
+   * manual "Làm mới" button so the operator sees current numbers; omit it
+   * from the 15s background poll so polling keeps benefiting from the cache. */
+  stats: (fresh = false) =>
+    api
+      .get<JobStats>('/jobs/stats', { params: fresh ? { fresh: 'true' } : undefined })
+      .then((r) => r.data),
   list: () => api.get<JobRow[]>('/jobs').then((r) => r.data),
   retry: (id: string) => api.post(`/jobs/${id}/retry`).then((r) => r.data),
   retryAllFailed: () =>

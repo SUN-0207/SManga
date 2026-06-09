@@ -1,6 +1,6 @@
 import { Roles } from '@/common/decorators/roles.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { JobsService } from './jobs.service';
 
@@ -12,8 +12,11 @@ export class JobsController {
   constructor(private readonly jobs: JobsService) {}
 
   @Get('stats')
-  stats() {
-    return this.jobs.stats();
+  stats(@Query('fresh') fresh?: string) {
+    // `?fresh=true` bypasses the 30s server-side cache. Used by the admin
+    // "Làm mới" button so a manual click always sees current numbers. The
+    // 15s background poll omits the param so it still benefits from the cache.
+    return this.jobs.stats(fresh === 'true' || fresh === '1');
   }
 
   @Get()

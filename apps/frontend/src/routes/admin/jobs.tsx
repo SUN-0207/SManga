@@ -46,7 +46,8 @@ function AdminJobsPage() {
 
   const statsQ = useQuery({
     queryKey: ['jobs', 'stats'],
-    queryFn: jobsApi.stats,
+    // Wrap so React Query's context arg isn't forwarded to stats(fresh).
+    queryFn: () => jobsApi.stats(),
     enabled: isLoggedIn,
     // 15s instead of 5s — under the 2026-06-09 scaling incident,
     // 5s × stats + list × 200+100 jobs sampled was the load that pushed
@@ -146,8 +147,15 @@ function AdminJobsPage() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              void statsQ.refetch();
+            onClick={async () => {
+              // Drop the React Query cache for both queries so the next
+              // fetch goes through, AND fire stats() with fresh=true so the
+              // BE skips its 30s server-side cache. Without the fresh flag
+              // the operator gets the same stale numbers they were already
+              // seeing — defeating the point of a "Làm mới" button.
+              queryClient.removeQueries({ queryKey: ['jobs'] });
+              const freshStats = await jobsApi.stats(true);
+              queryClient.setQueryData(['jobs', 'stats'], freshStats);
               void jobsQ.refetch();
             }}
             className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm border border-border hover:border-fg/40 hover:bg-bg-subtle/60 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"

@@ -82,9 +82,12 @@ export class JobsService {
 
   private statsCache: { value: StatsShape; expiresAt: number } | null = null;
 
-  async stats(): Promise<StatsShape> {
+  async stats(fresh = false): Promise<StatsShape> {
     const now = Date.now();
-    if (this.statsCache && this.statsCache.expiresAt > now) {
+    // `fresh=true` bypasses the cache — used by the admin /jobs "Làm mới"
+    // button so a manual click always sees current numbers, not a stale
+    // cached read. The 15s background poll still uses the cache.
+    if (!fresh && this.statsCache && this.statsCache.expiresAt > now) {
       return this.statsCache.value;
     }
 
@@ -153,11 +156,10 @@ export class JobsService {
   async retry(id: string) {
     const job = await this.queue.getJob(id);
     if (!job) return { ok: false, reason: 'job not found' };
-    // Operator-initiated re-enqueue is still subject to the cap — at scale
-    // retryAllFailed could move 5k failed jobs back into waiting and push
-    // an already-pressured queue over the edge. Operator gets a clear 503
-    // and waits for drain.
-    await assertQueueCapacity(this.queue);
+    // INTENTIONALLY no capacity check here. retry/retryAllFailed are
+    // operator-rescue paths — when the queue is wedged the operator NEEDS
+    // these to clear stuck work. Blocking them with 503 when waiting > cap
+    // would lock the operator out exactly when they're trying to recover.
     // Cache is bucket-count + erroring-sample based, both stale once we
     // re-enqueue a job. Drop it so the next /stats poll re-fetches.
     this.statsCache = null;
@@ -192,7 +194,7 @@ export class JobsService {
    * burst-re-enqueueing does not hammer the upstream site.
    */
   async retryAllFailed(): Promise<{ retried: number; skipped: number }> {
-    await assertQueueCapacity(this.queue);
+    // No cap — same rationale as retry(): operator rescue path.
     this.statsCache = null;
     const failed = await this.queue.getJobs(['failed'], 0, -1);
     let retried = 0;

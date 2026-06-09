@@ -46,7 +46,8 @@ function AdminDashboard() {
   });
   const jobsStatsQ = useQuery({
     queryKey: ['jobs', 'stats'],
-    queryFn: jobsApi.stats,
+    // Wrap so React Query's queryFn context arg isn't forwarded to stats(fresh).
+    queryFn: () => jobsApi.stats(),
     enabled: isLoggedIn,
     refetchInterval: isLoggedIn ? 10_000 : false,
     retry: false,
