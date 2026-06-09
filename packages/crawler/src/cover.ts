@@ -9,7 +9,11 @@ export async function downloadCover(
 ): Promise<{ bytes: Buffer; mimeType: string } | null> {
   try {
     const { bytes, contentType } = await fetchBytes(url);
-    const mimeType = contentType.split(';')[0]?.trim() ?? 'application/octet-stream';
+    const rawMime = contentType.split(';')[0]?.trim() ?? 'application/octet-stream';
+    // truyenfull's CDN returns the non-standard `image/jpg` instead of `image/jpeg`.
+    // Browsers accept both, but our allowlist + downstream consumers should only
+    // see the RFC-correct form. Normalise before the membership check.
+    const mimeType = rawMime === 'image/jpg' ? 'image/jpeg' : rawMime;
     if (!ALLOWED.has(mimeType)) {
       logger.warn({ url, mimeType }, 'cover mime not allowed, skipping');
       return null;
