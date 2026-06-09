@@ -121,3 +121,16 @@ export function buildWebSiteSchema(): Record<string, unknown> {
     },
   };
 }
+
+export function buildOrganizationSchema(): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'SManga',
+    url: BASE,
+    logo: `${BASE}/favicon.svg`,
+    // Empty until Phase 3 social accounts exist. Emitting now anyway
+    // so Google sees the entity shape; population later is additive.
+    sameAs: [],
+  };
+}

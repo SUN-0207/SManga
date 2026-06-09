@@ -4,6 +4,7 @@ import {
   buildArticleSchema,
   buildBookSchema,
   buildBreadcrumbSchema,
+  buildOrganizationSchema,
   buildWebSiteSchema,
   stripAndTruncate,
 } from './builders';
@@ -132,5 +133,21 @@ describe('buildWebSiteSchema', () => {
     const schema = buildWebSiteSchema();
     expect(schema['@type']).toBe('WebSite');
     expect(schema.potentialAction).toBeDefined();
+  });
+});
+
+describe('buildOrganizationSchema', () => {
+  it('emits Organization with name, url, and logo', () => {
+    const schema = buildOrganizationSchema();
+    expect(schema['@context']).toBe('https://schema.org');
+    expect(schema['@type']).toBe('Organization');
+    expect(schema.name).toBe('SManga');
+    expect(schema.url).toBe('https://smanga.shop');
+    expect(schema.logo).toBe('https://smanga.shop/favicon.svg');
+  });
+
+  it('emits sameAs as an array (empty until social accounts exist)', () => {
+    const schema = buildOrganizationSchema();
+    expect(Array.isArray(schema.sameAs)).toBe(true);
   });
 });

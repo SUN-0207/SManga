@@ -2,7 +2,7 @@ import { meApi } from '@/api/me';
 import { type StorySummary, listStories } from '@/api/stories';
 import { TwoColumnSection } from '@/components/home/TwoColumnSection';
 import { SEO } from '@/components/seo/SEO';
-import { buildWebSiteSchema } from '@/components/seo/builders';
+import { buildOrganizationSchema, buildWebSiteSchema } from '@/components/seo/builders';
 import { StoryCover } from '@/components/ui/StoryCover';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
@@ -33,7 +33,7 @@ function HomePage() {
         title="SManga — Đọc truyện chữ Việt online miễn phí"
         description="Thư viện truyện chữ Việt biên tập như tạp chí — ngôn tình, tiên hiệp, huyền huyễn, kiếm hiệp... đọc online không quảng cáo."
         canonical="/"
-        jsonLd={buildWebSiteSchema()}
+        jsonLd={[buildWebSiteSchema(), buildOrganizationSchema()]}
       />
       <div className="container py-8 lg:py-12 space-y-12 lg:space-y-16">
         {/* Returning reader gets resume CTA above the fold; LoggedInHero
