@@ -1,4 +1,3 @@
-import { listGenres } from '@/api/genres';
 import { meApi } from '@/api/me';
 import { type StorySummary, listStories } from '@/api/stories';
 import { TwoColumnSection } from '@/components/home/TwoColumnSection';
@@ -46,7 +45,6 @@ function HomePage() {
           isLoading={storiesQ.isLoading || featuredQ.isLoading}
         />
         <TwoColumnSection stories={storiesQ.data ?? []} isLoading={storiesQ.isLoading} />
-        <GenreSection />
       </div>
     </>
   );
@@ -285,38 +283,6 @@ function LoggedInHero() {
             </Link>
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function GenreSection() {
-  const genresQ = useQuery({
-    queryKey: ['genres'],
-    queryFn: listGenres,
-    staleTime: 30 * 60_000,
-  });
-  // Top 12 most-used genres on home — full list lives on /kham-pha.
-  const top = (genresQ.data ?? []).filter((g) => g.storyCount > 0).slice(0, 12);
-  if (top.length === 0) return null;
-  return (
-    <section>
-      <div className="mb-6">
-        <p className="text-label text-fg-muted uppercase mb-2">KHÁM PHÁ</p>
-        <h2 className="text-heading-lg">Theo thể loại</h2>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {top.map((g) => (
-          <Link
-            key={g.slug}
-            to="/kham-pha"
-            search={{ q: '', page: 1, genre: g.slug }}
-            title={`${g.name} · ${g.storyCount} truyện`}
-            className="inline-flex items-center h-9 px-4 rounded-full border border-border hover:border-border-strong hover:bg-bg-subtle text-body-sm transition-colors duration-fast cursor-pointer"
-          >
-            {g.name}
-          </Link>
-        ))}
       </div>
     </section>
   );
