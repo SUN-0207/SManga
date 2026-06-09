@@ -1,13 +1,22 @@
+import { _resetCapacityCache } from '@/modules/queue/queue-capacity';
 import { JOB_FETCH_CHAPTER, JOB_PRIORITY } from '@/modules/queue/queue.constants';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { JobsService } from './jobs.service';
 
 describe('JobsService.refetchAllChapters', () => {
+  // The capacity helper caches getWaitingCount() for 2s across calls. Tests
+  // need a clean slate so the mock's getWaitingCount value drives each case.
+  beforeEach(() => {
+    _resetCapacityCache();
+  });
+
   it('enqueues one fetch-chapter job per crawled chapter with idempotent jobId', async () => {
     const rows = [{ id: 'c1' }, { id: 'c2' }];
     const db = { execute: vi.fn().mockResolvedValue({ rows }) };
     const addBulk = vi.fn().mockResolvedValue([]);
-    const queue = { addBulk } as never;
+    // Under capacity → cap check passes, enqueue proceeds.
+    const getWaitingCount = vi.fn().mockResolvedValue(100);
+    const queue = { addBulk, getWaitingCount } as never;
     const svc = new JobsService(db as never, queue);
 
     const result = await svc.refetchAllChapters();
@@ -31,11 +40,26 @@ describe('JobsService.refetchAllChapters', () => {
   it('returns { enqueued: 0 } and does not call addBulk when DB has no crawled chapters', async () => {
     const db = { execute: vi.fn().mockResolvedValue({ rows: [] }) };
     const addBulk = vi.fn();
-    const queue = { addBulk } as never;
+    const getWaitingCount = vi.fn().mockResolvedValue(0);
+    const queue = { addBulk, getWaitingCount } as never;
     const svc = new JobsService(db as never, queue);
 
     const result = await svc.refetchAllChapters();
     expect(result).toEqual({ enqueued: 0 });
+    expect(addBulk).not.toHaveBeenCalled();
+  });
+
+  it('throws 503 when wait queue is at capacity, never queries DB', async () => {
+    const dbExecute = vi.fn();
+    const db = { execute: dbExecute };
+    const addBulk = vi.fn();
+    // At cap (10k) → assertQueueCapacity throws before DB is touched.
+    const getWaitingCount = vi.fn().mockResolvedValue(10_000);
+    const queue = { addBulk, getWaitingCount } as never;
+    const svc = new JobsService(db as never, queue);
+
+    await expect(svc.refetchAllChapters()).rejects.toThrow(/quá tải/);
+    expect(dbExecute).not.toHaveBeenCalled();
     expect(addBulk).not.toHaveBeenCalled();
   });
 });

@@ -29,7 +29,18 @@ import { QUEUE_CRAWLER } from './queue.constants';
             enableReadyCheck: false,
           },
           defaultJobOptions: {
-            attempts: 3,
+            // attempts:2 means 1 retry max (30s backoff). Was 3 (30s + 60s
+            // = 90s of retry budget). At 5 workers × 0.5 rps with truyenfull
+            // transient errors observed at ~13/hr (2026-06-09 log analysis),
+            // one retry catches most blips without inflating the `delayed`
+            // ZSET → re-promoted-via-LINSERT pressure that compounded the
+            // 100% Redis CPU incident. Operator can still bulk-retry via
+            // "Retry tất cả thất bại" on /admin/jobs for stuck batches.
+            //
+            // refetchAllChapters overrides this back to 3 in jobs.service.ts
+            // — that path re-crawls existing chapters where transient
+            // errors are more likely.
+            attempts: 2,
             backoff: { type: 'exponential', delay: 30_000 },
             // Keep last 20k completed jobs (7 days). A single story with ~1000
             // chapters previously hit the old cap of 1000 and made the

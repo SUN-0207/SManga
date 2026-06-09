@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { isQueueAtCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverChaptersJobData,
   JOB_DISCOVER_CHAPTERS,
@@ -39,6 +40,16 @@ export class RefreshAllStoriesProcessor {
     const manual = (job.data as { manual?: boolean } | undefined)?.manual ?? false;
     if (!manual && !config.autoRefreshEnabled) {
       this.logger.log(`refresh-all-stories ${job.id} skipped — auto refresh disabled`);
+      return { enqueued: 0, skipped: 0 };
+    }
+    // Skip the entire refresh cycle if the wait queue is saturated. With
+    // ~37k stories eligible, even a single 0.01% fan-out (1 chain × N
+    // chapters each) per tick can push a near-cap queue over the edge.
+    // Skip silently; next tick re-evaluates.
+    if (await isQueueAtCapacity(this.queue)) {
+      this.logger.warn(
+        `refresh-all-stories ${job.id} SKIPPED — queue at capacity. Will retry on next tick.`,
+      );
       return { enqueued: 0, skipped: 0 };
     }
 

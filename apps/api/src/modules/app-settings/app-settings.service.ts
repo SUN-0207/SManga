@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   JOB_PRIORITY,
   JOB_REFRESH_ALL_STORIES,
@@ -69,6 +70,7 @@ export class AppSettingsService implements OnModuleInit {
    * UI can link into /admin/jobs to watch it.
    */
   async runNow() {
+    await assertQueueCapacity(this.queue);
     const job = await this.queue.add(
       JOB_REFRESH_ALL_STORIES,
       { manual: true },

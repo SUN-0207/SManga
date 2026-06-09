@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   type FetchChapterJobData,
   JOB_FETCH_CHAPTER,
@@ -152,6 +153,11 @@ export class JobsService {
   async retry(id: string) {
     const job = await this.queue.getJob(id);
     if (!job) return { ok: false, reason: 'job not found' };
+    // Operator-initiated re-enqueue is still subject to the cap — at scale
+    // retryAllFailed could move 5k failed jobs back into waiting and push
+    // an already-pressured queue over the edge. Operator gets a clear 503
+    // and waits for drain.
+    await assertQueueCapacity(this.queue);
     // Cache is bucket-count + erroring-sample based, both stale once we
     // re-enqueue a job. Drop it so the next /stats poll re-fetches.
     this.statsCache = null;
@@ -186,6 +192,7 @@ export class JobsService {
    * burst-re-enqueueing does not hammer the upstream site.
    */
   async retryAllFailed(): Promise<{ retried: number; skipped: number }> {
+    await assertQueueCapacity(this.queue);
     this.statsCache = null;
     const failed = await this.queue.getJobs(['failed'], 0, -1);
     let retried = 0;
@@ -222,6 +229,10 @@ export class JobsService {
    * source friendly during the drain.
    */
   async refetchAllChapters(): Promise<{ enqueued: number }> {
+    // Refetch is the operation that previously enqueued 3.7M jobs in one
+    // click (2026-06-09 incident). Cap check FIRST so we don't query the
+    // DB at all when the queue is already saturated.
+    await assertQueueCapacity(this.queue);
     this.statsCache = null;
     // The chapter table does NOT have an updated_at column — use crawled_at
     // (timestamp when content was last fetched). NULLS FIRST puts never-crawled

@@ -1,5 +1,6 @@
 import { gunzipSync } from 'node:zlib';
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   type FetchChapterJobData,
   JOB_FETCH_CHAPTER,
@@ -111,6 +112,7 @@ export class ChaptersService {
         `chapter list not yet discovered for this story (discovery_status=${storyRow.discoveryStatus}). POST /stories/:id/discover first.`,
       );
     }
+    await assertQueueCapacity(this.queue);
 
     let ids: string[] = [];
     if (dto.mode === 'one') {

@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { isQueueAtCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverChaptersJobData,
   type ImportStoryJobData,
@@ -35,12 +36,21 @@ export class ImportStoryProcessor {
         `import-story done ${job.id} storyId=${storyId} alreadyExisted=${alreadyExisted} (metadata only)`,
       );
       if (autoCrawl) {
-        const payload: DiscoverChaptersJobData = { storyId, requestedBy, autoCrawl: true };
-        await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
-          jobId: `discover-chapters:${storyId}`,
-          priority: JOB_PRIORITY.DISCOVER_CHAPTERS,
-        });
-        this.logger.log(`import-story chained discover-chapters for ${storyId} (autoCrawl)`);
+        // Skip the chain if the wait queue is saturated — story metadata
+        // is already persisted; operator can manually fire discover from
+        // /admin/stories once wait drains.
+        if (await isQueueAtCapacity(this.queue)) {
+          this.logger.warn(
+            `import-story SKIPPED chaining discover-chapters for ${storyId}: queue at capacity. Story metadata is persisted; re-trigger discover from /admin/stories once wait drains.`,
+          );
+        } else {
+          const payload: DiscoverChaptersJobData = { storyId, requestedBy, autoCrawl: true };
+          await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
+            jobId: `discover-chapters:${storyId}`,
+            priority: JOB_PRIORITY.DISCOVER_CHAPTERS,
+          });
+          this.logger.log(`import-story chained discover-chapters for ${storyId} (autoCrawl)`);
+        }
       }
       return;
     }

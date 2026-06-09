@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { isQueueAtCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverChaptersJobData,
   type FetchChapterJobData,
@@ -37,21 +38,35 @@ export class DiscoverChaptersProcessor {
       );
 
       if (autoCrawl) {
-        const rows = await this.db
-          .select({ id: chapter.id })
-          .from(chapter)
-          .where(and(eq(chapter.storyId, storyId), inArray(chapter.status, ['pending', 'failed'])))
-          .orderBy(asc(chapter.index));
-        for (const r of rows) {
-          const payload: FetchChapterJobData = { chapterId: r.id };
-          await this.queue.add(JOB_FETCH_CHAPTER, payload, {
-            jobId: `fetch-chapter:${r.id}`,
-            priority: JOB_PRIORITY.FETCH_CHAPTER,
-          });
+        // Check capacity ONCE up-front. If the wait queue is saturated, skip
+        // the chain — chapters stay 'pending' in DB and an operator can
+        // re-trigger via crawl-missing later (after wait drains). This is
+        // the degradation mode that prevents one large discover from
+        // ballooning the queue into the 100% CPU territory we hit on
+        // 2026-06-09 with 3.7M jobs.
+        if (await isQueueAtCapacity(this.queue)) {
+          this.logger.warn(
+            `discover-chapters SKIPPED chaining fetch-chapter for ${storyId}: queue at capacity. Chapter rows stay 'pending'; operator can re-trigger via /admin/stories crawl-missing once wait drains.`,
+          );
+        } else {
+          const rows = await this.db
+            .select({ id: chapter.id })
+            .from(chapter)
+            .where(
+              and(eq(chapter.storyId, storyId), inArray(chapter.status, ['pending', 'failed'])),
+            )
+            .orderBy(asc(chapter.index));
+          for (const r of rows) {
+            const payload: FetchChapterJobData = { chapterId: r.id };
+            await this.queue.add(JOB_FETCH_CHAPTER, payload, {
+              jobId: `fetch-chapter:${r.id}`,
+              priority: JOB_PRIORITY.FETCH_CHAPTER,
+            });
+          }
+          this.logger.log(
+            `discover-chapters chained ${rows.length} fetch-chapter jobs for ${storyId} (autoCrawl)`,
+          );
         }
-        this.logger.log(
-          `discover-chapters chained ${rows.length} fetch-chapter jobs for ${storyId} (autoCrawl)`,
-        );
       }
     } catch (err) {
       // engine.discoverChapters already wrote discovery_status='failed' to DB;

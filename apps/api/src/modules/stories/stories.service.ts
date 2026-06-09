@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverChaptersJobData,
   type ImportStoryJobData,
@@ -374,6 +375,7 @@ export class StoriesService {
     } catch {
       throw new BadRequestException('no adapter registered for that hostname');
     }
+    await assertQueueCapacity(this.queue);
     const payload: ImportStoryJobData = { url, requestedBy, autoCrawl };
     const job = await this.queue.add(JOB_IMPORT_STORY, payload, {
       priority: JOB_PRIORITY.IMPORT_STORY,
@@ -396,6 +398,7 @@ export class StoriesService {
     if (unique.length > BULK_IMPORT_CAP) {
       throw new BadRequestException(`bulk import cap is ${BULK_IMPORT_CAP} URLs per call`);
     }
+    await assertQueueCapacity(this.queue);
     const queued: { url: string; jobId: string }[] = [];
     const skipped: { url: string; reason: string }[] = [];
     for (const url of unique) {
@@ -432,6 +435,7 @@ export class StoriesService {
     if (s.discoveryStatus === 'running') {
       throw new ConflictException('chapter discovery already running for this story');
     }
+    await assertQueueCapacity(this.queue);
     const payload: DiscoverChaptersJobData = { storyId, requestedBy, autoCrawl };
     const job = await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
       jobId: `discover-chapters:${storyId}`,
@@ -454,6 +458,7 @@ export class StoriesService {
   ) {
     if (ids.length === 0) throw new BadRequestException('ids must contain at least one entry');
     if (ids.length > 100) throw new BadRequestException('bulk action cap is 100 stories per call');
+    await assertQueueCapacity(this.queue);
 
     const queued: { storyId: string; jobs: number }[] = [];
     const skipped: { storyId: string; reason: string }[] = [];

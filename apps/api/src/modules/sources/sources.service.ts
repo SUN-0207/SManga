@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverAllSourceJobData,
   JOB_DISCOVER_ALL_SOURCE,
@@ -158,6 +159,7 @@ export class SourcesService {
       }
     }
 
+    await assertQueueCapacity(this.queue);
     const payload: DiscoverAllSourceJobData = { sourceId, feedId, autoCrawl, requestedBy };
 
     const job = await this.queue.add(JOB_DISCOVER_ALL_SOURCE, payload, {
