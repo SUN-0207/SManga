@@ -7,6 +7,7 @@ import { ChapterList } from '@/components/reader/ChapterList';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
 import { SEO } from '@/components/seo/SEO';
 import { buildBookSchema, buildBreadcrumbSchema, stripAndTruncate } from '@/components/seo/builders';
+import { SimilarStoriesRail } from '@/components/story/SimilarStoriesRail';
 import { StoryCover } from '@/components/ui/StoryCover';
 import { useTrackStoryView } from '@/hooks/use-track-view';
 import { useQuery } from '@tanstack/react-query';
@@ -183,6 +184,22 @@ function StoryDetail() {
         </div>
       </section>
 
+      {s.author && s.author !== 'Khuyết danh' && (
+        <SimilarStoriesRail
+          title="Cùng tác giả"
+          by="author"
+          value={s.author}
+          excludeId={s.id}
+        />
+      )}
+      {s.genres?.[0]?.slug && (
+        <SimilarStoriesRail
+          title="Cùng thể loại"
+          by="genre"
+          value={s.genres[0].slug}
+          excludeId={s.id}
+        />
+      )}
       <RecommendationSection kind="similar" storyId={s.id} />
 
       <CommentSection targetType="story" targetId={s.id} slug={s.slug} />
