@@ -27,3 +27,6 @@ tests-e2e/
 .claude/settings.local.json
 # Local MCP config containing PATs — copy from .mcp.json.example and fill in
 .mcp.json
+# graphify generated knowledge graph — regenerate with /graphify; contains
+# machine-specific interpreter paths (.graphify_*) and a large cache/
+graphify-out/
