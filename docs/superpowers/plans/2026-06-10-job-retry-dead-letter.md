@@ -12,6 +12,24 @@
 
 ---
 
+## Running tests (authoritative — overrides any inline command below)
+
+This monorepo uses **per-package vitest configs**, not a single root runner. The root `vitest.config.ts` has NO path aliases and runs node env, so `pnpm exec vitest run <path>` from the repo root **cannot** run `apps/api` specs (they import via `@/` — collection fails) or `apps/frontend` specs (they need jsdom). Wherever a step below says `pnpm exec vitest run <repo-relative-path>`, translate it to the matching per-package command:
+
+| Package | Run one spec |
+|---|---|
+| `@smanga/shared` | `pnpm --filter @smanga/shared exec vitest run tests/<file>` |
+| `@smanga/db` | `pnpm --filter @smanga/db exec vitest run tests/<file>` |
+| `@smanga/crawler` | `pnpm --filter @smanga/crawler exec vitest run` |
+| `@smanga/api` | `pnpm --filter @smanga/api exec vitest run src/modules/<...>/<file>` (api config supplies `@/` + `@smanga/*` aliases + SWC decorators; collection ~20s) |
+| all packages | `pnpm test` (= `pnpm -r --workspace-concurrency=1 test`) — canonical full suite |
+
+Typecheck: `pnpm --filter @smanga/<pkg> typecheck`. Generate migration: `pnpm --filter @smanga/db generate`. Apply locally: `pnpm db:migrate` (needs `DATABASE_URL` + running Postgres).
+
+**Pre-commit hook:** `lefthook` runs `biome check` + `tsc` on staged files. Before each `git commit`, run `pnpm exec biome check --write <changed files>` and re-stage so lint/format doesn't fail the commit. Never bypass with `--no-verify`.
+
+---
+
 ## Design refinements (read first — these resolve ambiguities in the spec)
 
 The spec is the source of truth, but three details were under-specified. This plan resolves them; the code and tests below assume these resolutions.
