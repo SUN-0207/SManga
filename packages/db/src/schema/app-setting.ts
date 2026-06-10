@@ -14,6 +14,9 @@ export const appSetting = pgTable('app_setting', {
   /** 'ongoing' = only status='ongoing' stories; 'all' = every story with discovery complete. */
   autoRefreshScope: text('auto_refresh_scope').notNull().default('ongoing'),
   autoRefreshConcurrency: integer('auto_refresh_concurrency').notNull().default(5),
+  /** Kill switch for the dead-letter retry reconciler. Default ON — flip off
+   * to instantly disable auto-retry during an incident. */
+  autoRetryEnabled: boolean('auto_retry_enabled').notNull().default(true),
   lastRunAt: timestamp('last_run_at', { withTimezone: true }),
   lastRunCount: integer('last_run_count'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
