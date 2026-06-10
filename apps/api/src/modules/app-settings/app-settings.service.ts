@@ -86,6 +86,21 @@ export class AppSettingsService implements OnModuleInit {
       .where(eq(appSetting.id, 1));
   }
 
+  async getAutoRetry(): Promise<{ autoRetryEnabled: boolean }> {
+    const s = await this.getOrSeed();
+    return { autoRetryEnabled: s.autoRetryEnabled };
+  }
+
+  async setAutoRetry(enabled: boolean): Promise<{ autoRetryEnabled: boolean }> {
+    const [updated] = await this.db
+      .update(appSetting)
+      .set({ autoRetryEnabled: enabled, updatedAt: new Date() })
+      .where(eq(appSetting.id, 1))
+      .returning();
+    if (!updated) throw new BadRequestException('app_setting row missing — re-run migrations');
+    return { autoRetryEnabled: updated.autoRetryEnabled };
+  }
+
   private async getOrSeed() {
     const [row] = await this.db.select().from(appSetting).where(eq(appSetting.id, 1)).limit(1);
     if (row) return row;
