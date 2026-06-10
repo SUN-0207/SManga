@@ -1,4 +1,4 @@
-import { AdapterNotFoundError, FetchError, ParserError, RateLimitError } from './errors.js';
+import { AdapterNotFoundError, FetchError, ParserError, RateLimitError } from './errors.ts';
 
 export type FailureClass = 'transient' | 'permanent';
 
