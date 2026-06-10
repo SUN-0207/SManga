@@ -1,4 +1,5 @@
 import { jobsApi } from '@/api/jobs';
+import { DeadLetterPanel } from '@/components/admin/DeadLetterPanel';
 import { JobsTable } from '@/components/admin/JobsTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { EmptyQueue } from '@/components/ui/illustrations/EmptyQueue';
@@ -288,6 +289,8 @@ function AdminJobsPage() {
           <JobsTable jobs={jobs} />
         )}
       </div>
+
+      <DeadLetterPanel enabled={isLoggedIn} />
     </div>
   );
 }
