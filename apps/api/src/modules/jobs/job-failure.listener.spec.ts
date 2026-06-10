@@ -120,6 +120,9 @@ describe('JobFailureListener.onCompleted', () => {
     const patch = (set.mock.calls as any[][])[0]![0] as Record<string, unknown>;
     expect(patch.status).toBe('resolved');
     expect(patch.resolvedAt).toBeInstanceOf(Date);
+    // Resetting generation makes resolution a clean episode boundary so a later
+    // failure of the same (reused) dedupKey restarts fresh at gen 0.
+    expect(patch.retryGeneration).toBe(0);
   });
 
   it('does nothing for non-dead-letterable job types', async () => {

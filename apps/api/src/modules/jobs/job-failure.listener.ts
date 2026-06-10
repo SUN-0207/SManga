@@ -103,7 +103,18 @@ export class JobFailureListener {
     const now = new Date();
     await this.db
       .update(jobFailure)
-      .set({ status: 'resolved', resolvedAt: now, nextRetryAt: null, updatedAt: now })
+      // retryGeneration resets to 0 so a later, independent failure of the
+      // same work (the dedupKey is reused across crawl episodes) starts a
+      // fresh episode at gen 0 (now + 10m) instead of inheriting the prior
+      // episode's generation and creeping toward `dead`. Resolution is the
+      // episode boundary (spec §6).
+      .set({
+        status: 'resolved',
+        resolvedAt: now,
+        nextRetryAt: null,
+        retryGeneration: 0,
+        updatedAt: now,
+      })
       .where(
         and(
           eq(jobFailure.dedupKey, dedupKey),
