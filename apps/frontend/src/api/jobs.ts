@@ -26,6 +26,21 @@ export interface JobStats {
   erroringSampled: number;
 }
 
+export interface DeadLetterRow {
+  id: string;
+  dedupKey: string;
+  jobName: string;
+  errorClass: string;
+  classification: 'transient' | 'permanent';
+  failedReason: string | null;
+  attemptsMade: number;
+  retryGeneration: number;
+  status: 'pending' | 'retrying' | 'needs_attention' | 'dead' | 'resolved';
+  firstFailedAt: string;
+  lastFailedAt: string;
+  nextRetryAt: string | null;
+}
+
 export const jobsApi = {
   /** `fresh=true` bypasses the server-side 30s cache. Use it from the
    * manual "Làm mới" button so the operator sees current numbers; omit it
@@ -40,4 +55,17 @@ export const jobsApi = {
     api.post<{ retried: number; skipped: number }>('/jobs/retry-failed').then((r) => r.data),
   refetchAllChapters: () =>
     api.post<{ enqueued: number }>('/jobs/refetch-all-chapters').then((r) => r.data),
+  deadLetter: () => api.get<DeadLetterRow[]>('/jobs/dead-letter').then((r) => r.data),
+  deadLetterRetryNow: (id: string) =>
+    api.post<{ ok: boolean }>(`/jobs/dead-letter/${id}/retry-now`).then((r) => r.data),
+  deadLetterDismiss: (id: string) =>
+    api.post<{ ok: boolean }>(`/jobs/dead-letter/${id}/dismiss`).then((r) => r.data),
+  deadLetterRetryAll: () =>
+    api.post<{ rearmed: number }>('/jobs/dead-letter/retry-all').then((r) => r.data),
+  getAutoRetry: () =>
+    api.get<{ autoRetryEnabled: boolean }>('/admin/settings/auto-retry').then((r) => r.data),
+  setAutoRetry: (enabled: boolean) =>
+    api
+      .patch<{ autoRetryEnabled: boolean }>('/admin/settings/auto-retry', { enabled })
+      .then((r) => r.data),
 };
