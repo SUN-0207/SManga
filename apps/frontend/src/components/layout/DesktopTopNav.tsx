@@ -1,11 +1,13 @@
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { AvatarMenu } from '@/components/reader/AvatarMenu';
 import { ReaderSettingsDrawer } from '@/components/reader/ReaderSettingsDrawer';
+import { SearchModal } from '@/components/search/SearchModal';
 import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth-store';
 // apps/frontend/src/components/layout/DesktopTopNav.tsx
 import { Link, useRouterState } from '@tanstack/react-router';
 import { Search as SearchIcon } from 'lucide-react';
+import { useState } from 'react';
 
 const NAV = [
   { to: '/' as const, label: 'Đọc', match: (p: string) => p === '/' },
@@ -25,6 +27,7 @@ const NAV = [
 export function DesktopTopNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const user = useAuthStore((s) => s.user);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <>
@@ -57,15 +60,17 @@ export function DesktopTopNav() {
             })}
           </nav>
           <div className="flex items-center gap-2">
-            {/* Search icon links to /tim-kiem (real route) until /kham-pha route lands */}
-            <Link
-              to="/tim-kiem"
-              search={{ q: '', page: 1 }}
+            {/* Opens the SearchModal overlay (instant search). The legacy
+                /tim-kiem → /kham-pha redirect remains in place for shared
+                URLs and the modal's "Xem tất cả" footer link. */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
               aria-label="Tìm kiếm"
-              className="inline-flex items-center justify-center h-9 w-9 rounded-md text-fg-muted hover:bg-bg-subtle hover:text-fg transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="inline-flex items-center justify-center h-9 w-9 rounded-md text-fg-muted hover:bg-bg-subtle hover:text-fg transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
             >
               <SearchIcon className="h-4 w-4" />
-            </Link>
+            </button>
             <NotificationBell />
             {user ? (
               <AvatarMenu user={user} />
@@ -81,6 +86,7 @@ export function DesktopTopNav() {
           </div>
         </div>
       </header>
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ReaderSettingsDrawer />
     </>
   );

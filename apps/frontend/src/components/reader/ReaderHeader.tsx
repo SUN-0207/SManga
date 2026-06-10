@@ -1,5 +1,6 @@
 import { MobileNavDrawer } from '@/components/layout/MobileNavDrawer';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { SearchModal } from '@/components/search/SearchModal';
 import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth-store';
 import { Link } from '@tanstack/react-router';
@@ -17,6 +18,7 @@ import { ReaderSettingsDrawer } from './ReaderSettingsDrawer';
 export function ReaderHeader() {
   const user = useAuthStore((s) => s.user);
   const [navOpen, setNavOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <>
@@ -37,14 +39,14 @@ export function ReaderHeader() {
             </Link>
           </div>
           <div className="flex items-center gap-1">
-            <Link
-              to="/tim-kiem"
-              search={{ q: '', page: 1 }}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
               aria-label="Tìm kiếm"
-              className="inline-flex items-center justify-center h-9 w-9 rounded-md text-fg-muted hover:bg-bg-subtle hover:text-fg transition-colors duration-fast"
+              className="inline-flex items-center justify-center h-9 w-9 rounded-md text-fg-muted hover:bg-bg-subtle hover:text-fg transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
             >
               <SearchIcon className="h-4 w-4" />
-            </Link>
+            </button>
             <NotificationBell />
             {user ? (
               <AvatarMenu user={user} />
@@ -61,6 +63,7 @@ export function ReaderHeader() {
         </div>
       </header>
       <MobileNavDrawer open={navOpen} onClose={() => setNavOpen(false)} />
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
       <ReaderSettingsDrawer />
     </>
   );
