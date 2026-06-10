@@ -28,14 +28,14 @@ export async function fetchHtml(url: string, opts: FetchOptions = {}): Promise<s
       bodyTimeout: timeoutMs,
     });
   } catch (err) {
-    throw new FetchError(`network error fetching ${url}`, err);
+    throw new FetchError(`network error fetching ${url}`, { cause: err });
   }
 
   if (res.statusCode === 429 || res.statusCode === 503) {
     throw new RateLimitError(`rate limited (${res.statusCode}) fetching ${url}`);
   }
   if (res.statusCode >= 400) {
-    throw new FetchError(`http ${res.statusCode} fetching ${url}`);
+    throw new FetchError(`http ${res.statusCode} fetching ${url}`, { statusCode: res.statusCode });
   }
   return await res.body.text();
 }
@@ -55,10 +55,10 @@ export async function fetchBytes(
       bodyTimeout: timeoutMs,
     });
   } catch (err) {
-    throw new FetchError(`network error fetching ${url}`, err);
+    throw new FetchError(`network error fetching ${url}`, { cause: err });
   }
   if (res.statusCode >= 400) {
-    throw new FetchError(`http ${res.statusCode} fetching ${url}`);
+    throw new FetchError(`http ${res.statusCode} fetching ${url}`, { statusCode: res.statusCode });
   }
   const buf = Buffer.from(await res.body.arrayBuffer());
   const contentType = String(res.headers['content-type'] ?? 'application/octet-stream');
