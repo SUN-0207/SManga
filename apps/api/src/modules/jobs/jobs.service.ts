@@ -11,8 +11,9 @@ import {
 import { InjectQueue } from '@nestjs/bull';
 import { Inject, Injectable } from '@nestjs/common';
 import type { Database } from '@smanga/db';
+import { jobFailure } from '@smanga/db/schema';
 import type { JobStatus, Queue } from 'bull';
-import { sql } from 'drizzle-orm';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 
 const rowsOf = <T>(r: unknown): T[] =>
   Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
@@ -320,5 +321,51 @@ export class JobsService {
 
     await this.queue.addBulk(jobs);
     return { enqueued: jobs.length, totalNullCover };
+  }
+
+  /** Rows the operator should see: anything not yet resolved. */
+  async listDeadLetter() {
+    return this.db
+      .select()
+      .from(jobFailure)
+      .where(inArray(jobFailure.status, ['pending', 'retrying', 'needs_attention', 'dead']))
+      .orderBy(desc(jobFailure.lastFailedAt))
+      .limit(200);
+  }
+
+  /** Force a single row back into the retry pipeline. Works on dead /
+   * needs_attention too — flips to pending with nextRetryAt=now so the next
+   * reconciler tick (≤5 min) picks it up. */
+  async deadLetterRetryNow(id: string): Promise<{ ok: boolean }> {
+    const now = new Date();
+    const [updated] = await this.db
+      .update(jobFailure)
+      .set({ status: 'pending', nextRetryAt: now, updatedAt: now })
+      .where(eq(jobFailure.id, id))
+      .returning({ id: jobFailure.id });
+    return { ok: Boolean(updated) };
+  }
+
+  /** Mark a row resolved (operator dismisses it). */
+  async deadLetterDismiss(id: string): Promise<{ ok: boolean }> {
+    const now = new Date();
+    const [updated] = await this.db
+      .update(jobFailure)
+      .set({ status: 'resolved', resolvedAt: now, nextRetryAt: null, updatedAt: now })
+      .where(eq(jobFailure.id, id))
+      .returning({ id: jobFailure.id });
+    return { ok: Boolean(updated) };
+  }
+
+  /** Re-arm every stuck row (needs_attention / dead / retrying) → pending,
+   * nextRetryAt=now. Bulk operator rescue. */
+  async deadLetterRetryAll(): Promise<{ rearmed: number }> {
+    const now = new Date();
+    const updated = await this.db
+      .update(jobFailure)
+      .set({ status: 'pending', nextRetryAt: now, updatedAt: now })
+      .where(inArray(jobFailure.status, ['needs_attention', 'dead', 'retrying']))
+      .returning({ id: jobFailure.id });
+    return { rearmed: updated.length };
   }
 }

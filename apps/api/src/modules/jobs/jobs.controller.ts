@@ -55,4 +55,25 @@ export class JobsController {
   backfillCovers() {
     return this.jobs.backfillCovers();
   }
+
+  @Get('dead-letter')
+  listDeadLetter() {
+    return this.jobs.listDeadLetter();
+  }
+
+  @Post('dead-letter/retry-all')
+  @HttpCode(202)
+  deadLetterRetryAll() {
+    return this.jobs.deadLetterRetryAll();
+  }
+
+  @Post('dead-letter/:id/retry-now')
+  deadLetterRetryNow(@Param('id') id: string) {
+    return this.jobs.deadLetterRetryNow(id);
+  }
+
+  @Post('dead-letter/:id/dismiss')
+  deadLetterDismiss(@Param('id') id: string) {
+    return this.jobs.deadLetterDismiss(id);
+  }
 }
