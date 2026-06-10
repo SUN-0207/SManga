@@ -37,7 +37,14 @@ export async function fetchHtml(url: string, opts: FetchOptions = {}): Promise<s
   if (res.statusCode >= 400) {
     throw new FetchError(`http ${res.statusCode} fetching ${url}`, { statusCode: res.statusCode });
   }
-  return await res.body.text();
+  // The body read can still time out (undici bodyTimeout) or reset AFTER
+  // headers arrive — wrap it so it surfaces as a (transient) FetchError
+  // rather than a raw undici error that the classifier treats as permanent.
+  try {
+    return await res.body.text();
+  } catch (err) {
+    throw new FetchError(`network error reading body for ${url}`, { cause: err });
+  }
 }
 
 export async function fetchBytes(
@@ -60,7 +67,12 @@ export async function fetchBytes(
   if (res.statusCode >= 400) {
     throw new FetchError(`http ${res.statusCode} fetching ${url}`, { statusCode: res.statusCode });
   }
-  const buf = Buffer.from(await res.body.arrayBuffer());
+  let buf: Buffer;
+  try {
+    buf = Buffer.from(await res.body.arrayBuffer());
+  } catch (err) {
+    throw new FetchError(`network error reading body for ${url}`, { cause: err });
+  }
   const contentType = String(res.headers['content-type'] ?? 'application/octet-stream');
   return { bytes: buf, contentType };
 }
