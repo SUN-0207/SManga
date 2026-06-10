@@ -90,7 +90,13 @@ export class RetryReconcilerService implements OnModuleInit {
         const existing = await this.queue.getJob(jobId);
         if (existing) await existing.remove().catch(() => {});
         await this.queue.add(row.jobName, row.jobData as object, { jobId, priority });
-        await this.db
+        // Optimistic-lock the transition on the row's updatedAt snapshot. In
+        // the single API process, a worker can finish (or re-fail) the just-
+        // enqueued job and the listener can update this row BEFORE this write
+        // lands. Guarding on the picked updatedAt means a concurrently-changed
+        // row matches 0 rows — we leave the listener's outcome intact instead
+        // of stamping a phantom 'retrying' that the picker would never revisit.
+        const flipped = await this.db
           .update(jobFailure)
           .set({
             status: 'retrying',
@@ -98,8 +104,15 @@ export class RetryReconcilerService implements OnModuleInit {
             nextRetryAt: null,
             updatedAt: new Date(),
           })
-          .where(eq(jobFailure.id, row.id));
-        reEnqueued += 1;
+          .where(and(eq(jobFailure.id, row.id), eq(jobFailure.updatedAt, row.updatedAt)))
+          .returning({ id: jobFailure.id });
+        if (flipped.length > 0) {
+          reEnqueued += 1;
+        } else {
+          this.logger.log(
+            `reconciler: row ${row.dedupKey} changed since pick (resolved/re-failed concurrently); skipping status flip`,
+          );
+        }
       } catch (err) {
         this.logger.error(
           `reconciler re-enqueue failed key=${row.dedupKey}: ${(err as Error).message}`,

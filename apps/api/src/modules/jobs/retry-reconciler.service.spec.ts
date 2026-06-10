@@ -20,11 +20,17 @@ function makeSelect(results: unknown[][]) {
   return vi.fn(() => chain);
 }
 
-function updateMock() {
-  const where = vi.fn().mockResolvedValue(undefined);
+/**
+ * Mock update().set().where().returning(). `returningRows` is what the
+ * optimistic-lock guard sees: non-empty = the row was still 'pending' and got
+ * flipped; empty = it changed concurrently and we skip.
+ */
+function updateMock(returningRows: unknown[] = [{ id: 'r' }]) {
+  const returning = vi.fn().mockResolvedValue(returningRows);
+  const where = vi.fn(() => ({ returning }));
   const set = vi.fn(() => ({ where }));
   const update = vi.fn(() => ({ set }));
-  return { update, set, where };
+  return { update, set, where, returning };
 }
 
 describe('RetryReconcilerService.handle', () => {
@@ -121,5 +127,31 @@ describe('RetryReconcilerService.handle', () => {
     await svc.handle({} as never);
     expect(remove).toHaveBeenCalledTimes(1);
     expect(add).toHaveBeenCalledTimes(1);
+  });
+
+  it('still enqueues but does NOT count/flip a row changed concurrently after enqueue', async () => {
+    // The job is re-added, but by the time the status flip runs the row was
+    // resolved/re-failed by the listener (optimistic-lock guard matches 0 rows).
+    const add = vi.fn().mockResolvedValue({ id: 'x' });
+    const getJob = vi.fn().mockResolvedValue(null);
+    const getWaitingCount = vi.fn().mockResolvedValue(0);
+    const queue = { add, getJob, getWaitingCount } as never;
+    const due = [
+      {
+        id: 'r1',
+        dedupKey: 'fetch-chapter:c1',
+        jobName: 'fetch-chapter',
+        jobData: { chapterId: 'c1' },
+        retryGeneration: 0,
+        updatedAt: new Date('2026-06-10T00:00:00Z'),
+      },
+    ];
+    const { update } = updateMock([]); // guard matched 0 rows → changed concurrently
+    const db = { select: makeSelect([[{ autoRetryEnabled: true }], due]), update } as never;
+    const svc = new RetryReconcilerService(db, queue);
+
+    const res = await svc.handle({} as never);
+    expect(add).toHaveBeenCalledTimes(1); // job was still re-enqueued
+    expect(res.reEnqueued).toBe(0); // but not counted — listener already owns the row
   });
 });
