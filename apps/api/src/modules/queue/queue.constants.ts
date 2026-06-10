@@ -5,6 +5,7 @@ export const JOB_DISCOVER_CHAPTERS = 'discover-chapters';
 export const JOB_FETCH_CHAPTER = 'fetch-chapter';
 export const JOB_REFRESH_ALL_STORIES = 'refresh-all-stories';
 export const JOB_DISCOVER_ALL_SOURCE = 'discover-all-source';
+export const JOB_RETRY_RECONCILER = 'retry-reconciler';
 
 /**
  * Bull priority — LOWER number = HIGHER priority. Workers pick the lowest
@@ -22,6 +23,7 @@ export const JOB_DISCOVER_ALL_SOURCE = 'discover-all-source';
  */
 export const JOB_PRIORITY = {
   FETCH_CHAPTER: 1,
+  RETRY_RECONCILER: 2,
   DISCOVER_CHAPTERS: 5,
   DISCOVER_ALL_SOURCE: 8,
   IMPORT_STORY: 10,
