@@ -76,6 +76,7 @@ function AdminStoryDetail() {
       <div>
         <Link
           to="/admin/stories"
+          search={{ page: 1, q: '' }}
           className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] text-fg-muted hover:text-fg transition-colors duration-200 cursor-pointer mb-3"
         >
           <ArrowLeft className="h-3.5 w-3.5" />

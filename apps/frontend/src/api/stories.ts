@@ -32,6 +32,7 @@ export async function listStories(
   featured?: boolean,
   discoveryStatus?: 'complete' | 'stub',
   author?: string,
+  q?: string,
 ): Promise<StorySummary[]> {
   const res = await api.get<StorySummary[]>('/stories', {
     params: {
@@ -41,6 +42,7 @@ export async function listStories(
       ...(featured === undefined ? {} : { featured: String(featured) }),
       ...(discoveryStatus ? { discoveryStatus } : {}),
       ...(author ? { author } : {}),
+      ...(q ? { q } : {}),
     },
   });
   return res.data;
@@ -53,11 +55,13 @@ export async function setFeatured(storyId: string, featured: boolean): Promise<v
 export async function getStoriesCount(
   genre?: string,
   discoveryStatus?: 'complete' | 'stub',
+  q?: string,
 ): Promise<number> {
   const res = await api.get<{ total: number }>('/stories/count', {
     params: {
       ...(genre ? { genre } : {}),
       ...(discoveryStatus ? { discoveryStatus } : {}),
+      ...(q ? { q } : {}),
     },
   });
   return res.data.total;

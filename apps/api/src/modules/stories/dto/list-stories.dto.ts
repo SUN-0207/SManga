@@ -38,4 +38,12 @@ export class ListStoriesDto {
   @IsOptional()
   @IsString()
   author?: string;
+
+  /**
+   * Free-text search over `title || ' ' || author` (Vietnamese-friendly via
+   * the existing GIN/pg_trgm index on `immutable_unaccent(lower(...))`).
+   */
+  @IsOptional()
+  @IsString()
+  q?: string;
 }

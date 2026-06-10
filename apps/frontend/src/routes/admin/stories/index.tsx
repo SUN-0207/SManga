@@ -9,10 +9,14 @@ import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { ChevronRight, Compass, Download, Loader2, Search, X, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/admin/stories/')({
   component: AdminStoriesPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    page: typeof search.page === 'number' ? search.page : Number(search.page) || 1,
+    q: typeof search.q === 'string' ? search.q : '',
+  }),
 });
 
 const PAGE_SIZE = 50;
@@ -43,33 +47,59 @@ function formatDateVN(iso: string): string {
 
 function AdminStoriesPage() {
   const qc = useQueryClient();
+  const { page, q } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const [filter, setFilter] = useState<Filter>('all');
-  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Local input mirrors the URL `q` so typing feels instant; we debounce the
+  // commit back to the URL (and therefore the query keys) by 250ms.
+  const [searchInput, setSearchInput] = useState(q);
+  useEffect(() => {
+    if (searchInput === q) return;
+    const t = setTimeout(() => {
+      void navigate({ search: { q: searchInput.trim(), page: 1 } });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [searchInput, q, navigate]);
+
+  function clearSearch() {
+    setSearchInput('');
+    void navigate({ search: { q: '', page: 1 } });
+  }
+
+  function setPage(next: number) {
+    void navigate({ search: { q, page: next } });
+  }
 
   // Translate UI filter → server param. 'all' = no filter on discovery_status.
   const discoveryParam = filter === 'full' ? 'complete' : filter === 'stub' ? 'stub' : undefined;
+  // Pass undefined (not empty string) so the API params object omits `q`
+  // entirely when the search is blank — keeps the URL/query cache clean.
+  const qParam = q || undefined;
 
   const { data: stories = [], isLoading } = useQuery({
-    queryKey: ['admin-stories', 'list', { page, limit: PAGE_SIZE, filter }],
-    queryFn: () => listStories(page, PAGE_SIZE, undefined, undefined, discoveryParam),
+    queryKey: ['admin-stories', 'list', { page, limit: PAGE_SIZE, filter, q }],
+    queryFn: () =>
+      listStories(page, PAGE_SIZE, undefined, undefined, discoveryParam, undefined, qParam),
     placeholderData: (prev) => prev,
   });
 
   // Three count queries run in parallel — drive the filter-pill badges with
   // the real DB totals instead of `.length` of the current page (which was
-  // capped at the page size and made "Tất cả (100)" misleading).
+  // capped at the page size and made "Tất cả (100)" misleading). Counts also
+  // filter by `q` so the badges stay consistent with the visible list.
   const totalAllQ = useQuery({
-    queryKey: ['admin-stories', 'count', 'all'],
-    queryFn: () => getStoriesCount(undefined, undefined),
+    queryKey: ['admin-stories', 'count', 'all', q],
+    queryFn: () => getStoriesCount(undefined, undefined, qParam),
   });
   const totalFullQ = useQuery({
-    queryKey: ['admin-stories', 'count', 'full'],
-    queryFn: () => getStoriesCount(undefined, 'complete'),
+    queryKey: ['admin-stories', 'count', 'full', q],
+    queryFn: () => getStoriesCount(undefined, 'complete', qParam),
   });
   const totalStubQ = useQuery({
-    queryKey: ['admin-stories', 'count', 'stub'],
-    queryFn: () => getStoriesCount(undefined, 'stub'),
+    queryKey: ['admin-stories', 'count', 'stub', q],
+    queryFn: () => getStoriesCount(undefined, 'stub', qParam),
   });
 
   const totalAll = totalAllQ.data ?? 0;
@@ -143,8 +173,32 @@ function AdminStoriesPage() {
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated">
-        <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2">
+        <div className="px-5 py-3 border-b border-border space-y-3">
+          <div className="relative max-w-md">
+            <Search
+              aria-hidden
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-fg-subtle pointer-events-none"
+            />
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Tìm theo tên truyện hoặc tác giả..."
+              aria-label="Tìm truyện theo tên hoặc tác giả"
+              className="block h-10 w-full rounded-md border border-border bg-bg-subtle pl-9 pr-10 text-body-sm text-fg placeholder:text-fg-subtle transition-shadow duration-fast focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/40"
+            />
+            {searchInput.length > 0 && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                aria-label="Xoá tìm kiếm"
+                className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-6 w-6 rounded-md text-fg-muted hover:bg-bg-subtle hover:text-fg transition-colors duration-fast cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
             <h2 className="font-sans font-semibold text-heading-md text-fg mr-2">
               Danh sách truyện
             </h2>
@@ -162,7 +216,16 @@ function AdminStoriesPage() {
         {isLoading ? (
           <p className="text-body-sm text-fg-muted p-8 text-center">Đang tải...</p>
         ) : stories.length === 0 ? (
-          <StoriesEmptyState filter={filter} />
+          q ? (
+            <EmptyState
+              illustration={<EmptySearch />}
+              title="Không tìm thấy truyện nào"
+              description={`Không có truyện nào khớp với "${q}". Thử từ khoá khác.`}
+              cta={{ label: 'Xoá tìm kiếm', onClick: clearSearch }}
+            />
+          ) : (
+            <StoriesEmptyState filter={filter} />
+          )
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-body-sm">

@@ -17,15 +17,24 @@ export class StoriesController {
 
   @Get()
   list(@Query() q: ListStoriesDto) {
-    return this.stories.list(q.page, q.limit, q.genre, q.featured, q.discoveryStatus, q.author);
+    return this.stories.list(
+      q.page,
+      q.limit,
+      q.genre,
+      q.featured,
+      q.discoveryStatus,
+      q.author,
+      q.q,
+    );
   }
 
   @Get('count')
   count(
     @Query('genre') genre?: string,
     @Query('discoveryStatus') discoveryStatus?: 'complete' | 'stub',
+    @Query('q') q?: string,
   ) {
-    return this.stories.count(genre, discoveryStatus);
+    return this.stories.count(genre, discoveryStatus, q);
   }
 
   @Get('storage-stats')

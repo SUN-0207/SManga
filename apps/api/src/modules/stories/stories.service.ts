@@ -73,6 +73,7 @@ export class StoriesService {
   async count(
     genreSlug?: string,
     discoveryStatus?: 'complete' | 'stub',
+    q?: string,
   ): Promise<{ total: number }> {
     // `discovery_status` enum: 'pending' | 'running' | 'complete' | 'failed'.
     // 'stub' = anything not yet complete (everything except 'complete').
@@ -82,6 +83,13 @@ export class StoriesService {
         : discoveryStatus === 'stub'
           ? sql`AND s.discovery_status <> 'complete'`
           : sql``;
+    // Vietnamese-friendly free-text search via the GIN trigram index on
+    // immutable_unaccent(lower(title || ' ' || author)) — see CLAUDE.md
+    // hard-won workaround #13.
+    const qFilter = q
+      ? sql`AND immutable_unaccent(lower(s.title || ' ' || COALESCE(s.author,'')))
+            ILIKE '%' || immutable_unaccent(lower(${q})) || '%'`
+      : sql``;
 
     if (genreSlug) {
       const r = await this.db.execute<{ c: string }>(sql`
@@ -89,13 +97,13 @@ export class StoriesService {
         FROM story s
         INNER JOIN story_genre sg ON sg.story_id = s.id
         INNER JOIN genre g        ON g.id = sg.genre_id AND g.slug = ${genreSlug}
-        WHERE 1=1 ${discoveryFilter}
+        WHERE 1=1 ${discoveryFilter} ${qFilter}
       `);
       const arr = rowsOf<{ c: string | number }>(r);
       return { total: Number(arr[0]?.c ?? 0) };
     }
     const r = await this.db.execute<{ c: string | number }>(sql`
-      SELECT COUNT(*)::int AS c FROM story s WHERE 1=1 ${discoveryFilter}
+      SELECT COUNT(*)::int AS c FROM story s WHERE 1=1 ${discoveryFilter} ${qFilter}
     `);
     const arr = rowsOf<{ c: string | number }>(r);
     return { total: Number(arr[0]?.c ?? 0) };
@@ -108,6 +116,7 @@ export class StoriesService {
     featuredOnly?: boolean,
     discoveryStatus?: 'complete' | 'stub',
     author?: string,
+    q?: string,
   ) {
     const genreJoin = genreSlug
       ? sql`INNER JOIN story_genre sg ON sg.story_id = s.id
@@ -122,6 +131,13 @@ export class StoriesService {
           ? sql`AND s.discovery_status <> 'complete'`
           : sql``;
     const authorFilter = author ? sql`AND s.author = ${author}` : sql``;
+    // Vietnamese-friendly free-text search via the GIN trigram index on
+    // immutable_unaccent(lower(title || ' ' || author)) — see CLAUDE.md
+    // hard-won workaround #13.
+    const qFilter = q
+      ? sql`AND immutable_unaccent(lower(s.title || ' ' || COALESCE(s.author,'')))
+            ILIKE '%' || immutable_unaccent(lower(${q})) || '%'`
+      : sql``;
 
     const rawRows = await this.db.execute<{
       id: string;
@@ -166,7 +182,7 @@ export class StoriesService {
         WHERE status = 'crawled'
         GROUP BY story_id
       ) c ON c.story_id = s.id
-      WHERE 1=1 ${featuredFilter} ${discoveryFilter} ${authorFilter}
+      WHERE 1=1 ${featuredFilter} ${discoveryFilter} ${authorFilter} ${qFilter}
       ORDER BY s.updated_at DESC
       LIMIT ${limit} OFFSET ${(page - 1) * limit}
     `);
