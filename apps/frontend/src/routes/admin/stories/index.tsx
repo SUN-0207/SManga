@@ -6,9 +6,22 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
 import { EmptyFolder } from '@/components/ui/illustrations/EmptyFolder';
 import { EmptySearch } from '@/components/ui/illustrations/EmptySearch';
+import { type CrawlBadgeKind, crawlBadge } from '@/lib/crawl-badge';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import { ChevronRight, Compass, Download, Loader2, Search, X, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  Circle,
+  Compass,
+  Download,
+  Loader2,
+  Search,
+  X,
+  XCircle,
+  Zap,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/admin/stories/')({
@@ -35,7 +48,33 @@ const STATUS_TONE: Record<string, string> = {
   unknown: 'bg-bg-subtle text-fg-muted border-border',
 };
 
-type Filter = 'all' | 'full' | 'stub';
+const CRAWL_BADGE: Record<
+  Exclude<CrawlBadgeKind, 'stub'>,
+  { label: (n: number) => string; tone: string; icon: typeof CheckCircle2 }
+> = {
+  full: {
+    label: () => 'Đủ',
+    tone: 'bg-positive/15 text-positive border-positive/30',
+    icon: CheckCircle2,
+  },
+  failed: {
+    label: (n) => `Lỗi ${n}`,
+    tone: 'bg-destructive/15 text-destructive border-destructive/30',
+    icon: XCircle,
+  },
+  untouched: {
+    label: () => 'Chưa crawl',
+    tone: 'bg-bg-subtle text-fg-muted border-border',
+    icon: Circle,
+  },
+  partial: {
+    label: (n) => `Thiếu ${n}`,
+    tone: 'bg-accent/15 text-accent border-accent/30',
+    icon: AlertTriangle,
+  },
+};
+
+type Filter = 'all' | 'full' | 'stub' | 'needs-crawl';
 
 function formatDateVN(iso: string): string {
   return new Intl.DateTimeFormat('vi-VN', {
@@ -73,7 +112,10 @@ function AdminStoriesPage() {
   }
 
   // Translate UI filter → server param. 'all' = no filter on discovery_status.
+  // 'needs-crawl' is its own axis — leave discoveryStatus unset; the server
+  // forces discovery='complete' inside the needs-crawl filter.
   const discoveryParam = filter === 'full' ? 'complete' : filter === 'stub' ? 'stub' : undefined;
+  const crawlStateParam = filter === 'needs-crawl' ? ('needs-crawl' as const) : undefined;
   // Pass undefined (not empty string) so the API params object omits `q`
   // entirely when the search is blank — keeps the URL/query cache clean.
   const qParam = q || undefined;
@@ -81,7 +123,16 @@ function AdminStoriesPage() {
   const { data: stories = [], isLoading } = useQuery({
     queryKey: ['admin-stories', 'list', { page, limit: PAGE_SIZE, filter, q }],
     queryFn: () =>
-      listStories(page, PAGE_SIZE, undefined, undefined, discoveryParam, undefined, qParam),
+      listStories(
+        page,
+        PAGE_SIZE,
+        undefined,
+        undefined,
+        discoveryParam,
+        undefined,
+        qParam,
+        crawlStateParam,
+      ),
     placeholderData: (prev) => prev,
   });
 
@@ -101,11 +152,23 @@ function AdminStoriesPage() {
     queryKey: ['admin-stories', 'count', 'stub', q],
     queryFn: () => getStoriesCount(undefined, 'stub', qParam),
   });
+  const totalNeedsCrawlQ = useQuery({
+    queryKey: ['admin-stories', 'count', 'needs-crawl', q],
+    queryFn: () => getStoriesCount(undefined, undefined, qParam, 'needs-crawl'),
+  });
 
   const totalAll = totalAllQ.data ?? 0;
   const totalFull = totalFullQ.data ?? 0;
   const totalStub = totalStubQ.data ?? 0;
-  const activeTotal = filter === 'full' ? totalFull : filter === 'stub' ? totalStub : totalAll;
+  const totalNeedsCrawl = totalNeedsCrawlQ.data ?? 0;
+  const activeTotal =
+    filter === 'full'
+      ? totalFull
+      : filter === 'stub'
+        ? totalStub
+        : filter === 'needs-crawl'
+          ? totalNeedsCrawl
+          : totalAll;
   const totalPages = Math.max(1, Math.ceil(activeTotal / PAGE_SIZE));
 
   function changeFilter(next: Filter) {
@@ -211,6 +274,12 @@ function AdminStoriesPage() {
             <FilterChip active={filter === 'stub'} onClick={() => changeFilter('stub')}>
               Chỉ metadata ({totalStub.toLocaleString('vi-VN')})
             </FilterChip>
+            <FilterChip
+              active={filter === 'needs-crawl'}
+              onClick={() => changeFilter('needs-crawl')}
+            >
+              ⚠ Cần crawl ({totalNeedsCrawl.toLocaleString('vi-VN')})
+            </FilterChip>
           </div>
         </div>
         {isLoading ? (
@@ -257,6 +326,9 @@ function AdminStoriesPage() {
                   </th>
                   <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums">
                     Chapter
+                  </th>
+                  <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
+                    Crawl
                   </th>
                   <th className="px-3 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
                     Cập nhật
@@ -307,7 +379,27 @@ function AdminStoriesPage() {
                         <StubBadge status={r.discoveryStatus} />
                       </td>
                       <td className="px-3 py-3 tabular-nums text-fg">
-                        {isStub ? <span className="text-fg-muted">—</span> : r.totalChapters}
+                        {isStub ? (
+                          <span className="text-fg-muted">—</span>
+                        ) : (
+                          `${r.crawledChapters}/${r.crawledChapters + r.pendingChapters + r.failedChapters}`
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
+                        {(() => {
+                          const b = crawlBadge(r);
+                          if (b.kind === 'stub') return <span className="text-fg-muted">—</span>;
+                          const meta = CRAWL_BADGE[b.kind];
+                          const Icon = meta.icon;
+                          return (
+                            <span
+                              className={`inline-flex items-center gap-1 h-5 px-2 rounded-full text-[11px] border whitespace-nowrap ${meta.tone}`}
+                            >
+                              <Icon className="h-3 w-3" aria-hidden />
+                              {meta.label(b.count)}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-3 py-3 text-[11px] text-fg-muted tabular-nums">
                         {formatDateVN(r.updatedAt)}
@@ -361,6 +453,15 @@ function StoriesEmptyState({ filter }: Readonly<{ filter: Filter }>) {
         illustration={<EmptySearch />}
         title="Không có truyện đã đủ chapter"
         description="Chưa có truyện nào hoàn thành crawl. Hãy quét + crawl từ catalog."
+      />
+    );
+  }
+  if (filter === 'needs-crawl') {
+    return (
+      <EmptyState
+        illustration={<EmptySearch />}
+        title="Không có truyện cần crawl"
+        description="Mọi truyện đã khám phá đều đã crawl đủ chapter."
       />
     );
   }
