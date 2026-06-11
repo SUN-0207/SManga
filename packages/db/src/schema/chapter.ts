@@ -1,5 +1,7 @@
+import { sql } from 'drizzle-orm';
 import {
   customType,
+  index,
   integer,
   numeric,
   pgTable,
@@ -41,6 +43,12 @@ export const chapter = pgTable(
   },
   (t) => ({
     uniqStoryIndex: uniqueIndex('chapter_story_index_uniq').on(t.storyId, t.index),
+    // Partial index for "has uncrawled/errored chapters": the needs-crawl
+    // EXISTS probe and crawl-missing selects become empty-range index probes
+    // instead of heap walks over every chapter of fully-crawled stories.
+    needsCrawlIdx: index('chapter_needs_crawl_idx')
+      .on(t.storyId)
+      .where(sql`${t.status} IN ('pending', 'failed')`),
   }),
 );
 

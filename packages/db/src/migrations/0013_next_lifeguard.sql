@@ -1,0 +1,2 @@
+CREATE INDEX "story_updated_at_idx" ON "story" USING btree ("updated_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "chapter_needs_crawl_idx" ON "chapter" USING btree ("story_id") WHERE "chapter"."status" IN ('pending', 'failed');

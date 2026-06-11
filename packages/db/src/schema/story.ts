@@ -50,6 +50,8 @@ export const story = pgTable(
       sql`immutable_unaccent(lower(${t.title} || ' ' || coalesce(${t.author}, ''))) gin_trgm_ops`,
     ),
     lastChapterIdx: index('story_last_chapter_idx').on(t.lastChapterAt),
+    // Serves the public list's ORDER BY updated_at DESC LIMIT N top-N.
+    updatedAtIdx: index('story_updated_at_idx').on(t.updatedAt.desc()),
   }),
 );
 
