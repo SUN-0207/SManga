@@ -30,7 +30,13 @@ async function bootstrap() {
     credentials: true,
   });
   app.setGlobalPrefix('api', {
-    exclude: ['sitemap.xml', 'sitemap-stories.xml', 'sitemap-chapters.xml', 'robots.txt'],
+    exclude: [
+      'sitemap.xml',
+      'sitemap-stories.xml',
+      'sitemap-chapters.xml',
+      'sitemap-chapters-:n.xml',
+      'robots.txt',
+    ],
   });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
   app.useGlobalPipes(

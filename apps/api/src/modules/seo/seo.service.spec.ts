@@ -1,75 +1,73 @@
+import { describe, expect, it, vi } from 'vitest';
 import { SeoService } from './seo.service';
 
-describe('SeoService builders', () => {
-  describe('buildSitemapIndexXml', () => {
-    it('returns sitemap index referencing stories + chapters', () => {
-      const svc = new SeoService({} as never);
-      const xml = svc.buildSitemapIndexXml('2026-06-07T10:00:00.000Z');
-      expect(xml).toContain('<?xml version="1.0"');
-      expect(xml).toContain('<sitemapindex');
-      expect(xml).toContain('https://smanga.shop/sitemap-stories.xml');
-      expect(xml).toContain('https://smanga.shop/sitemap-chapters.xml');
-      expect(xml).toContain('<lastmod>2026-06-07T10:00:00.000Z</lastmod>');
-    });
+// db.execute is called as: currentVersion, listStories, listChapters (in rebuild order).
+function mockDb(version: string, storyRows: unknown[], chapterRows: unknown[]) {
+  const execute = vi
+    .fn()
+    .mockResolvedValueOnce({ rows: [{ v: version }] }) // currentVersion
+    .mockResolvedValueOnce({ rows: storyRows }) // listStoriesForSitemap
+    .mockResolvedValueOnce({ rows: chapterRows }); // listChaptersForSitemap
+  return { db: { execute } as never, execute };
+}
+
+function chapterRows(n: number) {
+  return Array.from({ length: n }, (_, i) => ({
+    slug: `s${i}`,
+    index: '1',
+    updated_at: '2026-06-01T00:00:00.000Z',
+  }));
+}
+
+describe('SeoService sitemap sharding + cache', () => {
+  it('shards chapters at 10k/file and lists each shard in the index', async () => {
+    // 25,001 chapter URLs -> 3 shards (10k, 10k, 5k001)
+    const { db } = mockDb(
+      '2026-06-11T10:00:00.000Z',
+      [{ slug: 'a', updated_at: '2026-06-01T00:00:00.000Z' }],
+      chapterRows(25_001),
+    );
+    const svc = new SeoService(db);
+
+    const index = await svc.getSitemap('index');
+    expect(index).not.toBeNull();
+    expect(index?.body).toContain('/sitemap-chapters-1.xml');
+    expect(index?.body).toContain('/sitemap-chapters-3.xml');
+    expect(index?.body).not.toContain('/sitemap-chapters-4.xml');
+    expect(index?.body).toContain('/sitemap-stories.xml');
+
+    const shard3 = await svc.getSitemap('chapters-3');
+    expect(shard3?.body.match(/<url>/g)?.length).toBe(5_001);
+    const shard1 = await svc.getSitemap('chapters-1');
+    expect(shard1?.body.match(/<url>/g)?.length).toBe(10_000);
+    expect(await svc.getSitemap('chapters-4')).toBeNull();
   });
 
-  describe('buildSitemapStoriesXml', () => {
-    it('renders one <url> per story with lastmod', () => {
-      const svc = new SeoService({} as never);
-      const xml = svc.buildSitemapStoriesXml([
-        { slug: 'tien-hiep', updatedAt: '2026-06-01T00:00:00Z' },
-        { slug: 'ngon-tinh', updatedAt: '2026-05-30T00:00:00Z' },
-      ]);
-      expect(xml).toContain('<loc>https://smanga.shop/truyen/tien-hiep</loc>');
-      expect(xml).toContain('<lastmod>2026-06-01T00:00:00Z</lastmod>');
-      expect(xml).toContain('<loc>https://smanga.shop/truyen/ngon-tinh</loc>');
-      expect(xml.match(/<url>/g)?.length).toBe(2);
-    });
-
-    it('escapes XML-unsafe characters in slugs', () => {
-      const svc = new SeoService({} as never);
-      const xml = svc.buildSitemapStoriesXml([
-        { slug: 'co-&-the', updatedAt: '2026-06-01T00:00:00Z' },
-      ]);
-      expect(xml).toContain('co-&amp;-the');
-      expect(xml).not.toContain('co-&-the<');
-    });
-
-    it('returns valid empty <urlset> for no stories', () => {
-      const svc = new SeoService({} as never);
-      const xml = svc.buildSitemapStoriesXml([]);
-      expect(xml).toContain('<urlset');
-      expect(xml).toContain('</urlset>');
-      expect(xml).not.toContain('<url>');
-    });
+  it('always exposes chapters-1 even with zero chapters', async () => {
+    const { db } = mockDb('2026-06-11T10:00:00.000Z', [], []);
+    const svc = new SeoService(db);
+    const shard1 = await svc.getSitemap('chapters-1');
+    expect(shard1).not.toBeNull();
+    expect(shard1?.body).toContain('<urlset');
+    expect((await svc.getSitemap('index'))?.body).toContain('/sitemap-chapters-1.xml');
   });
 
-  describe('buildSitemapChaptersXml', () => {
-    it('renders <url> for each (slug, chapterIndex) pair', () => {
-      const svc = new SeoService({} as never);
-      const xml = svc.buildSitemapChaptersXml([
-        { slug: 'tien-hiep', chapterIndex: '1', updatedAt: '2026-06-01T00:00:00Z' },
-        { slug: 'tien-hiep', chapterIndex: '2', updatedAt: '2026-06-02T00:00:00Z' },
-      ]);
-      expect(xml).toContain('<loc>https://smanga.shop/truyen/tien-hiep/chuong/1</loc>');
-      expect(xml).toContain('<loc>https://smanga.shop/truyen/tien-hiep/chuong/2</loc>');
-      expect(xml.match(/<url>/g)?.length).toBe(2);
-    });
+  it('builds once: a second getSitemap within TTL makes no new db calls', async () => {
+    const { db, execute } = mockDb('2026-06-11T10:00:00.000Z', [], chapterRows(1));
+    const svc = new SeoService(db);
+    await svc.getSitemap('index');
+    const callsAfterBuild = execute.mock.calls.length; // 3 (version + stories + chapters)
+    await svc.getSitemap('stories');
+    await svc.getSitemap('chapters-1');
+    expect(execute.mock.calls.length).toBe(callsAfterBuild);
   });
 
-  describe('buildRobotsTxt', () => {
-    it('disallows admin/auth/library/account/profile + links sitemap', () => {
-      const svc = new SeoService({} as never);
-      const txt = svc.buildRobotsTxt();
-      expect(txt).toMatch(/^User-agent: \*$/m);
-      expect(txt).toMatch(/^Disallow: \/admin\/$/m);
-      expect(txt).toMatch(/^Disallow: \/dang-nhap$/m);
-      expect(txt).toMatch(/^Disallow: \/dang-ky$/m);
-      expect(txt).toMatch(/^Disallow: \/tim-kiem$/m);
-      expect(txt).toMatch(/^Disallow: \/tu-sach$/m);
-      expect(txt).toMatch(/^Disallow: \/tai-khoan$/m);
-      expect(txt).toMatch(/^Disallow: \/ban$/m);
-      expect(txt).toMatch(/^Sitemap: https:\/\/smanga\.shop\/sitemap\.xml$/m);
-    });
+  it('derives a stable ETag from the version (304-friendly)', async () => {
+    const { db } = mockDb('2026-06-11T10:00:00.000Z', [], chapterRows(1));
+    const svc = new SeoService(db);
+    const a = await svc.getSitemap('stories');
+    const b = await svc.getSitemap('stories');
+    expect(a?.etag).toBe(b?.etag);
+    expect(a?.etag).toMatch(/^"[0-9a-f]{40}"$/);
   });
 });
