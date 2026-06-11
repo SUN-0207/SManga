@@ -34,17 +34,23 @@ last).
    - Then: **Eligible for cache**; Edge TTL → **"Ignore cache-control header and
      use this TTL"** → `86400` (1 day).
 
-3. **Public reader JSON (anonymous only) — respect origin s-maxage**
-   - Expression (wrap the whole thing; inner OR group parenthesized):
+3. **Public reader JSON — respect origin s-maxage**
+   - Expression (OR of the public read prefixes; NO cookie clause — `http.cookie`
+     isn't reliably available in Cache Rules, and it's redundant, see below):
      ```
-     ((starts_with(http.request.uri.path, "/api/v1/stories") or starts_with(http.request.uri.path, "/api/v1/chapters/by-slug") or starts_with(http.request.uri.path, "/api/v1/rankings") or starts_with(http.request.uri.path, "/api/v1/search")) and not (http.cookie contains "jwt"))
+     (starts_with(http.request.uri.path, "/api/v1/stories") or starts_with(http.request.uri.path, "/api/v1/chapters/by-slug") or starts_with(http.request.uri.path, "/api/v1/rankings") or starts_with(http.request.uri.path, "/api/v1/search"))
      ```
    - Then: **Eligible for cache**; Edge TTL → **"Use cache-control header if
-     present, bypass cache if not"** (do NOT hardcode a TTL — this honors the
-     per-endpoint `s-maxage` the API sends: 300s for lists, 86400s for chapter
-     content; admin endpoints that send no cache header safely bypass). The
-     no-`jwt`-cookie condition keeps logged-in/admin responses out of the shared
-     edge cache.
+     present, bypass cache if not"** (do NOT hardcode a TTL).
+   - **Why no cookie guard is needed:** the Edge-TTL "bypass if not present" IS
+     the guard — only responses that carry a cache header get cached, and
+     Phase 2 sends `s-maxage` ONLY on the public reader responses (lists 300s,
+     chapter content 86400s). Admin/authed endpoints sharing these prefixes
+     (`/stories/:id`, `/stories/storage-stats`, `/stories/:id/chapters`,
+     `/stories/counts`) send no cache header → they bypass. The public endpoints
+     return identical data for everyone (personalization is under `/api/v1/me/*`,
+     which doesn't match), so a shared edge cache can't leak. Cloudflare also
+     won't cache any response carrying `Set-Cookie`.
 
 4. **Rest of the API — bypass** (must be last)
    - Expression: `(starts_with(http.request.uri.path, "/api/"))`
