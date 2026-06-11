@@ -25,6 +25,7 @@ export class StoriesController {
       q.discoveryStatus,
       q.author,
       q.q,
+      q.crawlState,
     );
   }
 

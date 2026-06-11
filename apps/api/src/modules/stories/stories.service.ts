@@ -117,6 +117,7 @@ export class StoriesService {
     discoveryStatus?: 'complete' | 'stub',
     author?: string,
     q?: string,
+    crawlState?: 'needs-crawl',
   ) {
     const genreJoin = genreSlug
       ? sql`INNER JOIN story_genre sg ON sg.story_id = s.id
@@ -139,6 +140,14 @@ export class StoriesService {
             ILIKE '%' || immutable_unaccent(lower(${q})) || '%'`
       : sql``;
 
+    // Discovered (discovery complete) stories that still have uncrawled or
+    // errored chapters. References the joined `c` subquery's aggregates.
+    const crawlFilter =
+      crawlState === 'needs-crawl'
+        ? sql`AND s.discovery_status = 'complete'
+              AND COALESCE(c.pending_count, 0) + COALESCE(c.failed_count, 0) > 0`
+        : sql``;
+
     const rawRows = await this.db.execute<{
       id: string;
       slug: string;
@@ -156,6 +165,9 @@ export class StoriesService {
       rating_count: string;
       featured: boolean;
       latest_chapter_index: string | null;
+      crawled_count: number;
+      pending_count: number;
+      failed_count: number;
     }>(sql`
       SELECT
         s.id, s.slug, s.title, s.author, s.status,
@@ -165,7 +177,10 @@ export class StoriesService {
         s.featured,
         r.avg                  AS rating_avg,
         COALESCE(r.cnt, 0)     AS rating_count,
-        c.latest_chapter_index AS latest_chapter_index
+        c.latest_chapter_index AS latest_chapter_index,
+        COALESCE(c.crawled_count, 0) AS crawled_count,
+        COALESCE(c.pending_count, 0) AS pending_count,
+        COALESCE(c.failed_count, 0)  AS failed_count
       FROM story s
       ${genreJoin}
       LEFT JOIN (
@@ -177,12 +192,14 @@ export class StoriesService {
       ) r ON r.story_id = s.id
       LEFT JOIN (
         SELECT story_id,
-               MAX(index) AS latest_chapter_index
+               MAX(index) FILTER (WHERE status = 'crawled') AS latest_chapter_index,
+               COUNT(*)   FILTER (WHERE status = 'crawled')::int AS crawled_count,
+               COUNT(*)   FILTER (WHERE status = 'pending')::int AS pending_count,
+               COUNT(*)   FILTER (WHERE status = 'failed')::int  AS failed_count
         FROM chapter
-        WHERE status = 'crawled'
         GROUP BY story_id
       ) c ON c.story_id = s.id
-      WHERE 1=1 ${featuredFilter} ${discoveryFilter} ${authorFilter} ${qFilter}
+      WHERE 1=1 ${featuredFilter} ${discoveryFilter} ${authorFilter} ${qFilter} ${crawlFilter}
       ORDER BY s.updated_at DESC
       LIMIT ${limit} OFFSET ${(page - 1) * limit}
     `);
@@ -204,6 +221,9 @@ export class StoriesService {
       rating_count: string;
       featured: boolean;
       latest_chapter_index: string | null;
+      crawled_count: number;
+      pending_count: number;
+      failed_count: number;
     }>(rawRows);
 
     return arr.map((row) => ({
@@ -227,6 +247,9 @@ export class StoriesService {
       // is in 'crawled' status yet — FE hides the pill in that case.
       latestChapterIndex:
         row.latest_chapter_index != null ? Math.floor(Number(row.latest_chapter_index)) : null,
+      crawledChapters: Number(row.crawled_count ?? 0),
+      pendingChapters: Number(row.pending_count ?? 0),
+      failedChapters: Number(row.failed_count ?? 0),
     }));
   }
 
