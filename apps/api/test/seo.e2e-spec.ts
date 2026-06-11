@@ -59,7 +59,13 @@ describe('SEO endpoints (e2e)', () => {
 
     // Mirror main.ts: exclude the SEO paths from the global /api prefix.
     app.setGlobalPrefix('api', {
-      exclude: ['sitemap.xml', 'sitemap-stories.xml', 'sitemap-chapters.xml', 'robots.txt'],
+      exclude: [
+        'sitemap.xml',
+        'sitemap-stories.xml',
+        'sitemap-chapters.xml',
+        'sitemap-chapters-:n.xml',
+        'robots.txt',
+      ],
     });
     app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
     app.useGlobalPipes(
@@ -85,7 +91,9 @@ describe('SEO endpoints (e2e)', () => {
     expect(res.headers['content-type']).toMatch(/application\/xml/);
     expect(res.text).toContain('<sitemapindex');
     expect(res.text).toContain('sitemap-stories.xml');
-    expect(res.text).toContain('sitemap-chapters.xml');
+    // Chapter sitemap is now sharded: the index lists sitemap-chapters-N.xml
+    // (always at least shard 1), not the old monolithic sitemap-chapters.xml.
+    expect(res.text).toContain('sitemap-chapters-1.xml');
   });
 
   // ── story sitemap ──────────────────────────────────────────────────────────
@@ -98,8 +106,16 @@ describe('SEO endpoints (e2e)', () => {
 
   // ── chapter sitemap ────────────────────────────────────────────────────────
 
-  it('GET /sitemap-chapters.xml → 200 application/xml with urlset', async () => {
+  it('GET /sitemap-chapters.xml → 200 application/xml with urlset (legacy = shard 1)', async () => {
     const res = await req(supertest(app.getHttpServer()).get('/sitemap-chapters.xml').expect(200));
+    expect(res.headers['content-type']).toMatch(/application\/xml/);
+    expect(res.text).toContain('<urlset');
+  });
+
+  it('GET /sitemap-chapters-1.xml → 200 application/xml with urlset (sharded, at root)', async () => {
+    const res = await req(
+      supertest(app.getHttpServer()).get('/sitemap-chapters-1.xml').expect(200),
+    );
     expect(res.headers['content-type']).toMatch(/application\/xml/);
     expect(res.text).toContain('<urlset');
   });
