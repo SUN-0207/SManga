@@ -12,19 +12,25 @@ last):
 
 1. **Covers — cache 1 year**
    - When incoming requests match: `URI Path` `starts with` `/api/v1/cover/`
-   - Then: Eligible for cache; Edge TTL: Override to `1 year`; Browser TTL: respect origin.
+   - Then: Eligible for cache; Edge TTL: "Ignore cache-control header and use this TTL" → `31536000` (1 year); Browser TTL: respect origin.
 
 2. **Sitemaps — cache 24h**
-   - `URI Path` `matches regex` `^/sitemap.*\.xml$`
-   - Then: Eligible for cache; Edge TTL: Override to `1 day`.
+   - `URI Path` `starts with` `/sitemap` AND `URI Path` `ends with` `.xml`
+     (do NOT use a `matches` regex — that operator needs a Business plan and
+     the expression builder rejects it. Raw expression:
+     `starts_with(http.request.uri.path, "/sitemap") and ends_with(http.request.uri.path, ".xml")`)
+   - Then: Eligible for cache; Edge TTL: "Ignore cache-control header and use this TTL" → `86400` (1 day).
 
 3. **Public reader JSON (no cookie) — respect origin s-maxage**
    - `URI Path` `starts with` `/api/v1/stories` OR `starts with` `/api/v1/chapters/by-slug`
      OR `starts with` `/api/v1/rankings` OR `starts with` `/api/v1/search`
    - AND `Cookie` `does not contain` `jwt`
-   - Then: Eligible for cache; Edge TTL: respect origin (uses the `s-maxage`
-     the API now sends). The no-`jwt`-cookie condition keeps logged-in/admin
-     responses out of the shared edge cache.
+   - Then: Eligible for cache; Edge TTL: **"Use cache-control header if present,
+     bypass cache if not"** (do NOT hardcode a TTL here — this honors the
+     per-endpoint `s-maxage` the API sends: 300s for lists, 86400s for chapter
+     content, and admin endpoints that send no cache header safely bypass).
+     The no-`jwt`-cookie condition keeps logged-in/admin responses out of the
+     shared edge cache.
 
 4. **Rest of the API — bypass**
    - `URI Path` `starts with` `/api/`
