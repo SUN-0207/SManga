@@ -1,5 +1,5 @@
 import { type BulkAction, discoverApi } from '@/api/discover';
-import { getStoriesCount, listStories } from '@/api/stories';
+import { getStoriesCounts, listStories } from '@/api/stories';
 import { ImportStoryForm } from '@/components/admin/ImportStoryForm';
 import { StubBadge } from '@/components/admin/StubBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -92,13 +92,13 @@ function AdminStoriesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Local input mirrors the URL `q` so typing feels instant; we debounce the
-  // commit back to the URL (and therefore the query keys) by 250ms.
+  // commit back to the URL (and therefore the query keys) by 400ms.
   const [searchInput, setSearchInput] = useState(q);
   useEffect(() => {
     if (searchInput === q) return;
     const t = setTimeout(() => {
       void navigate({ search: { q: searchInput.trim(), page: 1 } });
-    }, 250);
+    }, 400);
     return () => clearTimeout(t);
   }, [searchInput, q, navigate]);
 
@@ -136,31 +136,18 @@ function AdminStoriesPage() {
     placeholderData: (prev) => prev,
   });
 
-  // Three count queries run in parallel — drive the filter-pill badges with
-  // the real DB totals instead of `.length` of the current page (which was
-  // capped at the page size and made "Tất cả (100)" misleading). Counts also
-  // filter by `q` so the badges stay consistent with the visible list.
-  const totalAllQ = useQuery({
-    queryKey: ['admin-stories', 'count', 'all', q],
-    queryFn: () => getStoriesCount(undefined, undefined, qParam),
-  });
-  const totalFullQ = useQuery({
-    queryKey: ['admin-stories', 'count', 'full', q],
-    queryFn: () => getStoriesCount(undefined, 'complete', qParam),
-  });
-  const totalStubQ = useQuery({
-    queryKey: ['admin-stories', 'count', 'stub', q],
-    queryFn: () => getStoriesCount(undefined, 'stub', qParam),
-  });
-  const totalNeedsCrawlQ = useQuery({
-    queryKey: ['admin-stories', 'count', 'needs-crawl', q],
-    queryFn: () => getStoriesCount(undefined, undefined, qParam, 'needs-crawl'),
+  // ONE round-trip for all four filter-pill totals; AbortSignal cancels
+  // superseded keystrokes' queries server-side.
+  const countsQ = useQuery({
+    queryKey: ['admin-stories', 'counts', q],
+    queryFn: ({ signal }) => getStoriesCounts(qParam, signal),
+    placeholderData: (prev) => prev,
   });
 
-  const totalAll = totalAllQ.data ?? 0;
-  const totalFull = totalFullQ.data ?? 0;
-  const totalStub = totalStubQ.data ?? 0;
-  const totalNeedsCrawl = totalNeedsCrawlQ.data ?? 0;
+  const totalAll = countsQ.data?.all ?? 0;
+  const totalFull = countsQ.data?.full ?? 0;
+  const totalStub = countsQ.data?.stub ?? 0;
+  const totalNeedsCrawl = countsQ.data?.needsCrawl ?? 0;
   const activeTotal =
     filter === 'full'
       ? totalFull

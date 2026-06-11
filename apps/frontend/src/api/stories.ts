@@ -76,6 +76,24 @@ export async function getStoriesCount(
   return res.data.total;
 }
 
+export interface StoriesCounts {
+  all: number;
+  full: number;
+  stub: number;
+  needsCrawl: number;
+}
+
+/** One round-trip for all four admin filter-pill totals (replaces 4 parallel
+ * getStoriesCount calls). Accepts React Query's AbortSignal so superseded
+ * keystrokes cancel server-side work. */
+export async function getStoriesCounts(q?: string, signal?: AbortSignal): Promise<StoriesCounts> {
+  const res = await api.get<StoriesCounts>('/stories/counts', {
+    params: { ...(q ? { q } : {}) },
+    signal,
+  });
+  return res.data;
+}
+
 export interface StoryDetail extends StorySummary {
   description: string;
   genres: { slug: string; name: string }[];

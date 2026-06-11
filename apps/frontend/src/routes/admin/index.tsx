@@ -49,14 +49,14 @@ function AdminDashboard() {
     // Wrap so React Query's queryFn context arg isn't forwarded to stats(fresh).
     queryFn: () => jobsApi.stats(),
     enabled: isLoggedIn,
-    refetchInterval: isLoggedIn ? 10_000 : false,
+    refetchInterval: isLoggedIn ? 30_000 : false,
     retry: false,
   });
   const storageQ = useQuery({
     queryKey: ['stories', 'storage-stats'],
     queryFn: getStorageStats,
     enabled: isLoggedIn,
-    refetchInterval: isLoggedIn ? 30_000 : false,
+    staleTime: 5 * 60_000,
     retry: false,
   });
 

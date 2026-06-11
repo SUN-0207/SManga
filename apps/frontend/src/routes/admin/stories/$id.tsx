@@ -2,10 +2,12 @@ import type { DiscoveryStatus } from '@/api/discover';
 import { setFeatured } from '@/api/stories';
 import { ChapterCrawlPanel } from '@/components/admin/ChapterCrawlPanel';
 import { StubBadge } from '@/components/admin/StubBadge';
+import { Pagination } from '@/components/ui/Pagination';
 import { api } from '@/lib/api-client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { AlertCircle, ArrowLeft, CheckCircle2, Clock, RefreshCw, Star } from 'lucide-react';
+import { useState } from 'react';
 
 export const Route = createFileRoute('/admin/stories/$id')({
   component: AdminStoryDetail,
@@ -35,6 +37,14 @@ interface ChapterRow {
   size: number | null;
 }
 
+interface AdminChaptersResponse {
+  items: ChapterRow[];
+  page: number;
+  totalPages: number;
+  total: number;
+  counts: { crawled: number; pending: number; failed: number };
+}
+
 const STATUS_META: Record<string, { tone: string; icon: typeof CheckCircle2 }> = {
   crawled: { tone: 'text-emerald-600', icon: CheckCircle2 },
   pending: { tone: 'text-fg-muted', icon: Clock },
@@ -54,22 +64,29 @@ function AdminStoryDetail() {
       (q.state.data as StoryRow | undefined)?.discoveryStatus === 'running' ? 5000 : false,
   });
 
+  const [chapterPage, setChapterPage] = useState(1);
   const chaptersQ = useQuery({
-    queryKey: ['admin', 'story', id, 'chapters'],
-    queryFn: () => api.get<ChapterRow[]>(`/stories/${id}/chapters`).then((r) => r.data),
+    queryKey: ['admin', 'story', id, 'chapters', chapterPage],
+    queryFn: () =>
+      api
+        .get<AdminChaptersResponse>(`/stories/${id}/chapters`, {
+          params: { page: chapterPage, pageSize: 50 },
+        })
+        .then((r) => r.data),
     enabled: storyQ.data?.discoveryStatus === 'complete',
+    placeholderData: (prev) => prev,
   });
 
   const story = storyQ.data;
-  const chapters = chaptersQ.data ?? [];
+  const chapters = chaptersQ.data?.items ?? [];
 
   if (storyQ.isLoading) return <p className="text-sm text-fg-muted">Đang tải...</p>;
   if (!story) return <p className="text-sm text-destructive">Không tìm thấy truyện.</p>;
 
   const isStub = story.discoveryStatus !== 'complete';
-  const crawledCount = chapters.filter((c) => c.status === 'crawled').length;
-  const pendingCount = chapters.filter((c) => c.status === 'pending').length;
-  const failedCount = chapters.filter((c) => c.status === 'failed').length;
+  const crawledCount = chaptersQ.data?.counts.crawled ?? 0;
+  const pendingCount = chaptersQ.data?.counts.pending ?? 0;
+  const failedCount = chaptersQ.data?.counts.failed ?? 0;
 
   return (
     <div className="space-y-8">
@@ -123,62 +140,74 @@ function AdminStoryDetail() {
         <div className="rounded-xl border border-border bg-bg overflow-hidden">
           <div className="px-5 py-3 border-b border-border flex items-center justify-between">
             <h2 className="font-sans font-semibold text-base">Danh sách chapter</h2>
-            <span className="text-xs text-fg-muted tabular-nums">{chapters.length}</span>
+            <span className="text-xs text-fg-muted tabular-nums">
+              {(chaptersQ.data?.total ?? 0).toLocaleString('vi-VN')}
+            </span>
           </div>
           {chaptersQ.isLoading ? (
             <p className="text-sm text-fg-muted p-8 text-center">Đang tải...</p>
           ) : chapters.length === 0 ? (
             <p className="text-sm text-fg-muted p-8 text-center">Chưa có chapter.</p>
           ) : (
-            <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-bg z-10">
-                  <tr className="border-b border-border text-left">
-                    <th className="px-5 py-2.5 w-16 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums">
-                      #
-                    </th>
-                    <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
-                      Tiêu đề
-                    </th>
-                    <th className="px-5 py-2.5 w-28 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
-                      Trạng thái
-                    </th>
-                    <th className="px-5 py-2.5 w-24 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums">
-                      Bytes
-                    </th>
-                    <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
-                      Lỗi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {chapters.map((c) => {
-                    const meta = STATUS_META[c.status] ?? STATUS_FALLBACK;
-                    const Icon = meta.icon;
-                    return (
-                      <tr key={c.id} className="border-b border-border/60 last:border-0">
-                        <td className="px-5 py-2 font-mono text-xs text-fg-muted tabular-nums">
-                          {c.index}
-                        </td>
-                        <td className="px-5 py-2 text-sm">{c.title}</td>
-                        <td className="px-5 py-2">
-                          <span className={`inline-flex items-center gap-1 text-xs ${meta.tone}`}>
-                            <Icon className="h-3 w-3" />
-                            {c.status}
-                          </span>
-                        </td>
-                        <td className="px-5 py-2 text-xs text-fg-muted tabular-nums">
-                          {c.size ?? '—'}
-                        </td>
-                        <td className="px-5 py-2 text-xs text-destructive truncate max-w-xs">
-                          {c.lastError ?? ''}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-bg z-10">
+                    <tr className="border-b border-border text-left">
+                      <th className="px-5 py-2.5 w-16 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums">
+                        #
+                      </th>
+                      <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
+                        Tiêu đề
+                      </th>
+                      <th className="px-5 py-2.5 w-28 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
+                        Trạng thái
+                      </th>
+                      <th className="px-5 py-2.5 w-24 text-[11px] uppercase tracking-wider font-medium text-fg-muted tabular-nums">
+                        Bytes
+                      </th>
+                      <th className="px-5 py-2.5 text-[11px] uppercase tracking-wider font-medium text-fg-muted">
+                        Lỗi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chapters.map((c) => {
+                      const meta = STATUS_META[c.status] ?? STATUS_FALLBACK;
+                      const Icon = meta.icon;
+                      return (
+                        <tr key={c.id} className="border-b border-border/60 last:border-0">
+                          <td className="px-5 py-2 font-mono text-xs text-fg-muted tabular-nums">
+                            {c.index}
+                          </td>
+                          <td className="px-5 py-2 text-sm">{c.title}</td>
+                          <td className="px-5 py-2">
+                            <span className={`inline-flex items-center gap-1 text-xs ${meta.tone}`}>
+                              <Icon className="h-3 w-3" />
+                              {c.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-2 text-xs text-fg-muted tabular-nums">
+                            {c.size ?? '—'}
+                          </td>
+                          <td className="px-5 py-2 text-xs text-destructive truncate max-w-xs">
+                            {c.lastError ?? ''}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-5 py-3 border-t border-border">
+                <Pagination
+                  page={chapterPage}
+                  totalPages={chaptersQ.data?.totalPages ?? 1}
+                  isLoading={chaptersQ.isLoading}
+                  onChange={setChapterPage}
+                />
+              </div>
+            </>
           )}
         </div>
       )}
