@@ -39,6 +39,11 @@ export class StoriesController {
     return this.stories.count(genre, discoveryStatus, q, crawlState);
   }
 
+  @Get('counts')
+  counts(@Query('q') q?: string) {
+    return this.stories.counts(q);
+  }
+
   @Get('storage-stats')
   storageStats() {
     return this.stories.storageStats();

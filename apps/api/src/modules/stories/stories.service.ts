@@ -118,6 +118,51 @@ export class StoriesService {
     return { total: Number(arr[0]?.c ?? 0) };
   }
 
+  /**
+   * All four admin filter-pill totals in ONE pass (replaces 4 parallel
+   * count() calls per keystroke). needs-crawl probes the partial
+   * chapter_needs_crawl_idx, so the EXISTS is an empty-range check for
+   * fully-crawled stories.
+   */
+  async counts(
+    q?: string,
+  ): Promise<{ all: number; full: number; stub: number; needsCrawl: number }> {
+    const qFilter = q
+      ? sql`AND immutable_unaccent(lower(s.title || ' ' || COALESCE(s.author,'')))
+            ILIKE '%' || immutable_unaccent(lower(${q})) || '%'`
+      : sql``;
+    const r = await this.db.execute<{
+      all_count: number;
+      full_count: number;
+      stub_count: number;
+      needs_crawl_count: number;
+    }>(sql`
+      SELECT
+        COUNT(*)::int AS all_count,
+        COUNT(*) FILTER (WHERE s.discovery_status = 'complete')::int AS full_count,
+        COUNT(*) FILTER (WHERE s.discovery_status <> 'complete')::int AS stub_count,
+        COUNT(*) FILTER (
+          WHERE s.discovery_status = 'complete'
+            AND EXISTS (SELECT 1 FROM chapter ch
+                        WHERE ch.story_id = s.id AND ch.status IN ('pending','failed'))
+        )::int AS needs_crawl_count
+      FROM story s
+      WHERE 1=1 ${qFilter}
+    `);
+    const row = rowsOf<{
+      all_count: number;
+      full_count: number;
+      stub_count: number;
+      needs_crawl_count: number;
+    }>(r)[0];
+    return {
+      all: Number(row?.all_count ?? 0),
+      full: Number(row?.full_count ?? 0),
+      stub: Number(row?.stub_count ?? 0),
+      needsCrawl: Number(row?.needs_crawl_count ?? 0),
+    };
+  }
+
   async list(
     page = 1,
     limit = 48,
