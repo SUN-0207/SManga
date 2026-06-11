@@ -449,6 +449,7 @@ export class StoriesService {
   }
 
   async chapterListBySlug(slug: string, page = 1, pageSize = 50) {
+    const size = Math.min(Math.max(pageSize, 1), 200);
     const [s] = await this.db
       .select({ id: story.id })
       .from(story)
@@ -460,14 +461,14 @@ export class StoriesService {
       .from(chapter)
       .where(eq(chapter.storyId, s.id));
     const total = totalRows[0]?.value ?? 0;
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const totalPages = Math.max(1, Math.ceil(total / size));
     const items = await this.db
       .select({ index: chapter.index, title: chapter.title, status: chapter.status })
       .from(chapter)
       .where(eq(chapter.storyId, s.id))
       .orderBy(asc(chapter.index))
-      .limit(pageSize)
-      .offset((page - 1) * pageSize);
+      .limit(size)
+      .offset((page - 1) * size);
     return { items, page, totalPages, total };
   }
 
