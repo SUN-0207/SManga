@@ -34,6 +34,14 @@ export class ListStoriesDto {
   @IsIn(['complete', 'stub'])
   discoveryStatus?: 'complete' | 'stub';
 
+  /**
+   * Crawl-completeness filter (orthogonal to discoveryStatus).
+   * - `needs-crawl` → discovery complete AND has ≥1 pending|failed chapter
+   */
+  @IsOptional()
+  @IsIn(['needs-crawl'])
+  crawlState?: 'needs-crawl';
+
   /** Filter by exact author name (used by the "Cùng tác giả" rail). */
   @IsOptional()
   @IsString()
