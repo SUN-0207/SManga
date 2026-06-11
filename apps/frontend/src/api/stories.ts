@@ -23,6 +23,11 @@ export interface StorySummary {
   /** Floor of MAX(chapter.index) WHERE status='crawled'. null when no chapter
    * is crawled yet — UI hides the "Ch.N" pill in that case. */
   latestChapterIndex: number | null;
+  /** On-the-fly per-status chapter counts (crawled/pending/failed). Total =
+   * sum of these three. 0 for metadata-only stories with no chapter rows. */
+  crawledChapters: number;
+  pendingChapters: number;
+  failedChapters: number;
 }
 
 export async function listStories(
@@ -33,6 +38,7 @@ export async function listStories(
   discoveryStatus?: 'complete' | 'stub',
   author?: string,
   q?: string,
+  crawlState?: 'needs-crawl',
 ): Promise<StorySummary[]> {
   const res = await api.get<StorySummary[]>('/stories', {
     params: {
@@ -43,6 +49,7 @@ export async function listStories(
       ...(discoveryStatus ? { discoveryStatus } : {}),
       ...(author ? { author } : {}),
       ...(q ? { q } : {}),
+      ...(crawlState ? { crawlState } : {}),
     },
   });
   return res.data;
@@ -56,12 +63,14 @@ export async function getStoriesCount(
   genre?: string,
   discoveryStatus?: 'complete' | 'stub',
   q?: string,
+  crawlState?: 'needs-crawl',
 ): Promise<number> {
   const res = await api.get<{ total: number }>('/stories/count', {
     params: {
       ...(genre ? { genre } : {}),
       ...(discoveryStatus ? { discoveryStatus } : {}),
       ...(q ? { q } : {}),
+      ...(crawlState ? { crawlState } : {}),
     },
   });
   return res.data.total;

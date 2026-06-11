@@ -77,6 +77,9 @@ function DiscoverPage() {
         ratingCount: it.ratingCount ?? 0,
         featured: it.featured ?? false,
         latestChapterIndex: null,
+        crawledChapters: 0,
+        pendingChapters: 0,
+        failedChapters: 0,
       }))
     : (browseQ.data ?? []);
 
