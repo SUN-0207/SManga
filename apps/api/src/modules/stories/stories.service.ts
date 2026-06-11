@@ -74,6 +74,7 @@ export class StoriesService {
     genreSlug?: string,
     discoveryStatus?: 'complete' | 'stub',
     q?: string,
+    crawlState?: 'needs-crawl',
   ): Promise<{ total: number }> {
     // `discovery_status` enum: 'pending' | 'running' | 'complete' | 'failed'.
     // 'stub' = anything not yet complete (everything except 'complete').
@@ -90,6 +91,14 @@ export class StoriesService {
       ? sql`AND immutable_unaccent(lower(s.title || ' ' || COALESCE(s.author,'')))
             ILIKE '%' || immutable_unaccent(lower(${q})) || '%'`
       : sql``;
+    // needs-crawl: discovery complete AND ≥1 pending|failed chapter. EXISTS
+    // short-circuits on the chapter(story_id) index — no full aggregation.
+    const crawlFilter =
+      crawlState === 'needs-crawl'
+        ? sql`AND s.discovery_status = 'complete'
+              AND EXISTS (SELECT 1 FROM chapter ch
+                          WHERE ch.story_id = s.id AND ch.status IN ('pending','failed'))`
+        : sql``;
 
     if (genreSlug) {
       const r = await this.db.execute<{ c: string }>(sql`
@@ -97,13 +106,13 @@ export class StoriesService {
         FROM story s
         INNER JOIN story_genre sg ON sg.story_id = s.id
         INNER JOIN genre g        ON g.id = sg.genre_id AND g.slug = ${genreSlug}
-        WHERE 1=1 ${discoveryFilter} ${qFilter}
+        WHERE 1=1 ${discoveryFilter} ${qFilter} ${crawlFilter}
       `);
       const arr = rowsOf<{ c: string | number }>(r);
       return { total: Number(arr[0]?.c ?? 0) };
     }
     const r = await this.db.execute<{ c: string | number }>(sql`
-      SELECT COUNT(*)::int AS c FROM story s WHERE 1=1 ${discoveryFilter} ${qFilter}
+      SELECT COUNT(*)::int AS c FROM story s WHERE 1=1 ${discoveryFilter} ${qFilter} ${crawlFilter}
     `);
     const arr = rowsOf<{ c: string | number }>(r);
     return { total: Number(arr[0]?.c ?? 0) };
