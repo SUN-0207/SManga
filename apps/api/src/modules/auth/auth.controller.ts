@@ -1,5 +1,6 @@
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
+import { RealIpThrottlerGuard } from '@/common/guards/real-ip-throttler.guard';
 import { loadEnv } from '@/config/env';
 import {
   Body,
@@ -16,6 +17,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -37,6 +39,8 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
+  @UseGuards(RealIpThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { token, user } = await this.auth.login(dto);
     res.cookie('jwt', token, {
