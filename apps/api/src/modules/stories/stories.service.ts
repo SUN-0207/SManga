@@ -25,6 +25,20 @@ import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
 const BULK_IMPORT_CAP = 50;
 
+/** storageStats runs two full-table aggregates (chapter SUM + story cover
+ * SUM with detoast). The admin dashboard polls it — cache server-side so a
+ * forgotten tab can't re-scan the library every 30s. */
+const STORAGE_STATS_TTL_MS = 5 * 60_000;
+
+export interface StorageStats {
+  contentBytes: number;
+  coverBytes: number;
+  totalBytes: number;
+  chaptersWithContent: number;
+  storiesWithCover: number;
+  chapterTargetTotal: number;
+}
+
 const rowsOf = <T>(r: unknown): T[] =>
   Array.isArray(r) ? (r as T[]) : ((r as { rows?: T[] }).rows ?? []);
 
@@ -35,7 +49,13 @@ export class StoriesService {
     @InjectQueue(QUEUE_CRAWLER) private readonly queue: Queue,
   ) {}
 
-  async storageStats() {
+  private storageStatsCache: { value: StorageStats; expiresAt: number } | null = null;
+
+  async storageStats(): Promise<StorageStats> {
+    const now = Date.now();
+    if (this.storageStatsCache && this.storageStatsCache.expiresAt > now) {
+      return this.storageStatsCache.value;
+    }
     // content_text is gzipped bytea (see CLAUDE.md note 11), so octet_length on
     // it returns the COMPRESSED size — useless for a "library size" display.
     // content_byte_size stores the UNCOMPRESSED length explicitly for stats.
@@ -60,7 +80,7 @@ export class StoriesService {
       (coverResult as unknown as Array<Record<string, string | number>>)[0];
     const contentBytes = Number(chapterRow?.content_bytes ?? 0);
     const coverBytes = Number(coverRow?.cover_bytes ?? 0);
-    return {
+    const value: StorageStats = {
       contentBytes,
       coverBytes,
       totalBytes: contentBytes + coverBytes,
@@ -68,6 +88,8 @@ export class StoriesService {
       storiesWithCover: Number(coverRow?.stories_with_cover ?? 0),
       chapterTargetTotal: Number(coverRow?.chapter_target_total ?? 0),
     };
+    this.storageStatsCache = { value, expiresAt: now + STORAGE_STATS_TTL_MS };
+    return value;
   }
 
   async count(

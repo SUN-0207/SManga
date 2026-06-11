@@ -32,3 +32,26 @@ describe('StoriesService.counts', () => {
     expect(await svc.counts()).toEqual({ all: 0, full: 0, stub: 0, needsCrawl: 0 });
   });
 });
+
+describe('StoriesService.storageStats cache', () => {
+  it('serves the second call from cache (no extra db round-trips)', async () => {
+    const execute = vi.fn().mockResolvedValue({
+      rows: [
+        {
+          content_bytes: 1,
+          chapters_with_content: 1,
+          cover_bytes: 1,
+          stories_with_cover: 1,
+          chapter_target_total: 1,
+        },
+      ],
+    });
+    const svc = new StoriesService({ execute } as never, {} as never);
+
+    await svc.storageStats();
+    const callsAfterFirst = execute.mock.calls.length; // 2 queries (chapter + story)
+    await svc.storageStats();
+
+    expect(execute.mock.calls.length).toBe(callsAfterFirst); // cached — no new queries
+  });
+});
