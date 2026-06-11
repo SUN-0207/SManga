@@ -1,7 +1,17 @@
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { BulkActionDto } from './dto/bulk-action.dto';
 import { ImportStoryBulkDto, ImportStoryDto } from './dto/import-story.dto';
@@ -16,6 +26,7 @@ export class StoriesController {
   constructor(private readonly stories: StoriesService) {}
 
   @Get()
+  @Header('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
   list(@Query() q: ListStoriesDto) {
     return this.stories.list(
       q.page,
@@ -50,11 +61,13 @@ export class StoriesController {
   }
 
   @Get('by-slug/:slug')
+  @Header('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
   getBySlug(@Param('slug') slug: string) {
     return this.stories.getBySlug(slug);
   }
 
   @Get('by-slug/:slug/chapters')
+  @Header('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
   chaptersBySlug(
     @Param('slug') slug: string,
     @Query('page') page?: string,
