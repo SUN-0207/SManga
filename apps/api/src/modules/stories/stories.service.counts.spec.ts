@@ -55,3 +55,54 @@ describe('StoriesService.storageStats cache', () => {
     expect(execute.mock.calls.length).toBe(callsAfterFirst); // cached — no new queries
   });
 });
+
+describe('StoriesService.listChaptersByStoryId (paginated)', () => {
+  function chainTo(rows: unknown[]) {
+    const chain = {
+      from: () => chain,
+      where: () => chain,
+      orderBy: () => chain,
+      limit: () => chain,
+      offset: () => Promise.resolve(rows),
+    };
+    return chain;
+  }
+
+  it('returns one page plus single-query status counts', async () => {
+    const execute = vi
+      .fn()
+      .mockResolvedValue({ rows: [{ total: 1991, crawled: 1985, pending: 5, failed: 1 }] });
+    const items = [
+      {
+        id: 'c1',
+        index: '1.00',
+        title: 'Ch 1',
+        status: 'crawled',
+        lastError: null,
+        crawledAt: null,
+        size: 1000,
+      },
+    ];
+    const select = vi.fn(() => chainTo(items));
+    const svc = new StoriesService({ execute, select } as never, {} as never);
+
+    const res = await svc.listChaptersByStoryId('s1', 2, 50);
+
+    expect(res.page).toBe(2);
+    expect(res.total).toBe(1991);
+    expect(res.totalPages).toBe(Math.ceil(1991 / 50));
+    expect(res.counts).toEqual({ crawled: 1985, pending: 5, failed: 1 });
+    expect(res.items).toBe(items);
+    expect(execute).toHaveBeenCalledTimes(1); // counts in ONE pass, not 3 client-side filters
+  });
+
+  it('clamps pageSize to 200', async () => {
+    const execute = vi
+      .fn()
+      .mockResolvedValue({ rows: [{ total: 10, crawled: 10, pending: 0, failed: 0 }] });
+    const select = vi.fn(() => chainTo([]));
+    const svc = new StoriesService({ execute, select } as never, {} as never);
+    const res = await svc.listChaptersByStoryId('s1', 1, 99999);
+    expect(res.totalPages).toBe(1); // 10 rows / clamped 200
+  });
+});

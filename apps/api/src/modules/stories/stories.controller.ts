@@ -73,8 +73,12 @@ export class StoriesController {
   @Get(':id/chapters')
   @UseGuards(JwtAuthGuard)
   @Roles(['admin'])
-  adminChapters(@Param('id') id: string) {
-    return this.stories.listChaptersByStoryId(id);
+  adminChapters(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    return this.stories.listChaptersByStoryId(id, Number(page) || 1, Number(pageSize) || 50);
   }
 
   @Post('import')

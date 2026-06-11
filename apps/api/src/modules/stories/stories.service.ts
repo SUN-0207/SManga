@@ -471,8 +471,28 @@ export class StoriesService {
     return { items, page, totalPages, total };
   }
 
-  async listChaptersByStoryId(storyId: string) {
-    return this.db
+  /** Admin chapter table: paginated (the largest story has ~2k rows — never
+   * ship them all) + status counts computed server-side in one pass. */
+  async listChaptersByStoryId(storyId: string, page = 1, pageSize = 50) {
+    const size = Math.min(Math.max(pageSize, 1), 200);
+    const countsRes = await this.db.execute<{
+      total: number;
+      crawled: number;
+      pending: number;
+      failed: number;
+    }>(sql`
+      SELECT COUNT(*)::int AS total,
+             COUNT(*) FILTER (WHERE status = 'crawled')::int AS crawled,
+             COUNT(*) FILTER (WHERE status = 'pending')::int AS pending,
+             COUNT(*) FILTER (WHERE status = 'failed')::int  AS failed
+      FROM chapter WHERE story_id = ${storyId}
+    `);
+    const c = rowsOf<{ total: number; crawled: number; pending: number; failed: number }>(
+      countsRes,
+    )[0];
+    const total = Number(c?.total ?? 0);
+    const totalPages = Math.max(1, Math.ceil(total / size));
+    const items = await this.db
       .select({
         id: chapter.id,
         index: chapter.index,
@@ -484,7 +504,20 @@ export class StoriesService {
       })
       .from(chapter)
       .where(eq(chapter.storyId, storyId))
-      .orderBy(asc(chapter.index));
+      .orderBy(asc(chapter.index))
+      .limit(size)
+      .offset((page - 1) * size);
+    return {
+      items,
+      page,
+      totalPages,
+      total,
+      counts: {
+        crawled: Number(c?.crawled ?? 0),
+        pending: Number(c?.pending ?? 0),
+        failed: Number(c?.failed ?? 0),
+      },
+    };
   }
 
   async enqueueImport(url: string, requestedBy: string | null, autoCrawl = false) {
