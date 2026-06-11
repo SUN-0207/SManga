@@ -519,69 +519,112 @@ function BulkActionBar({
   if (ids.length === 0 && !info && !error) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[min(820px,calc(100%-3rem))]">
+    <>
       {ids.length > 0 && (
-        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border-strong bg-bg-elevated px-4 py-3 shadow-elev flex-wrap">
-          <span className="inline-flex h-7 items-center rounded-full bg-accent-gradient px-3 text-[12px] font-semibold text-white">
-            {ids.length}
-          </span>
-          <span className="text-body-sm text-fg-muted">
-            đã chọn{ids.length > 100 ? ' (vượt giới hạn 100)' : ''}
-          </span>
-          <div className="ml-auto flex items-center gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={onClear}
-              disabled={mut.isPending || ids.length === 0}
-              aria-label="Bỏ chọn tất cả"
-              className="inline-flex h-9 items-center gap-1 rounded-md border border-border-strong bg-bg-subtle px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle/80 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <X className="h-4 w-4" />
-              Bỏ chọn
-            </button>
-            <ActionButton
-              onClick={() => mut.mutate({ action: 'discover' })}
-              disabled={mut.isPending || ids.length === 0 || ids.length > 100}
-              busy={mut.isPending && mut.variables?.action === 'discover'}
-              icon={<Search className="h-4 w-4" aria-hidden />}
-              variant="outline"
-            >
-              Quét chương
-            </ActionButton>
-            <ActionButton
-              onClick={() => mut.mutate({ action: 'crawl-missing' })}
-              disabled={mut.isPending || ids.length === 0 || ids.length > 100}
-              busy={mut.isPending && mut.variables?.action === 'crawl-missing'}
-              icon={<Download className="h-4 w-4" aria-hidden />}
-              variant="outline"
-            >
-              Crawl missing
-            </ActionButton>
-            <ActionButton
-              onClick={() => mut.mutate({ action: 'discover-and-crawl' })}
-              disabled={mut.isPending || ids.length === 0 || ids.length > 100}
-              busy={mut.isPending && mut.variables?.action === 'discover-and-crawl'}
-              icon={<Zap className="h-4 w-4" aria-hidden />}
-              variant="cta"
-            >
-              Quét + Crawl
-            </ActionButton>
+        <div className="pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 z-30 w-[min(820px,calc(100%-3rem))]">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-border-strong bg-bg-elevated px-4 py-3 shadow-elev flex-wrap">
+            <span className="inline-flex h-7 items-center rounded-full bg-accent-gradient px-3 text-[12px] font-semibold text-white">
+              {ids.length}
+            </span>
+            <span className="text-body-sm text-fg-muted">
+              đã chọn{ids.length > 100 ? ' (vượt giới hạn 100)' : ''}
+            </span>
+            <div className="ml-auto flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={onClear}
+                disabled={mut.isPending || ids.length === 0}
+                aria-label="Bỏ chọn tất cả"
+                className="inline-flex h-9 items-center gap-1 rounded-md border border-border-strong bg-bg-subtle px-3 text-body-sm font-medium text-fg-muted transition-colors duration-fast hover:bg-bg-subtle/80 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <X className="h-4 w-4" />
+                Bỏ chọn
+              </button>
+              <ActionButton
+                onClick={() => mut.mutate({ action: 'discover' })}
+                disabled={mut.isPending || ids.length === 0 || ids.length > 100}
+                busy={mut.isPending && mut.variables?.action === 'discover'}
+                icon={<Search className="h-4 w-4" aria-hidden />}
+                variant="outline"
+              >
+                Quét chương
+              </ActionButton>
+              <ActionButton
+                onClick={() => mut.mutate({ action: 'crawl-missing' })}
+                disabled={mut.isPending || ids.length === 0 || ids.length > 100}
+                busy={mut.isPending && mut.variables?.action === 'crawl-missing'}
+                icon={<Download className="h-4 w-4" aria-hidden />}
+                variant="outline"
+              >
+                Crawl missing
+              </ActionButton>
+              <ActionButton
+                onClick={() => mut.mutate({ action: 'discover-and-crawl' })}
+                disabled={mut.isPending || ids.length === 0 || ids.length > 100}
+                busy={mut.isPending && mut.variables?.action === 'discover-and-crawl'}
+                icon={<Zap className="h-4 w-4" aria-hidden />}
+                variant="cta"
+              >
+                Quét + Crawl
+              </ActionButton>
+            </div>
           </div>
         </div>
       )}
       {(error || info) && (
-        <div
-          className={`pointer-events-auto rounded-xl border px-4 py-2 text-center text-[12px] shadow-elev ${
-            ids.length > 0 ? 'mt-2' : ''
-          } ${
-            error
-              ? 'border-destructive/30 bg-destructive/10 text-destructive'
-              : 'border-positive/30 bg-positive/10 text-positive'
-          }`}
-        >
-          {error ?? info}
-        </div>
+        <Toast
+          message={(error ?? info) as string}
+          tone={error ? 'error' : 'success'}
+          onClose={() => {
+            setError(null);
+            setInfo(null);
+          }}
+        />
       )}
+    </>
+  );
+}
+
+function Toast({
+  message,
+  tone,
+  onClose,
+}: {
+  message: string;
+  tone: 'success' | 'error';
+  onClose: () => void;
+}) {
+  // Slide-in on mount via a transition — this project has no animation plugin.
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const isError = tone === 'error';
+  const Icon = isError ? XCircle : CheckCircle2;
+  return (
+    <div className="pointer-events-none fixed bottom-6 right-6 z-50 w-[min(380px,calc(100vw-2rem))]">
+      <div
+        role="status"
+        aria-live="polite"
+        className={`pointer-events-auto flex items-start gap-2.5 rounded-lg border bg-bg-elevated px-4 py-3 shadow-elev transition-all duration-slow ease-spring ${
+          shown ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
+        } ${isError ? 'border-destructive/40' : 'border-positive/40'}`}
+      >
+        <Icon
+          className={`mt-0.5 h-5 w-5 shrink-0 ${isError ? 'text-destructive' : 'text-positive'}`}
+          aria-hidden
+        />
+        <p className="flex-1 text-body-sm leading-snug text-fg">{message}</p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Đóng thông báo"
+          className="-mr-1 -mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-fg-muted transition-colors duration-fast hover:bg-bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
