@@ -150,11 +150,14 @@ export class StoriesService {
       : sql``;
 
     // Discovered (discovery complete) stories that still have uncrawled or
-    // errored chapters. References the joined `c` subquery's aggregates.
+    // errored chapters. EXISTS probes chapter_needs_crawl_idx (partial) —
+    // deliberately independent of the lateral aggregates below so filtering
+    // happens before per-row aggregation.
     const crawlFilter =
       crawlState === 'needs-crawl'
         ? sql`AND s.discovery_status = 'complete'
-              AND COALESCE(c.pending_count, 0) + COALESCE(c.failed_count, 0) > 0`
+              AND EXISTS (SELECT 1 FROM chapter pch
+                          WHERE pch.story_id = s.id AND pch.status IN ('pending','failed'))`
         : sql``;
 
     const rawRows = await this.db.execute<{
@@ -192,22 +195,20 @@ export class StoriesService {
         COALESCE(c.failed_count, 0)  AS failed_count
       FROM story s
       ${genreJoin}
-      LEFT JOIN (
-        SELECT story_id,
-               avg(value)::numeric(3,2) AS avg,
+      LEFT JOIN LATERAL (
+        SELECT avg(value)::numeric(3,2) AS avg,
                count(*)::int            AS cnt
         FROM rating
-        GROUP BY story_id
-      ) r ON r.story_id = s.id
-      LEFT JOIN (
-        SELECT story_id,
-               MAX(index) FILTER (WHERE status = 'crawled') AS latest_chapter_index,
-               COUNT(*)   FILTER (WHERE status = 'crawled')::int AS crawled_count,
-               COUNT(*)   FILTER (WHERE status = 'pending')::int AS pending_count,
-               COUNT(*)   FILTER (WHERE status = 'failed')::int  AS failed_count
-        FROM chapter
-        GROUP BY story_id
-      ) c ON c.story_id = s.id
+        WHERE rating.story_id = s.id
+      ) r ON true
+      LEFT JOIN LATERAL (
+        SELECT MAX(ch.index) FILTER (WHERE ch.status = 'crawled')      AS latest_chapter_index,
+               COUNT(*)      FILTER (WHERE ch.status = 'crawled')::int AS crawled_count,
+               COUNT(*)      FILTER (WHERE ch.status = 'pending')::int AS pending_count,
+               COUNT(*)      FILTER (WHERE ch.status = 'failed')::int  AS failed_count
+        FROM chapter ch
+        WHERE ch.story_id = s.id
+      ) c ON true
       WHERE 1=1 ${featuredFilter} ${discoveryFilter} ${authorFilter} ${qFilter} ${crawlFilter}
       ORDER BY s.updated_at DESC
       LIMIT ${limit} OFFSET ${(page - 1) * limit}
