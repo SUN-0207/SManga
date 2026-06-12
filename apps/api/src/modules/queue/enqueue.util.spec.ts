@@ -99,4 +99,30 @@ describe('enqueueIdempotent', () => {
     );
     expect(add).toHaveBeenCalledTimes(1);
   });
+
+  it('leaves the job untouched when getState() throws (unknown != terminal)', async () => {
+    // A transient getState error must NOT cause a remove — that could delete a
+    // live job and duplicate in-flight work. Treat unknown as still-queued.
+    const remove = vi.fn();
+    const existing = {
+      getState: vi.fn(async () => {
+        throw new Error('redis blip');
+      }),
+      remove,
+    };
+    const getJob = vi.fn(async () => existing);
+    const add = vi.fn();
+    const queue = { getJob, add } as never;
+
+    const res = await enqueueIdempotent(
+      queue,
+      'discover-chapters',
+      { storyId: 's1' },
+      { jobId: 'discover-chapters:s1' },
+    );
+
+    expect(remove).not.toHaveBeenCalled();
+    expect(add).not.toHaveBeenCalled();
+    expect(res).toBe(existing);
+  });
 });

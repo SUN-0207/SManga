@@ -53,7 +53,13 @@ export async function enqueueIdempotent(
   const existing = await queue.getJob(opts.jobId);
   if (existing) {
     const state = await existing.getState().catch(() => null);
-    if (state && !TERMINAL_STATES.has(state)) return existing; // still queued — don't duplicate
+    // Only clear a CONFIRMED terminal (completed/failed) leftover. Everything
+    // else is left untouched — still-queued states (waiting/active/delayed/
+    // paused/stuck) AND an unknown state from a getState() error. Removing on
+    // "unknown" would risk deleting a live job and duplicating in-flight work;
+    // a missed re-enqueue of a genuine terminal leftover is self-healing (the
+    // next auto-refresh tick / rescue click / discover-all re-run retries it).
+    if (!state || !TERMINAL_STATES.has(state)) return existing;
     await existing.remove().catch(() => {}); // terminal leftover — clear so the re-add takes
   }
   return queue.add(name, data as never, opts);

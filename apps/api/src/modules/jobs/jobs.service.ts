@@ -241,7 +241,7 @@ export class JobsService {
    * Enqueue a fetch-chapter job for every chapter currently in `crawled`
    * status, so the new parser logic regenerates the stored prose. Idempotent
    * via `jobId` — Bull skips duplicate-id enqueues in the waiting state. The
-   * engine's per-source token bucket (0.5 rps for truyenfull) keeps the
+   * engine's per-source token bucket (1 rps for truyenfull) keeps the
    * source friendly during the drain.
    */
   async refetchAllChapters(): Promise<{ enqueued: number; remaining: number }> {
