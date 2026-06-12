@@ -36,12 +36,14 @@ export class ListStoriesDto {
   discoveryStatus?: 'complete' | 'stub';
 
   /**
-   * Crawl-completeness filter (orthogonal to discoveryStatus).
-   * - `needs-crawl` → discovery complete AND has ≥1 pending|failed chapter
+   * Crawl-completeness filter (orthogonal to discoveryStatus). Mutually
+   * exclusive so error stories don't hide among genuinely-uncrawled ones:
+   * - `needs-crawl` → discovery complete AND ≥1 pending chapter AND NO failed chapter
+   * - `has-errors`  → discovery complete AND ≥1 failed chapter (needs operator attention)
    */
   @IsOptional()
-  @IsIn(['needs-crawl'])
-  crawlState?: 'needs-crawl';
+  @IsIn(['needs-crawl', 'has-errors'])
+  crawlState?: 'needs-crawl' | 'has-errors';
 
   /** Filter by exact author name (used by the "Cùng tác giả" rail). */
   @IsOptional()

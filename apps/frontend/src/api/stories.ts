@@ -38,7 +38,7 @@ export async function listStories(
   discoveryStatus?: 'complete' | 'stub',
   author?: string,
   q?: string,
-  crawlState?: 'needs-crawl',
+  crawlState?: 'needs-crawl' | 'has-errors',
 ): Promise<StorySummary[]> {
   const res = await api.get<StorySummary[]>('/stories', {
     params: {
@@ -63,7 +63,7 @@ export async function getStoriesCount(
   genre?: string,
   discoveryStatus?: 'complete' | 'stub',
   q?: string,
-  crawlState?: 'needs-crawl',
+  crawlState?: 'needs-crawl' | 'has-errors',
 ): Promise<number> {
   const res = await api.get<{ total: number }>('/stories/count', {
     params: {
@@ -81,6 +81,7 @@ export interface StoriesCounts {
   full: number;
   stub: number;
   needsCrawl: number;
+  hasErrors: number;
 }
 
 /** One round-trip for all four admin filter-pill totals (replaces 4 parallel

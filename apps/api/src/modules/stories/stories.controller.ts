@@ -45,7 +45,7 @@ export class StoriesController {
     @Query('genre') genre?: string,
     @Query('discoveryStatus') discoveryStatus?: 'complete' | 'stub',
     @Query('q') q?: string,
-    @Query('crawlState') crawlState?: 'needs-crawl',
+    @Query('crawlState') crawlState?: 'needs-crawl' | 'has-errors',
   ) {
     return this.stories.count(genre, discoveryStatus, q, crawlState);
   }

@@ -74,7 +74,7 @@ const CRAWL_BADGE: Record<
   },
 };
 
-type Filter = 'all' | 'full' | 'stub' | 'needs-crawl';
+type Filter = 'all' | 'full' | 'stub' | 'needs-crawl' | 'has-errors';
 
 function formatDateVN(iso: string): string {
   return new Intl.DateTimeFormat('vi-VN', {
@@ -112,10 +112,10 @@ function AdminStoriesPage() {
   }
 
   // Translate UI filter → server param. 'all' = no filter on discovery_status.
-  // 'needs-crawl' is its own axis — leave discoveryStatus unset; the server
-  // forces discovery='complete' inside the needs-crawl filter.
+  // 'needs-crawl' / 'has-errors' are their own axis — leave discoveryStatus
+  // unset; the server forces discovery='complete' inside those filters.
   const discoveryParam = filter === 'full' ? 'complete' : filter === 'stub' ? 'stub' : undefined;
-  const crawlStateParam = filter === 'needs-crawl' ? ('needs-crawl' as const) : undefined;
+  const crawlStateParam = filter === 'needs-crawl' || filter === 'has-errors' ? filter : undefined;
   // Pass undefined (not empty string) so the API params object omits `q`
   // entirely when the search is blank — keeps the URL/query cache clean.
   const qParam = q || undefined;
@@ -148,6 +148,7 @@ function AdminStoriesPage() {
   const totalFull = countsQ.data?.full ?? 0;
   const totalStub = countsQ.data?.stub ?? 0;
   const totalNeedsCrawl = countsQ.data?.needsCrawl ?? 0;
+  const totalHasErrors = countsQ.data?.hasErrors ?? 0;
   const activeTotal =
     filter === 'full'
       ? totalFull
@@ -155,7 +156,9 @@ function AdminStoriesPage() {
         ? totalStub
         : filter === 'needs-crawl'
           ? totalNeedsCrawl
-          : totalAll;
+          : filter === 'has-errors'
+            ? totalHasErrors
+            : totalAll;
   const totalPages = Math.max(1, Math.ceil(activeTotal / PAGE_SIZE));
 
   function changeFilter(next: Filter) {
@@ -266,6 +269,9 @@ function AdminStoriesPage() {
               onClick={() => changeFilter('needs-crawl')}
             >
               ⚠ Cần crawl ({totalNeedsCrawl.toLocaleString('vi-VN')})
+            </FilterChip>
+            <FilterChip active={filter === 'has-errors'} onClick={() => changeFilter('has-errors')}>
+              ✕ Lỗi crawl ({totalHasErrors.toLocaleString('vi-VN')})
             </FilterChip>
           </div>
         </div>
@@ -448,7 +454,16 @@ function StoriesEmptyState({ filter }: Readonly<{ filter: Filter }>) {
       <EmptyState
         illustration={<EmptySearch />}
         title="Không có truyện cần crawl"
-        description="Mọi truyện đã khám phá đều đã crawl đủ chapter."
+        description="Mọi truyện đã khám phá đều đã crawl đủ chapter (truyện lỗi nằm ở mục Lỗi crawl)."
+      />
+    );
+  }
+  if (filter === 'has-errors') {
+    return (
+      <EmptyState
+        illustration={<EmptySearch />}
+        title="Không có truyện lỗi crawl"
+        description="Không có chương nào đang ở trạng thái lỗi."
       />
     );
   }

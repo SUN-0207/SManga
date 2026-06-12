@@ -97,7 +97,7 @@ export class StoriesService {
     genreSlug?: string,
     discoveryStatus?: 'complete' | 'stub',
     q?: string,
-    crawlState?: 'needs-crawl',
+    crawlState?: 'needs-crawl' | 'has-errors',
   ): Promise<{ total: number }> {
     // `discovery_status` enum: 'pending' | 'running' | 'complete' | 'failed'.
     // 'stub' = anything not yet complete (everything except 'complete').
@@ -114,14 +114,23 @@ export class StoriesService {
       ? sql`AND immutable_unaccent(lower(s.title || ' ' || COALESCE(s.author,'')))
             ILIKE '%' || immutable_unaccent(lower(${q})) || '%'`
       : sql``;
-    // needs-crawl: discovery complete AND ≥1 pending|failed chapter. EXISTS
-    // short-circuits on the chapter(story_id) index — no full aggregation.
+    // Mutually-exclusive crawl buckets (both probe the partial
+    // chapter_needs_crawl_idx on chapter(story_id) WHERE status IN
+    // ('pending','failed'); the per-status EXISTS short-circuits, no aggregation):
+    //  - needs-crawl: complete AND ≥1 pending AND NO failed (errors excluded)
+    //  - has-errors:  complete AND ≥1 failed
     const crawlFilter =
       crawlState === 'needs-crawl'
         ? sql`AND s.discovery_status = 'complete'
               AND EXISTS (SELECT 1 FROM chapter ch
-                          WHERE ch.story_id = s.id AND ch.status IN ('pending','failed'))`
-        : sql``;
+                          WHERE ch.story_id = s.id AND ch.status = 'pending')
+              AND NOT EXISTS (SELECT 1 FROM chapter ch
+                              WHERE ch.story_id = s.id AND ch.status = 'failed')`
+        : crawlState === 'has-errors'
+          ? sql`AND s.discovery_status = 'complete'
+                AND EXISTS (SELECT 1 FROM chapter ch
+                            WHERE ch.story_id = s.id AND ch.status = 'failed')`
+          : sql``;
 
     if (genreSlug) {
       const r = await this.db.execute<{ c: string }>(sql`
@@ -142,14 +151,18 @@ export class StoriesService {
   }
 
   /**
-   * All four admin filter-pill totals in ONE pass (replaces 4 parallel
-   * count() calls per keystroke). needs-crawl probes the partial
-   * chapter_needs_crawl_idx, so the EXISTS is an empty-range check for
-   * fully-crawled stories.
+   * All admin filter-pill totals in ONE pass (replaces N parallel count() calls
+   * per keystroke). needs-crawl + has-errors are mutually exclusive and both
+   * probe the partial chapter_needs_crawl_idx, so each per-status EXISTS is an
+   * empty-range check for fully-crawled stories.
    */
-  async counts(
-    q?: string,
-  ): Promise<{ all: number; full: number; stub: number; needsCrawl: number }> {
+  async counts(q?: string): Promise<{
+    all: number;
+    full: number;
+    stub: number;
+    needsCrawl: number;
+    hasErrors: number;
+  }> {
     const qFilter = q
       ? sql`AND immutable_unaccent(lower(s.title || ' ' || COALESCE(s.author,'')))
             ILIKE '%' || immutable_unaccent(lower(${q})) || '%'`
@@ -159,6 +172,7 @@ export class StoriesService {
       full_count: number;
       stub_count: number;
       needs_crawl_count: number;
+      has_errors_count: number;
     }>(sql`
       SELECT
         COUNT(*)::int AS all_count,
@@ -167,8 +181,15 @@ export class StoriesService {
         COUNT(*) FILTER (
           WHERE s.discovery_status = 'complete'
             AND EXISTS (SELECT 1 FROM chapter ch
-                        WHERE ch.story_id = s.id AND ch.status IN ('pending','failed'))
-        )::int AS needs_crawl_count
+                        WHERE ch.story_id = s.id AND ch.status = 'pending')
+            AND NOT EXISTS (SELECT 1 FROM chapter ch
+                            WHERE ch.story_id = s.id AND ch.status = 'failed')
+        )::int AS needs_crawl_count,
+        COUNT(*) FILTER (
+          WHERE s.discovery_status = 'complete'
+            AND EXISTS (SELECT 1 FROM chapter ch
+                        WHERE ch.story_id = s.id AND ch.status = 'failed')
+        )::int AS has_errors_count
       FROM story s
       WHERE 1=1 ${qFilter}
     `);
@@ -177,12 +198,14 @@ export class StoriesService {
       full_count: number;
       stub_count: number;
       needs_crawl_count: number;
+      has_errors_count: number;
     }>(r)[0];
     return {
       all: Number(row?.all_count ?? 0),
       full: Number(row?.full_count ?? 0),
       stub: Number(row?.stub_count ?? 0),
       needsCrawl: Number(row?.needs_crawl_count ?? 0),
+      hasErrors: Number(row?.has_errors_count ?? 0),
     };
   }
 
@@ -194,7 +217,7 @@ export class StoriesService {
     discoveryStatus?: 'complete' | 'stub',
     author?: string,
     q?: string,
-    crawlState?: 'needs-crawl',
+    crawlState?: 'needs-crawl' | 'has-errors',
   ) {
     const genreJoin = genreSlug
       ? sql`INNER JOIN story_genre sg ON sg.story_id = s.id
@@ -225,8 +248,14 @@ export class StoriesService {
       crawlState === 'needs-crawl'
         ? sql`AND s.discovery_status = 'complete'
               AND EXISTS (SELECT 1 FROM chapter pch
-                          WHERE pch.story_id = s.id AND pch.status IN ('pending','failed'))`
-        : sql``;
+                          WHERE pch.story_id = s.id AND pch.status = 'pending')
+              AND NOT EXISTS (SELECT 1 FROM chapter pch
+                              WHERE pch.story_id = s.id AND pch.status = 'failed')`
+        : crawlState === 'has-errors'
+          ? sql`AND s.discovery_status = 'complete'
+                AND EXISTS (SELECT 1 FROM chapter pch
+                            WHERE pch.story_id = s.id AND pch.status = 'failed')`
+          : sql``;
 
     const rawRows = await this.db.execute<{
       id: string;
