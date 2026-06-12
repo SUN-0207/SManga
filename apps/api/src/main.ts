@@ -20,6 +20,10 @@ import { loadEnv } from './config/env';
 async function bootstrap() {
   const env = loadEnv();
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  // Let SIGTERM (Watchtower swap) run module destroy hooks so @nestjs/bull
+  // closes the queue gracefully — active jobs release their locks instead of
+  // being mass-failed as stalled on the next boot.
+  app.enableShutdownHooks();
 
   app.useLogger(app.get(Logger));
   app.use(helmet());

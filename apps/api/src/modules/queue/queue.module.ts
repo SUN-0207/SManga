@@ -60,7 +60,19 @@ import { QUEUE_CRAWLER } from './queue.constants';
         };
       },
     }),
-    BullModule.registerQueue({ name: QUEUE_CRAWLER }),
+    BullModule.registerQueue({
+      name: QUEUE_CRAWLER,
+      settings: {
+        // Default lockDuration 30s / maxStalledCount 1 mass-fails active jobs
+        // on any >30s stall or a Watchtower container swap. Longer lock +
+        // higher stalled tolerance survive deploys and brief event-loop stalls
+        // during crawls (cheerio parse). lockRenewTime defaults to half of
+        // lockDuration, which is fine.
+        lockDuration: 120_000,
+        stalledInterval: 60_000,
+        maxStalledCount: 3,
+      },
+    }),
   ],
   exports: [BullModule],
 })
