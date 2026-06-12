@@ -8,19 +8,27 @@ the laptop (`sunny-server`):
    ```bash
    free -h
    ```
-   If total RAM < 8 GB, HALVE the Postgres/Redis values first (edit the compose on
-   the laptop or via a follow-up commit): `shared_buffers=512MB`,
-   `effective_cache_size=1536MB`, `maintenance_work_mem=128MB`, postgres `mem_limit: 1g`,
-   redis `--maxmemory 384mb`, api `--max-old-space-size=512` + `mem_limit: 1g`.
+   If total RAM < 8 GB, HALVE the values first (edit the compose on the laptop or
+   via a follow-up commit): `shared_buffers=512MB`, `effective_cache_size=1536MB`,
+   `maintenance_work_mem=128MB`, postgres `mem_limit: 1g`; redis `--maxmemory 384mb`
+   + `mem_limit: 1g`; api `--max-old-space-size=512` + `mem_limit: 1g`. Keep each
+   `mem_limit` ≥ ~2.5× the service's memory target — a too-tight limit OOM-loops it.
 
-2. **Apply:**
+2. **Apply** — bring Redis up first so it finishes loading its AOF before the API
+   boots. (The API also now retries through Redis `LOADING` on boot — fixed
+   2026-06-12 — so a co-restart can no longer crash-loop it; this ordering is just
+   belt-and-suspenders. **Make sure the API image carrying that fix is deployed
+   before re-applying.**)
    ```bash
-   cd ~/smanga   # the deploy dir on the laptop
+   cd ~/smanga
    git pull
-   docker compose -f deploy/home/docker-compose.prod.yml up -d
+   C="docker compose -f deploy/home/docker-compose.prod.yml"
+   $C up -d redis     # recreate Redis with the new flags; let it load its AOF
+   sleep 25
+   $C up -d           # bring up the rest; the API boots with Redis already loaded
    ```
-   `up -d` recreates only the services whose config changed (postgres, redis, api,
-   frontend). Postgres keeps its `postgres-data` volume; Redis keeps `redis-data`.
+   `up -d` recreates only services whose config changed. Postgres keeps its
+   `postgres-data` volume; Redis keeps `redis-data`.
 
 3. **Verify after restart:**
    ```bash

@@ -5,6 +5,7 @@ import {
   JOB_REFRESH_ALL_STORIES,
   QUEUE_CRAWLER,
 } from '@/modules/queue/queue.constants';
+import { withRedisReadyRetry } from '@/modules/queue/redis-ready';
 import { InjectQueue } from '@nestjs/bull';
 import { BadRequestException, Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import type { Database } from '@smanga/db';
@@ -128,14 +129,21 @@ export class AppSettingsService implements OnModuleInit {
       return;
     }
 
-    await this.queue.add(
-      JOB_REFRESH_ALL_STORIES,
-      {},
-      {
-        repeat: { cron, tz: 'Asia/Ho_Chi_Minh' },
-        jobId: REPEATABLE_KEY,
-        priority: JOB_PRIORITY.REFRESH_ALL_STORIES,
-      },
+    // Retry while Redis is still LOADING after a co-restart so a boot-time
+    // install can't crash the API process (see redis-ready.ts). On the runtime
+    // (PATCH) path Redis is already up, so this runs once.
+    await withRedisReadyRetry(
+      () =>
+        this.queue.add(
+          JOB_REFRESH_ALL_STORIES,
+          {},
+          {
+            repeat: { cron, tz: 'Asia/Ho_Chi_Minh' },
+            jobId: REPEATABLE_KEY,
+            priority: JOB_PRIORITY.REFRESH_ALL_STORIES,
+          },
+        ),
+      { logger: this.logger, label: 'auto-refresh repeatable install' },
     );
     this.logger.log(`auto-refresh repeatable installed cron="${cron}" tz=Asia/Ho_Chi_Minh`);
   }

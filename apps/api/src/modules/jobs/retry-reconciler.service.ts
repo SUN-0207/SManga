@@ -1,6 +1,7 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
 import { isQueueAtCapacity } from '@/modules/queue/queue-capacity';
 import { JOB_PRIORITY, JOB_RETRY_RECONCILER, QUEUE_CRAWLER } from '@/modules/queue/queue.constants';
+import { withRedisReadyRetry } from '@/modules/queue/redis-ready';
 import { InjectQueue, Process, Processor } from '@nestjs/bull';
 import { Inject, Logger, type OnModuleInit } from '@nestjs/common';
 import type { Database } from '@smanga/db';
@@ -38,16 +39,23 @@ export class RetryReconcilerService implements OnModuleInit {
     } catch (err) {
       this.logger.warn(`reconciler repeatable cleanup failed: ${(err as Error).message}`);
     }
-    await this.queue.add(
-      JOB_RETRY_RECONCILER,
-      {},
-      {
-        repeat: { cron: RECONCILER_CRON, tz: 'Asia/Ho_Chi_Minh' },
-        jobId: RECONCILER_REPEATABLE_KEY,
-        priority: JOB_PRIORITY.RETRY_RECONCILER,
-        removeOnComplete: true,
-        removeOnFail: 50,
-      },
+    // Retry while Redis is still LOADING after a co-restart — an unhandled
+    // throw here propagates out of Nest bootstrap and crash-loops the whole API
+    // (the 2026-06-12 incident). See redis-ready.ts.
+    await withRedisReadyRetry(
+      () =>
+        this.queue.add(
+          JOB_RETRY_RECONCILER,
+          {},
+          {
+            repeat: { cron: RECONCILER_CRON, tz: 'Asia/Ho_Chi_Minh' },
+            jobId: RECONCILER_REPEATABLE_KEY,
+            priority: JOB_PRIORITY.RETRY_RECONCILER,
+            removeOnComplete: true,
+            removeOnFail: 50,
+          },
+        ),
+      { logger: this.logger, label: 'retry-reconciler repeatable install' },
     );
     this.logger.log(`retry-reconciler repeatable installed cron="${RECONCILER_CRON}"`);
   }

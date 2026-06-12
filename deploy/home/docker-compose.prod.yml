@@ -33,7 +33,11 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--save", "60", "1", "--appendonly", "yes", "--maxmemory", "768mb", "--maxmemory-policy", "noeviction"]
-    mem_limit: 1g
+    # mem_limit must be well above --maxmemory (768mb): RSS spikes during AOF
+    # load/rewrite (copy-on-write). 1g was too tight → Docker OOM-killed Redis on
+    # boot → restart-loop → API crash-looped on `LOADING` (2026-06-12 incident).
+    # ~2.5x maxmemory leaves headroom. Host has 15Gi.
+    mem_limit: 2g
     stop_grace_period: 30s
     volumes:
       - redis-data:/data
@@ -44,7 +48,10 @@ services:
   api:
     image: ghcr.io/${GHCR_OWNER}/smanga-api:latest
     restart: unless-stopped
-    mem_limit: 1.5g
+    # Headroom above the 1024MB V8 heap (NODE_OPTIONS) for native buffers
+    # (zlib threadpool, cheerio DOM, undici) + Bull workers + 25 PG conns.
+    # 1.5g was uncomfortably tight; 2g avoids an OOM-loop. Host has 15Gi.
+    mem_limit: 2g
     stop_grace_period: 90s
     depends_on:
       postgres: { condition: service_healthy }
