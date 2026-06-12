@@ -1,16 +1,18 @@
 import { getChapterContent } from '@/api/chapters';
 import { CommentSection } from '@/components/comments/CommentSection';
+import { ReadingProgressBar } from '@/components/reader/ReadingProgressBar';
 import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
 import { SEO } from '@/components/seo/SEO';
 import { buildArticleSchema, buildBreadcrumbSchema } from '@/components/seo/builders';
 import { useReadingSessionTracker } from '@/hooks/use-reading-session-tracker';
 import { useTrackChapterView } from '@/hooks/use-track-view';
 import { cleanChapterTitle } from '@/lib/chapter-title';
+import { countWords } from '@/lib/reader-progress';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, List, Settings as SettingsIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export const Route = createFileRoute('/truyen/$slug/chuong/$index')({
   component: ChapterReader,
@@ -26,7 +28,6 @@ function ChapterReader() {
   const fontSize = useReaderPrefs((s) => s.fontSize);
   const fontFamily = useReaderPrefs((s) => s.fontFamily);
   const [chromeVisible, setChromeVisible] = useState(true);
-  const [scrollProgress, setScrollProgress] = useState(0);
 
   // Scroll to top on chapter change
   useEffect(() => {
@@ -49,6 +50,11 @@ function ChapterReader() {
   // the route param string (always defined once the route matches).
   useReadingSessionTracker(data?.story.id, data ? index : undefined);
 
+  // Memoize the per-chapter parse so scroll re-renders never recompute it.
+  const content = data?.chapter.content;
+  const paragraphs = useMemo(() => (content ? content.split('\n\n') : []), [content]);
+  const wordCount = useMemo(() => countWords(content), [content]);
+
   // Auto-hide chrome on scroll-down, show on scroll-up / mouse-move / touch
   useEffect(() => {
     let lastY = window.scrollY;
@@ -58,9 +64,6 @@ function ChapterReader() {
       const y = window.scrollY;
       const goingDown = y > lastY;
       lastY = y;
-      const doc = document.documentElement;
-      const max = doc.scrollHeight - window.innerHeight;
-      setScrollProgress(max > 0 ? Math.min(100, (y / max) * 100) : 0);
       if (goingDown && y > 200) {
         clearTimeout(hideTimer);
         hideTimer = setTimeout(() => setChromeVisible(false), 600);
@@ -112,7 +115,6 @@ function ChapterReader() {
     fontFamily === 'sans' ? 'font-sans' : fontFamily === 'mono' ? 'font-mono' : 'font-prose';
 
   // Word-based reading time (Spec C: ceil(wordCount / 250))
-  const wordCount = (chapter.content?.match(/\S+/g) ?? []).length;
   const readingMinutes = Math.max(1, Math.ceil(wordCount / 250));
 
   // Drop-cap eligibility — suppress on smallest font size, when no letter in first 20 chars,
@@ -184,28 +186,7 @@ function ChapterReader() {
       {/* Auto-save reading progress after 5s (non-visual, non-critical) */}
       <ReadingProgressTracker storyId={story.id} chapterIndex={chapter.index} />
 
-      {/* Scroll progress bar — fixed top, 2px pink gradient.
-       *  tabIndex=-1 makes the progressbar focusable programmatically
-       *  (satisfies WAI-ARIA + biome's useFocusableInteractive) without
-       *  pulling it into the Tab order — readers don't need to step
-       *  through a passive progress indicator. */}
-      <div
-        role="progressbar"
-        tabIndex={-1}
-        aria-valuenow={Math.round(scrollProgress)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label="Tiến độ đọc"
-        className="fixed top-0 left-0 right-0 h-0.5 bg-bg-subtle z-50"
-      >
-        <div
-          className="h-full bg-accent-gradient shadow-glow-pink-soft"
-          style={{
-            width: `${scrollProgress}%`,
-            transition: reduceMotion ? 'none' : 'width 100ms linear',
-          }}
-        />
-      </div>
+      <ReadingProgressBar />
 
       {/* Top chrome — auto-hides on scroll-down */}
       <header
@@ -268,7 +249,7 @@ function ChapterReader() {
 
         {chapter.isCrawled && chapter.content ? (
           <div className={`${fontFamilyClass} ${fontSizeClass} text-fg/95 [&_p]:mb-5`}>
-            {chapter.content.split('\n\n').map(renderParagraph)}
+            {paragraphs.map(renderParagraph)}
           </div>
         ) : (
           <div className="border border-dashed border-border rounded-xl p-10 text-center text-fg-muted my-10">
