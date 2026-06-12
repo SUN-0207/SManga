@@ -40,12 +40,17 @@ export interface AutoCrawlSetting {
   autoCrawlWatermark: number;
 }
 
+export interface UpdateAutoCrawlPatch {
+  enabled?: boolean;
+  watermark?: number;
+}
+
 export async function getAutoCrawl(): Promise<AutoCrawlSetting> {
   const res = await api.get<AutoCrawlSetting>('/admin/settings/auto-crawl');
   return res.data;
 }
 
-export async function updateAutoCrawl(patch: AutoCrawlSetting): Promise<AutoCrawlSetting> {
+export async function updateAutoCrawl(patch: UpdateAutoCrawlPatch): Promise<AutoCrawlSetting> {
   const res = await api.patch<AutoCrawlSetting>('/admin/settings/auto-crawl', patch);
   return res.data;
 }

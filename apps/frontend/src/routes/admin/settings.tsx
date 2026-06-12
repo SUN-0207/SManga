@@ -284,7 +284,7 @@ function AutoCrawlCard({
   }, [setting.autoCrawlEnabled, setting.autoCrawlWatermark]);
 
   const saveM = useMutation({
-    mutationFn: () => updateAutoCrawl({ autoCrawlEnabled: enabled, autoCrawlWatermark: watermark }),
+    mutationFn: () => updateAutoCrawl({ enabled, watermark }),
     onSuccess: () => {
       setOkFlash(true);
       setTimeout(() => setOkFlash(false), 2500);
