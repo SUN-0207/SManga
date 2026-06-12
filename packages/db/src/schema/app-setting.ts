@@ -17,6 +17,11 @@ export const appSetting = pgTable('app_setting', {
   /** Kill switch for the dead-letter retry reconciler. Default ON — flip off
    * to instantly disable auto-retry during an incident. */
   autoRetryEnabled: boolean('auto_retry_enabled').notNull().default(true),
+  /** Smart auto-crawl backlog drainer. OFF by default (opt-in). */
+  autoCrawlEnabled: boolean('auto_crawl_enabled').notNull().default(false),
+  /** Max fetch-chapter jobs the feeder keeps queued — the bound that makes it
+   * non-disruptive. Clamped [50,2000] in the DTO/service. */
+  autoCrawlWatermark: integer('auto_crawl_watermark').notNull().default(500),
   lastRunAt: timestamp('last_run_at', { withTimezone: true }),
   lastRunCount: integer('last_run_count'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

@@ -1,0 +1,2 @@
+ALTER TABLE "app_setting" ADD COLUMN "auto_crawl_enabled" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "app_setting" ADD COLUMN "auto_crawl_watermark" integer DEFAULT 500 NOT NULL;
