@@ -102,6 +102,30 @@ export class AppSettingsService implements OnModuleInit {
     return { autoRetryEnabled: updated.autoRetryEnabled };
   }
 
+  async getAutoCrawl(): Promise<{ autoCrawlEnabled: boolean; autoCrawlWatermark: number }> {
+    const s = await this.getOrSeed();
+    return { autoCrawlEnabled: s.autoCrawlEnabled, autoCrawlWatermark: s.autoCrawlWatermark };
+  }
+
+  async setAutoCrawl(
+    enabled: boolean,
+    watermark: number,
+  ): Promise<{ autoCrawlEnabled: boolean; autoCrawlWatermark: number }> {
+    // Clamp defensively even though the DTO validates — the bound is the
+    // load-bearing safety knob; never let it be 0 or absurdly large.
+    const clamped = Math.min(2000, Math.max(50, Math.floor(watermark)));
+    const [updated] = await this.db
+      .update(appSetting)
+      .set({ autoCrawlEnabled: enabled, autoCrawlWatermark: clamped, updatedAt: new Date() })
+      .where(eq(appSetting.id, 1))
+      .returning();
+    if (!updated) throw new BadRequestException('app_setting row missing — re-run migrations');
+    return {
+      autoCrawlEnabled: updated.autoCrawlEnabled,
+      autoCrawlWatermark: updated.autoCrawlWatermark,
+    };
+  }
+
   private async getOrSeed() {
     const [row] = await this.db.select().from(appSetting).where(eq(appSetting.id, 1)).limit(1);
     if (row) return row;
