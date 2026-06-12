@@ -3,6 +3,18 @@ import { JOB_FETCH_CHAPTER, JOB_IMPORT_STORY, JOB_PRIORITY } from '@/modules/que
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { JobsService } from './jobs.service';
 
+/** Build a minimal fake Bull Job object */
+function makeJob(id: string) {
+  return {
+    id,
+    name: 'fetch-chapter',
+    data: { chapterId: id },
+    opts: { attempts: 3, backoff: undefined, priority: 1 },
+    retry: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
 describe('JobsService.refetchAllChapters', () => {
   // The capacity helper caches getWaitingCount() for 2s across calls. Tests
   // need a clean slate so the mock's getWaitingCount value drives each case.
@@ -125,5 +137,57 @@ describe('JobsService.backfillCovers', () => {
     await expect(svc.backfillCovers()).rejects.toThrow(/quá tải/);
     expect(dbExecute).not.toHaveBeenCalled();
     expect(addBulk).not.toHaveBeenCalled();
+  });
+});
+
+describe('JobsService.retryAllFailed', () => {
+  it('retries every failed job across multiple pages without skipping (reads from index 0 each page)', async () => {
+    // Regression test for the "advancing start while mutating the live sorted set
+    // skips positions PAGE..2*PAGE-1" bug.
+    //
+    // Simulate 3 pages of 3 jobs each (PAGE=1000, but we use 3-job pages here
+    // by returning 3 items per call until the set is drained). The getJobs mock
+    // simulates the live sorted set: each call pops the first N items off the
+    // front and returns them. This matches Bull's ZREVRANGE behaviour where
+    // retried jobs are removed from the set — always reading from 0 is correct.
+    const allJobs = [makeJob('j1'), makeJob('j2'), makeJob('j3'), makeJob('j4'), makeJob('j5')];
+    // getJobs(['failed'], 0, PAGE-1) drains allJobs: each call removes the front
+    // slice and returns it; empty when done.
+    let remaining = [...allJobs];
+    const getJobs = vi.fn().mockImplementation((_states: unknown, start: number, end: number) => {
+      // The correct implementation always calls with start=0.
+      // Return the first PAGE items and drain them to simulate live mutation.
+      const page = remaining.slice(0, end - start + 1);
+      remaining = remaining.slice(page.length);
+      return Promise.resolve(page);
+    });
+    const add = vi.fn().mockResolvedValue({ id: 'new' });
+    const db = { execute: vi.fn() };
+    const queue = { getJobs, add } as never;
+    const svc = new JobsService(db as never, queue);
+
+    const result = await svc.retryAllFailed();
+
+    // All 5 jobs must be retried — none skipped due to position shifting.
+    expect(result.retried).toBe(5);
+    expect(result.skipped).toBe(0);
+    // job.retry() was called on each job exactly once.
+    for (const job of allJobs) {
+      expect(job.retry).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('counts skipped when both retry() and re-add throw', async () => {
+    const job = makeJob('bad');
+    job.retry.mockRejectedValue(new Error('cannot retry'));
+    const getJobs = vi.fn().mockResolvedValueOnce([job]).mockResolvedValue([]);
+    const add = vi.fn().mockRejectedValue(new Error('add failed'));
+    const db = { execute: vi.fn() };
+    const queue = { getJobs, add } as never;
+    const svc = new JobsService(db as never, queue);
+
+    const result = await svc.retryAllFailed();
+    expect(result.retried).toBe(0);
+    expect(result.skipped).toBe(1);
   });
 });

@@ -203,8 +203,17 @@ export class JobsService {
     let retried = 0;
     let skipped = 0;
     const PAGE = 1000;
-    for (let start = 0; ; start += PAGE) {
-      const failed = await this.queue.getJobs(['failed'], start, start + PAGE - 1);
+    // Always read from index 0: each iteration calls job.retry() or job.remove(),
+    // which removes entries from Bull's 'failed' sorted set (ZREM). Advancing
+    // `start` while mutating the live set skips jobs — the entries that were at
+    // positions PAGE..2*PAGE-1 shift down to 0..PAGE-1 after the first drain,
+    // so a start=PAGE read would miss them entirely. Reading from 0 each time is
+    // correct and safe: the loop terminates when a page comes back empty (the set
+    // is drained). Add a safety-bound of 10k pages (~10M jobs) to prevent an
+    // infinite loop if retry() unexpectedly re-inserts into failed.
+    const MAX_PAGES = 10_000;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const failed = await this.queue.getJobs(['failed'], 0, PAGE - 1);
       if (failed.length === 0) break;
       for (const job of failed) {
         try {
@@ -224,7 +233,6 @@ export class JobsService {
           }
         }
       }
-      if (failed.length < PAGE) break;
     }
     return { retried, skipped };
   }
