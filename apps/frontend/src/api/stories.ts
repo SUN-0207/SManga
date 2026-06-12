@@ -84,7 +84,7 @@ export interface StoriesCounts {
   hasErrors: number;
 }
 
-/** One round-trip for all four admin filter-pill totals (replaces 4 parallel
+/** One round-trip for all five admin filter-pill totals (replaces 5 parallel
  * getStoriesCount calls). Accepts React Query's AbortSignal so superseded
  * keystrokes cancel server-side work. */
 export async function getStoriesCounts(q?: string, signal?: AbortSignal): Promise<StoriesCounts> {

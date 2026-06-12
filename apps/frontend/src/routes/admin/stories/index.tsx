@@ -136,7 +136,7 @@ function AdminStoriesPage() {
     placeholderData: (prev) => prev,
   });
 
-  // ONE round-trip for all four filter-pill totals; AbortSignal cancels
+  // ONE round-trip for all five filter-pill totals; AbortSignal cancels
   // superseded keystrokes' queries server-side.
   const countsQ = useQuery({
     queryKey: ['admin-stories', 'counts', q],
