@@ -71,31 +71,32 @@ export class AutoCrawlFeederProcessor implements OnModuleInit {
 
   @Process(JOB_AUTOCRAWL_FEED)
   async handle(_job?: Job): Promise<{ enqueued: number; reason: string | null }> {
-    const [config] = await this.db
-      .select({
-        autoCrawlEnabled: appSetting.autoCrawlEnabled,
-        autoCrawlWatermark: appSetting.autoCrawlWatermark,
-      })
-      .from(appSetting)
-      .where(eq(appSetting.id, 1))
-      .limit(1);
-    if (!config?.autoCrawlEnabled) return { enqueued: 0, reason: 'disabled' };
+    try {
+      const [config] = await this.db
+        .select({
+          autoCrawlEnabled: appSetting.autoCrawlEnabled,
+          autoCrawlWatermark: appSetting.autoCrawlWatermark,
+        })
+        .from(appSetting)
+        .where(eq(appSetting.id, 1))
+        .limit(1);
+      if (!config?.autoCrawlEnabled) return { enqueued: 0, reason: 'disabled' };
 
-    const waiting = await this.queue.getWaitingCount();
-    if (waiting >= config.autoCrawlWatermark) return { enqueued: 0, reason: 'watermark' };
-    const headroom = config.autoCrawlWatermark - waiting;
+      const waiting = await this.queue.getWaitingCount();
+      if (waiting >= config.autoCrawlWatermark) return { enqueued: 0, reason: 'watermark' };
+      const headroom = config.autoCrawlWatermark - waiting;
 
-    // Two-step story-frontier (spec §5b) so the OUTER scan is bounded and the
-    // planner can't full-sort the ~1.7M pending rows:
-    //  1) `frontier` = the newest ≤headroom stories that still have a pending
-    //     chapter — early-stops on story_updated_at_idx (DESC) and probes the
-    //     partial chapter_needs_crawl_idx for the EXISTS, so it stops as soon as
-    //     it has enough stories.
-    //  2) take those stories' pending chapters in (story-recency, index) order
-    //     up to headroom — the sort is bounded by the frontier, not the backlog.
-    // Under-filling a tick is fine — the next tick continues. (1 pending/story
-    // worst case → headroom stories cover headroom chapters.)
-    const r = await this.db.execute<{ id: string }>(sql`
+      // Two-step story-frontier (spec §5b) so the OUTER scan is bounded and the
+      // planner can't full-sort the ~1.7M pending rows:
+      //  1) `frontier` = the newest ≤headroom stories that still have a pending
+      //     chapter — early-stops on story_updated_at_idx (DESC) and probes the
+      //     partial chapter_needs_crawl_idx for the EXISTS, so it stops as soon as
+      //     it has enough stories.
+      //  2) take those stories' pending chapters in (story-recency, index) order
+      //     up to headroom — the sort is bounded by the frontier, not the backlog.
+      // Under-filling a tick is fine — the next tick continues. (1 pending/story
+      // worst case → headroom stories cover headroom chapters.)
+      const r = await this.db.execute<{ id: string }>(sql`
       WITH frontier AS (
         SELECT s.id, s.updated_at
         FROM story s
@@ -112,23 +113,30 @@ export class AutoCrawlFeederProcessor implements OnModuleInit {
       ORDER BY f.updated_at DESC, ch.index ASC
       LIMIT ${headroom}
     `);
-    const rows = rowsOf<{ id: string }>(r);
-    if (rows.length === 0) return { enqueued: 0, reason: 'idle' };
+      const rows = rowsOf<{ id: string }>(r);
+      if (rows.length === 0) return { enqueued: 0, reason: 'idle' };
 
-    const jobs = rows.map((c) => ({
-      name: JOB_FETCH_CHAPTER,
-      data: { chapterId: c.id } satisfies FetchChapterJobData,
-      opts: {
-        jobId: `fetch-chapter:${c.id}`,
-        priority: JOB_PRIORITY.AUTOCRAWL_FETCH,
-        attempts: 3,
-        backoff: { type: 'exponential' as const, delay: 30_000 },
-      },
-    }));
-    const { enqueued } = await enqueueChunked(this.queue, jobs);
-    this.logger.log(
-      `auto-crawl feed: enqueued=${enqueued} waiting=${waiting} headroom=${headroom}`,
-    );
-    return { enqueued, reason: null };
+      const jobs = rows.map((c) => ({
+        name: JOB_FETCH_CHAPTER,
+        data: { chapterId: c.id } satisfies FetchChapterJobData,
+        opts: {
+          jobId: `fetch-chapter:${c.id}`,
+          priority: JOB_PRIORITY.AUTOCRAWL_FETCH,
+          attempts: 3,
+          backoff: { type: 'exponential' as const, delay: 30_000 },
+        },
+      }));
+      const { enqueued } = await enqueueChunked(this.queue, jobs);
+      this.logger.log(
+        `auto-crawl feed: enqueued=${enqueued} waiting=${waiting} headroom=${headroom}`,
+      );
+      return { enqueued, reason: null };
+    } catch (err) {
+      // Tick body guarded (spec §8): a transient DB/Redis error must not crash
+      // the process — log + return so the next cron tick simply retries, instead
+      // of leaving a failed feed job in Bull.
+      this.logger.error(`auto-crawl feed tick failed: ${(err as Error).message}`);
+      return { enqueued: 0, reason: 'error' };
+    }
   }
 }

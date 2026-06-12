@@ -71,4 +71,17 @@ describe('AutoCrawlFeederProcessor.handle', () => {
       opts: { jobId: 'fetch-chapter:c1', priority: 30 },
     });
   });
+
+  it('returns reason="error" (no crash, no enqueue) when the picker query throws', async () => {
+    const db = {
+      select: vi.fn(selectConfig({ autoCrawlEnabled: true, autoCrawlWatermark: 500 })),
+      execute: vi.fn().mockRejectedValue(new Error('db blip')),
+    };
+    const addBulk = vi.fn();
+    const queue = { getWaitingCount: vi.fn().mockResolvedValue(0), addBulk };
+    const svc = new AutoCrawlFeederProcessor(db as never, queue as never);
+    const res = await svc.handle();
+    expect(res).toEqual({ enqueued: 0, reason: 'error' });
+    expect(addBulk).not.toHaveBeenCalled();
+  });
 });
