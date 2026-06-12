@@ -6,6 +6,7 @@ export const JOB_FETCH_CHAPTER = 'fetch-chapter';
 export const JOB_REFRESH_ALL_STORIES = 'refresh-all-stories';
 export const JOB_DISCOVER_ALL_SOURCE = 'discover-all-source';
 export const JOB_RETRY_RECONCILER = 'retry-reconciler';
+export const JOB_AUTOCRAWL_FEED = 'autocrawl-feed';
 
 /**
  * Bull priority — LOWER number = HIGHER priority. Workers pick the lowest
@@ -20,6 +21,8 @@ export const JOB_RETRY_RECONCILER = 'retry-reconciler';
  *  8) Discover a whole source feed (rare admin action, fans out into N imports)
  * 10) Import story metadata (largely a setup step, no user-visible payoff)
  * 20) Scheduled refresh (cron, deferrable behind anything user-initiated)
+ * 30) Background auto-crawl backlog drain — lowest priority so manual
+ *     crawl-missing / "Chỉ crawl lỗi" / discover / reconciler always preempt.
  */
 export const JOB_PRIORITY = {
   FETCH_CHAPTER: 1,
@@ -28,6 +31,9 @@ export const JOB_PRIORITY = {
   DISCOVER_ALL_SOURCE: 8,
   IMPORT_STORY: 10,
   REFRESH_ALL_STORIES: 20,
+  // 30) Background auto-crawl backlog drain — lowest priority so manual
+  //     crawl-missing / "Chỉ crawl lỗi" / discover / reconciler always preempt.
+  AUTOCRAWL_FETCH: 30,
 } as const;
 
 export interface ImportStoryJobData {
