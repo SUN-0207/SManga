@@ -11,7 +11,7 @@ the laptop (`sunny-server`):
    If total RAM < 8 GB, HALVE the Postgres/Redis values first (edit the compose on
    the laptop or via a follow-up commit): `shared_buffers=512MB`,
    `effective_cache_size=1536MB`, `maintenance_work_mem=128MB`, postgres `mem_limit: 1g`,
-   redis `--maxmemory 384mb`, api `--max-old-space-size=768` + `mem_limit: 1g`.
+   redis `--maxmemory 384mb`, api `--max-old-space-size=512` + `mem_limit: 1g`.
 
 2. **Apply:**
    ```bash
@@ -24,9 +24,10 @@ the laptop (`sunny-server`):
 
 3. **Verify after restart:**
    ```bash
-   docker compose -f deploy/home/docker-compose.prod.yml ps          # all healthy
-   docker exec <postgres> psql -U smanga -d smanga -c 'SHOW shared_buffers;'   # 1GB
-   docker exec <redis> redis-cli CONFIG GET maxmemory-policy                   # noeviction
+   COMPOSE="docker compose -f deploy/home/docker-compose.prod.yml"
+   $COMPOSE ps                                                       # all healthy
+   $COMPOSE exec postgres psql -U smanga -d smanga -c 'SHOW shared_buffers;'   # 1GB
+   $COMPOSE exec redis redis-cli CONFIG GET maxmemory-policy                   # noeviction
    curl -sI https://smanga.shop/api/v1/health                                  # 200
    ```
 

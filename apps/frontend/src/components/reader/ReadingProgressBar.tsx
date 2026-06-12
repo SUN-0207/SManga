@@ -33,6 +33,8 @@ export function ReadingProgressBar() {
   }, []);
 
   return (
+    // tabIndex=-1 satisfies WAI-ARIA + biome's useFocusableInteractive without
+    // pulling this passive indicator into the Tab order — don't remove it.
     <div
       role="progressbar"
       tabIndex={-1}
