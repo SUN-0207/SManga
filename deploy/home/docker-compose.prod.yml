@@ -2,6 +2,20 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - effective_cache_size=3GB
+      - -c
+      - work_mem=32MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - random_page_cost=1.1
+    mem_limit: 2g
+    stop_grace_period: 30s
     environment:
       POSTGRES_DB: smanga
       POSTGRES_USER: smanga
@@ -18,7 +32,9 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes", "--maxmemory", "768mb", "--maxmemory-policy", "noeviction"]
+    mem_limit: 1g
+    stop_grace_period: 30s
     volumes:
       - redis-data:/data
     healthcheck:
@@ -28,12 +44,16 @@ services:
   api:
     image: ghcr.io/${GHCR_OWNER}/smanga-api:latest
     restart: unless-stopped
+    mem_limit: 1.5g
+    stop_grace_period: 90s
     depends_on:
       postgres: { condition: service_healthy }
       redis:    { condition: service_healthy }
     environment:
       NODE_ENV: production
       PORT: "3001"
+      NODE_OPTIONS: "--max-old-space-size=1024"
+      DB_POOL_MAX: "25"
       DATABASE_URL: postgres://smanga:${POSTGRES_PASSWORD}@postgres:5432/smanga
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
@@ -53,6 +73,7 @@ services:
   frontend:
     image: ghcr.io/${GHCR_OWNER}/smanga-frontend:latest
     restart: unless-stopped
+    stop_grace_period: 15s
     labels:
       com.centurylinklabs.watchtower.enable: "true"
 
