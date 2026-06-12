@@ -42,7 +42,7 @@ export interface BulkImportResponse {
   autoCrawl: boolean;
 }
 
-export type BulkAction = 'discover' | 'crawl-missing' | 'discover-and-crawl';
+export type BulkAction = 'discover' | 'crawl-missing' | 'crawl-failed' | 'discover-and-crawl';
 
 export interface BulkActionResponse {
   queued: { storyId: string; jobs: number }[];

@@ -496,6 +496,7 @@ function BulkActionBar({
       const labels: Record<BulkAction, string> = {
         discover: 'quét chương',
         'crawl-missing': 'crawl missing',
+        'crawl-failed': 'crawl lỗi',
         'discover-and-crawl': 'quét + crawl',
       };
       const skip = res.skipped.length;
@@ -559,6 +560,15 @@ function BulkActionBar({
                 variant="outline"
               >
                 Crawl missing
+              </ActionButton>
+              <ActionButton
+                onClick={() => mut.mutate({ action: 'crawl-failed' })}
+                disabled={mut.isPending || ids.length === 0 || ids.length > 100}
+                busy={mut.isPending && mut.variables?.action === 'crawl-failed'}
+                icon={<XCircle className="h-4 w-4" aria-hidden />}
+                variant="outline"
+              >
+                Chỉ crawl lỗi
               </ActionButton>
               <ActionButton
                 onClick={() => mut.mutate({ action: 'discover-and-crawl' })}

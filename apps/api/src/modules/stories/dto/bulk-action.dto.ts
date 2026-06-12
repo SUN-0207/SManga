@@ -1,6 +1,6 @@
 import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsIn, IsUUID } from 'class-validator';
 
-export type BulkAction = 'discover' | 'crawl-missing' | 'discover-and-crawl';
+export type BulkAction = 'discover' | 'crawl-missing' | 'crawl-failed' | 'discover-and-crawl';
 
 export class BulkActionDto {
   @IsArray()
@@ -10,6 +10,6 @@ export class BulkActionDto {
   @IsUUID(undefined, { each: true })
   ids!: string[];
 
-  @IsIn(['discover', 'crawl-missing', 'discover-and-crawl'])
+  @IsIn(['discover', 'crawl-missing', 'crawl-failed', 'discover-and-crawl'])
   action!: BulkAction;
 }

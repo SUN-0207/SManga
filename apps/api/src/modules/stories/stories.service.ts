@@ -630,12 +630,13 @@ export class StoriesService {
    * Bulk action over selected story rows on /admin/stories.
    * - 'discover': fire chapter-list discovery for each (skips if discoveryStatus='running')
    * - 'crawl-missing': enqueue fetch-chapter for every pending/failed chapter (skip if discovery not complete)
+   * - 'crawl-failed': enqueue fetch-chapter for ONLY failed chapters (re-crawl just the errors)
    * - 'discover-and-crawl': discover first, chain crawl via autoCrawl flag
    * Returns per-story result so the UI can flash success/skip counts.
    */
   async enqueueBulkAction(
     ids: string[],
-    action: 'discover' | 'crawl-missing' | 'discover-and-crawl',
+    action: 'discover' | 'crawl-missing' | 'crawl-failed' | 'discover-and-crawl',
     requestedBy: string | null,
   ) {
     if (ids.length === 0) throw new BadRequestException('ids must contain at least one entry');
@@ -674,15 +675,17 @@ export class StoriesService {
         continue;
       }
 
-      // 'crawl-missing'
+      // 'crawl-missing' (pending + failed) | 'crawl-failed' (failed only)
       if (s.discoveryStatus !== 'complete') {
         skipped.push({ storyId, reason: `discovery_status=${s.discoveryStatus}` });
         continue;
       }
+      const statuses: ('pending' | 'failed')[] =
+        action === 'crawl-failed' ? ['failed'] : ['pending', 'failed'];
       const rows = await this.db
         .select({ id: chapter.id })
         .from(chapter)
-        .where(and(eq(chapter.storyId, storyId), inArray(chapter.status, ['pending', 'failed'])));
+        .where(and(eq(chapter.storyId, storyId), inArray(chapter.status, statuses)));
       for (const r of rows) {
         // Idempotent: a retained completed/failed fetch-chapter:<id> would make
         // a raw add silently no-op, so crawl-missing would do nothing for up to
