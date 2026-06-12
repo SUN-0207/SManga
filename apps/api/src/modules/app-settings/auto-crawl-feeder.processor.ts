@@ -85,15 +85,31 @@ export class AutoCrawlFeederProcessor implements OnModuleInit {
     if (waiting >= config.autoCrawlWatermark) return { enqueued: 0, reason: 'watermark' };
     const headroom = config.autoCrawlWatermark - waiting;
 
-    // Newest-story-first pending chapters. Index-ordered (story_updated_at_idx
-    // DESC + partial chapter_needs_crawl_idx) with LIMIT so it stops early — no
-    // Seq Scan over the ~1.7M pending rows. EXPLAIN-verified (Task 7).
+    // Two-step story-frontier (spec §5b) so the OUTER scan is bounded and the
+    // planner can't full-sort the ~1.7M pending rows:
+    //  1) `frontier` = the newest ≤headroom stories that still have a pending
+    //     chapter — early-stops on story_updated_at_idx (DESC) and probes the
+    //     partial chapter_needs_crawl_idx for the EXISTS, so it stops as soon as
+    //     it has enough stories.
+    //  2) take those stories' pending chapters in (story-recency, index) order
+    //     up to headroom — the sort is bounded by the frontier, not the backlog.
+    // Under-filling a tick is fine — the next tick continues. (1 pending/story
+    // worst case → headroom stories cover headroom chapters.)
     const r = await this.db.execute<{ id: string }>(sql`
+      WITH frontier AS (
+        SELECT s.id, s.updated_at
+        FROM story s
+        WHERE s.discovery_status = 'complete'
+          AND EXISTS (SELECT 1 FROM chapter ch
+                      WHERE ch.story_id = s.id AND ch.status = 'pending')
+        ORDER BY s.updated_at DESC
+        LIMIT ${headroom}
+      )
       SELECT ch.id
       FROM chapter ch
-      JOIN story s ON s.id = ch.story_id
-      WHERE s.discovery_status = 'complete' AND ch.status = 'pending'
-      ORDER BY s.updated_at DESC, ch.index ASC
+      JOIN frontier f ON f.id = ch.story_id
+      WHERE ch.status = 'pending'
+      ORDER BY f.updated_at DESC, ch.index ASC
       LIMIT ${headroom}
     `);
     const rows = rowsOf<{ id: string }>(r);
