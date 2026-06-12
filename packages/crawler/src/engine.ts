@@ -16,14 +16,14 @@ import { logger } from './logger.ts';
 import { TokenBucket } from './rate-limit.ts';
 import { getAdapter, resolveAdapterForUrl } from './registry.ts';
 
-const buckets = new Map<string, TokenBucket>();
+const buckets = new Map<string, { bucket: TokenBucket; rps: number }>();
 function bucketFor(sourceId: string, rps: number): TokenBucket {
-  let b = buckets.get(sourceId);
-  if (!b) {
-    b = new TokenBucket({ ratePerSecond: rps, burst: rps });
-    buckets.set(sourceId, b);
-  }
-  return b;
+  const cached = buckets.get(sourceId);
+  if (cached && cached.rps === rps) return cached.bucket;
+  // rps changed (config/source edit) or first use → fresh bucket.
+  const bucket = new TokenBucket({ ratePerSecond: rps, burst: rps });
+  buckets.set(sourceId, { bucket, rps });
+  return bucket;
 }
 
 function slugify(input: string): string {
