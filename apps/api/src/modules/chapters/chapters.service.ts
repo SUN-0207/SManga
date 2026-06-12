@@ -3,6 +3,7 @@ import { gunzip as gunzipCb } from 'node:zlib';
 
 const gunzip = promisify(gunzipCb);
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { enqueueIdempotent } from '@/modules/queue/enqueue.util';
 import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   type FetchChapterJobData,
@@ -139,7 +140,9 @@ export class ChaptersService {
     let enqueued = 0;
     for (const chapterId of ids) {
       const payload: FetchChapterJobData = { chapterId };
-      await this.queue.add(JOB_FETCH_CHAPTER, payload, {
+      // Idempotent: a retained completed/failed fetch-chapter:<id> would make a
+      // raw add silently no-op, so this manual re-crawl button would do nothing.
+      await enqueueIdempotent(this.queue, JOB_FETCH_CHAPTER, payload, {
         jobId: `fetch-chapter:${chapterId}`,
         priority: JOB_PRIORITY.FETCH_CHAPTER,
       });

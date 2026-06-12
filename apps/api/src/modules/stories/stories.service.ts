@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { enqueueIdempotent } from '@/modules/queue/enqueue.util';
 import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverChaptersJobData,
@@ -589,7 +590,7 @@ export class StoriesService {
     }
     await assertQueueCapacity(this.queue);
     const payload: DiscoverChaptersJobData = { storyId, requestedBy, autoCrawl };
-    const job = await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
+    const job = await enqueueIdempotent(this.queue, JOB_DISCOVER_CHAPTERS, payload, {
       jobId: `discover-chapters:${storyId}`,
       priority: JOB_PRIORITY.DISCOVER_CHAPTERS,
     });
@@ -636,7 +637,7 @@ export class StoriesService {
           requestedBy,
           autoCrawl: action === 'discover-and-crawl',
         };
-        await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
+        await enqueueIdempotent(this.queue, JOB_DISCOVER_CHAPTERS, payload, {
           jobId: `discover-chapters:${storyId}`,
           priority: JOB_PRIORITY.DISCOVER_CHAPTERS,
         });
@@ -654,7 +655,12 @@ export class StoriesService {
         .from(chapter)
         .where(and(eq(chapter.storyId, storyId), inArray(chapter.status, ['pending', 'failed'])));
       for (const r of rows) {
-        await this.queue.add(
+        // Idempotent: a retained completed/failed fetch-chapter:<id> would make
+        // a raw add silently no-op, so crawl-missing would do nothing for up to
+        // the failed-retention window. enqueueIdempotent clears the terminal
+        // leftover; an in-flight job is left untouched (no duplicate).
+        await enqueueIdempotent(
+          this.queue,
           JOB_FETCH_CHAPTER,
           { chapterId: r.id },
           { jobId: `fetch-chapter:${r.id}`, priority: JOB_PRIORITY.FETCH_CHAPTER },

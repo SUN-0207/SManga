@@ -89,6 +89,7 @@ export async function importStoryMetadata(
       .where(eq(story.id, existingId))
       .limit(1);
     if (row && row.coverMimeType === null && metadata.coverUrl) {
+      await bucket.acquire(); // meter the cover fetch through the per-source bucket
       const cover = await downloadCover(metadata.coverUrl);
       if (cover) {
         await db
@@ -101,6 +102,11 @@ export async function importStoryMetadata(
     return { storyId: existingId, alreadyExisted: true };
   }
 
+  // The cover lives on the same source infra — meter it through the same bucket
+  // so one import (metadata fetch + cover fetch = 2 requests) can't burst past
+  // the per-source rps. acquire() is FIFO-serialized, so this just costs one
+  // more token, it never double-counts.
+  if (metadata.coverUrl) await bucket.acquire();
   const cover = metadata.coverUrl ? await downloadCover(metadata.coverUrl) : null;
 
   const baseSlug = slugify(metadata.title) || slugify(metadata.externalId) || 'story';
