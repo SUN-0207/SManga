@@ -6,5 +6,8 @@ export const DRIZZLE = Symbol('DRIZZLE');
 
 export const drizzleProvider: Provider = {
   provide: DRIZZLE,
-  useFactory: (): Database => createDb(loadEnv().DATABASE_URL),
+  useFactory: (): Database => {
+    const env = loadEnv();
+    return createDb(env.DATABASE_URL, env.DB_POOL_MAX);
+  },
 };

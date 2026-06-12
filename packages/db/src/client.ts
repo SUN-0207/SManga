@@ -4,7 +4,7 @@ import * as schema from './schema/index.ts';
 
 export type Database = ReturnType<typeof createDb>;
 
-export function createDb(connectionString: string) {
-  const queryClient = postgres(connectionString, { max: 10 });
+export function createDb(connectionString: string, max = 10) {
+  const queryClient = postgres(connectionString, { max });
   return drizzle(queryClient, { schema });
 }
