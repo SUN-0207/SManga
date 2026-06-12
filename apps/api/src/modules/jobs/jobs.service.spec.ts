@@ -145,22 +145,41 @@ describe('JobsService.retryAllFailed', () => {
     // Regression test for the "advancing start while mutating the live sorted set
     // skips positions PAGE..2*PAGE-1" bug.
     //
-    // Simulate 3 pages of 3 jobs each (PAGE=1000, but we use 3-job pages here
-    // by returning 3 items per call until the set is drained). The getJobs mock
-    // simulates the live sorted set: each call pops the first N items off the
-    // front and returns them. This matches Bull's ZREVRANGE behaviour where
-    // retried jobs are removed from the set — always reading from 0 is correct.
+    // The mock simulates Bull's live 'failed' sorted set: getJobs respects the
+    // `start` offset against the CURRENT remaining array, and each job.retry()
+    // removes its entry from that array (simulating ZREM). Page size is capped
+    // at 2 items regardless of the requested range.
+    //
+    // With the CORRECT implementation (always start=0):
+    //   call 1 → [j1,j2], retry removes both → remaining=[j3,j4,j5]
+    //   call 2 → [j3,j4], retry removes both → remaining=[j5]
+    //   call 3 → [j5],    retry removes it   → remaining=[]
+    //   call 4 → []  → loop exits.  All 5 retried.
+    //
+    // With the BUGGY implementation (start += PAGE, PAGE=1000):
+    //   call 1 (start=0)    → [j1,j2], retry removes both → remaining=[j3,j4,j5]
+    //   call 2 (start=1000) → remaining.slice(1000..1001) = [] → loop exits.
+    //   j3, j4, j5 are SKIPPED — the bug is caught.
+    const PAGE_CAP = 2; // cap mock page size to force multiple real iterations
     const allJobs = [makeJob('j1'), makeJob('j2'), makeJob('j3'), makeJob('j4'), makeJob('j5')];
-    // getJobs(['failed'], 0, PAGE-1) drains allJobs: each call removes the front
-    // slice and returns it; empty when done.
-    let remaining = [...allJobs];
-    const getJobs = vi.fn().mockImplementation((_states: unknown, start: number, end: number) => {
-      // The correct implementation always calls with start=0.
-      // Return the first PAGE items and drain them to simulate live mutation.
-      const page = remaining.slice(0, end - start + 1);
-      remaining = remaining.slice(page.length);
+
+    // `liveSet` represents Bull's sorted set; items are removed when retry()
+    // is called, simulating ZREM.  getJobs slices from `start` with PAGE_CAP.
+    const liveSet = [...allJobs];
+    const getJobs = vi.fn().mockImplementation((_states: unknown, start: number) => {
+      const page = liveSet.slice(start, start + PAGE_CAP);
       return Promise.resolve(page);
     });
+
+    // Wire each job's retry() to remove itself from liveSet, mirroring ZREM.
+    for (const job of allJobs) {
+      job.retry.mockImplementation(() => {
+        const idx = liveSet.indexOf(job);
+        if (idx !== -1) liveSet.splice(idx, 1);
+        return Promise.resolve(undefined);
+      });
+    }
+
     const add = vi.fn().mockResolvedValue({ id: 'new' });
     const db = { execute: vi.fn() };
     const queue = { getJobs, add } as never;
