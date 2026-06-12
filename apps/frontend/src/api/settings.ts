@@ -34,3 +34,18 @@ export async function runAutoRefreshNow(): Promise<{ jobId: string }> {
   const res = await api.post<{ jobId: string }>('/admin/settings/auto-refresh/run-now');
   return res.data;
 }
+
+export interface AutoCrawlSetting {
+  autoCrawlEnabled: boolean;
+  autoCrawlWatermark: number;
+}
+
+export async function getAutoCrawl(): Promise<AutoCrawlSetting> {
+  const res = await api.get<AutoCrawlSetting>('/admin/settings/auto-crawl');
+  return res.data;
+}
+
+export async function updateAutoCrawl(patch: AutoCrawlSetting): Promise<AutoCrawlSetting> {
+  const res = await api.patch<AutoCrawlSetting>('/admin/settings/auto-crawl', patch);
+  return res.data;
+}
