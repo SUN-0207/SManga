@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { enqueueIdempotent } from '@/modules/queue/enqueue.util';
 import { isQueueAtCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverChaptersJobData,
@@ -58,7 +59,7 @@ export class DiscoverChaptersProcessor {
             .orderBy(asc(chapter.index));
           for (const r of rows) {
             const payload: FetchChapterJobData = { chapterId: r.id };
-            await this.queue.add(JOB_FETCH_CHAPTER, payload, {
+            await enqueueIdempotent(this.queue, JOB_FETCH_CHAPTER, payload, {
               jobId: `fetch-chapter:${r.id}`,
               priority: JOB_PRIORITY.FETCH_CHAPTER,
             });

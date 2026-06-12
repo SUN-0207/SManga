@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { enqueueIdempotent } from '@/modules/queue/enqueue.util';
 import { isQueueAtCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverChaptersJobData,
@@ -45,7 +46,7 @@ export class ImportStoryProcessor {
           );
         } else {
           const payload: DiscoverChaptersJobData = { storyId, requestedBy, autoCrawl: true };
-          await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
+          await enqueueIdempotent(this.queue, JOB_DISCOVER_CHAPTERS, payload, {
             jobId: `discover-chapters:${storyId}`,
             priority: JOB_PRIORITY.DISCOVER_CHAPTERS,
           });

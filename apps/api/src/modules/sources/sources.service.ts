@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { enqueueIdempotent } from '@/modules/queue/enqueue.util';
 import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverAllSourceJobData,
@@ -162,10 +163,14 @@ export class SourcesService {
     await assertQueueCapacity(this.queue);
     const payload: DiscoverAllSourceJobData = { sourceId, feedId, autoCrawl, requestedBy };
 
-    const job = await this.queue.add(JOB_DISCOVER_ALL_SOURCE, payload, {
+    const job = await enqueueIdempotent(this.queue, JOB_DISCOVER_ALL_SOURCE, payload, {
       jobId,
       removeOnComplete: true,
-      removeOnFail: false,
+      // Was `false` → a failed discover-all stayed in Redis forever, and Bull's
+      // jobId dedup then silently no-op'd every re-run (the feed was wedged
+      // until a manual Redis purge). Bound it; enqueueIdempotent also clears a
+      // terminal leftover before re-adding.
+      removeOnFail: { age: 86_400, count: 50 },
       priority: JOB_PRIORITY.DISCOVER_ALL_SOURCE,
     });
     return { jobId: String(job.id) };

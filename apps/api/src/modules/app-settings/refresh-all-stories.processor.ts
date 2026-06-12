@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { enqueueIdempotent } from '@/modules/queue/enqueue.util';
 import { isQueueAtCapacity } from '@/modules/queue/queue-capacity';
 import {
   type DiscoverChaptersJobData,
@@ -67,22 +68,30 @@ export class RefreshAllStoriesProcessor {
 
     let enqueued = 0;
     let skipped = 0;
-    for (const r of rows) {
+    for (let i = 0; i < rows.length; i += 1) {
+      // Re-check capacity periodically — the upfront check is stale after a few
+      // hundred enqueues; stop and let the next tick continue rather than blow
+      // past the cap.
+      if (i % 200 === 0 && i > 0 && (await isQueueAtCapacity(this.queue))) {
+        skipped += rows.length - i;
+        this.logger.warn(
+          `refresh-all-stories ${job.id} stopped at ${i}/${rows.length} — queue near cap; rest deferred to next tick`,
+        );
+        break;
+      }
+      const r = rows[i]!;
+      const payload: DiscoverChaptersJobData = {
+        storyId: r.id,
+        requestedBy: null,
+        autoCrawl: true,
+      };
       try {
-        const payload: DiscoverChaptersJobData = {
-          storyId: r.id,
-          requestedBy: null,
-          autoCrawl: true,
-        };
-        await this.queue.add(JOB_DISCOVER_CHAPTERS, payload, {
+        await enqueueIdempotent(this.queue, JOB_DISCOVER_CHAPTERS, payload, {
           jobId: `discover-chapters:${r.id}`,
-          // Scheduled refresh defers behind all user-initiated work via a
-          // dedicated low priority rung — see JOB_PRIORITY in queue.constants.
           priority: JOB_PRIORITY.REFRESH_ALL_STORIES,
         });
         enqueued += 1;
       } catch {
-        // Idempotent jobId collision (a discovery already running) → skip silently.
         skipped += 1;
       }
     }
