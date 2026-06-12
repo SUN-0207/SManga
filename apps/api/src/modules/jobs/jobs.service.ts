@@ -1,4 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
+import { enqueueChunked } from '@/modules/queue/enqueue.util';
 import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
   type FetchChapterJobData,
@@ -199,29 +200,31 @@ export class JobsService {
   async retryAllFailed(): Promise<{ retried: number; skipped: number }> {
     // No cap — same rationale as retry(): operator rescue path.
     this.statsCache = null;
-    const failed = await this.queue.getJobs(['failed'], 0, -1);
     let retried = 0;
     let skipped = 0;
-    for (const job of failed) {
-      try {
-        await job.retry();
-        retried += 1;
-      } catch {
-        // Same fall-through as single-job retry: if Bull refuses (e.g. attempts
-        // exhausted + state already shifted), re-enqueue a clone so the user's
-        // "retry all" intent is honored.
+    const PAGE = 1000;
+    for (let start = 0; ; start += PAGE) {
+      const failed = await this.queue.getJobs(['failed'], start, start + PAGE - 1);
+      if (failed.length === 0) break;
+      for (const job of failed) {
         try {
-          await this.queue.add(job.name, job.data, {
-            attempts: job.opts.attempts ?? 3,
-            backoff: job.opts.backoff,
-            priority: job.opts.priority,
-          });
-          await job.remove().catch(() => {});
+          await job.retry();
           retried += 1;
         } catch {
-          skipped += 1;
+          try {
+            await this.queue.add(job.name, job.data, {
+              attempts: job.opts.attempts ?? 3,
+              backoff: job.opts.backoff,
+              priority: job.opts.priority,
+            });
+            await job.remove().catch(() => {});
+            retried += 1;
+          } catch {
+            skipped += 1;
+          }
         }
       }
+      if (failed.length < PAGE) break;
     }
     return { retried, skipped };
   }
@@ -233,7 +236,7 @@ export class JobsService {
    * engine's per-source token bucket (0.5 rps for truyenfull) keeps the
    * source friendly during the drain.
    */
-  async refetchAllChapters(): Promise<{ enqueued: number }> {
+  async refetchAllChapters(): Promise<{ enqueued: number; remaining: number }> {
     // Refetch is the operation that previously enqueued 3.7M jobs in one
     // click (2026-06-09 incident). Cap check FIRST so we don't query the
     // DB at all when the queue is already saturated.
@@ -248,7 +251,7 @@ export class JobsService {
       ORDER BY crawled_at ASC NULLS FIRST
     `);
     const rows = rowsOf<{ id: string }>(r);
-    if (rows.length === 0) return { enqueued: 0 };
+    if (rows.length === 0) return { enqueued: 0, remaining: 0 };
 
     const jobs = rows.map((c) => ({
       name: JOB_FETCH_CHAPTER,
@@ -265,8 +268,8 @@ export class JobsService {
       },
     }));
 
-    await this.queue.addBulk(jobs);
-    return { enqueued: jobs.length };
+    const { enqueued, remaining } = await enqueueChunked(this.queue, jobs);
+    return { enqueued, remaining };
   }
 
   /**
@@ -282,7 +285,7 @@ export class JobsService {
    * between calls. The per-source token bucket (1 rps for truyenfull) caps
    * outbound fetch rate naturally, so we can fan out without throttling here.
    */
-  async backfillCovers(): Promise<{ enqueued: number; totalNullCover: number }> {
+  async backfillCovers(): Promise<{ enqueued: number; remaining: number; totalNullCover: number }> {
     await assertQueueCapacity(this.queue);
     this.statsCache = null;
 
@@ -301,7 +304,7 @@ export class JobsService {
     const rows = rowsOf<{ external_url: string }>(r);
     const totalNullCover = rows.length;
     if (totalNullCover === 0) {
-      return { enqueued: 0, totalNullCover: 0 };
+      return { enqueued: 0, remaining: 0, totalNullCover: 0 };
     }
 
     const jobs = rows.map((row) => ({
@@ -319,8 +322,8 @@ export class JobsService {
       },
     }));
 
-    await this.queue.addBulk(jobs);
-    return { enqueued: jobs.length, totalNullCover };
+    const { enqueued, remaining } = await enqueueChunked(this.queue, jobs);
+    return { enqueued, remaining, totalNullCover };
   }
 
   /** Rows the operator should see: anything not yet resolved. */

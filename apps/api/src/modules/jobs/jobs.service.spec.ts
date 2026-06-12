@@ -21,7 +21,7 @@ describe('JobsService.refetchAllChapters', () => {
 
     const result = await svc.refetchAllChapters();
 
-    expect(result).toEqual({ enqueued: 2 });
+    expect(result).toEqual({ enqueued: 2, remaining: 0 });
     expect(addBulk).toHaveBeenCalledTimes(1);
     const jobs = addBulk.mock.calls[0]?.[0];
     expect(jobs).toHaveLength(2);
@@ -45,7 +45,7 @@ describe('JobsService.refetchAllChapters', () => {
     const svc = new JobsService(db as never, queue);
 
     const result = await svc.refetchAllChapters();
-    expect(result).toEqual({ enqueued: 0 });
+    expect(result).toEqual({ enqueued: 0, remaining: 0 });
     expect(addBulk).not.toHaveBeenCalled();
   });
 
@@ -82,7 +82,7 @@ describe('JobsService.backfillCovers', () => {
 
     const result = await svc.backfillCovers();
 
-    expect(result).toEqual({ enqueued: 2, totalNullCover: 2 });
+    expect(result).toEqual({ enqueued: 2, remaining: 0, totalNullCover: 2 });
     expect(addBulk).toHaveBeenCalledTimes(1);
     const jobs = addBulk.mock.calls[0]?.[0];
     expect(jobs).toHaveLength(2);
@@ -110,7 +110,7 @@ describe('JobsService.backfillCovers', () => {
     const svc = new JobsService(db as never, queue);
 
     const result = await svc.backfillCovers();
-    expect(result).toEqual({ enqueued: 0, totalNullCover: 0 });
+    expect(result).toEqual({ enqueued: 0, remaining: 0, totalNullCover: 0 });
     expect(addBulk).not.toHaveBeenCalled();
   });
 
