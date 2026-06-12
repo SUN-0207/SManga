@@ -35,7 +35,7 @@ const config: Config = {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         prose: ['Newsreader', 'Source Serif Pro', 'Georgia', 'serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
         heading: ['Inter', 'system-ui', 'sans-serif'], // alias kept for legacy uses
       },
       fontSize: {

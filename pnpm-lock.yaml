@@ -214,6 +214,12 @@ importers:
       '@dr.pogodin/react-helmet':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.7)
+      '@fontsource/inter':
+        specifier: ^5.2.8
+        version: 5.2.8
+      '@fontsource/newsreader':
+        specifier: ^5.2.10
+        version: 5.2.10
       '@radix-ui/react-label':
         specifier: 2.1.9
         version: 2.1.9(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -1211,6 +1217,12 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@fontsource/inter@5.2.8':
+    resolution: {integrity: sha512-P6r5WnJoKiNVV+zvW2xM13gNdFhAEpQ9dQJHt3naLvfg+LkF2ldgSLiF4T41lf1SQCM9QmkqPTn4TH568IRagg==}
+
+  '@fontsource/newsreader@5.2.10':
+    resolution: {integrity: sha512-TFaYzoFhDqarUyV2yYjgZZEwT4bpaj6sGBnXSnFknQ/QB8/9LzfY6IO9+inHOX4zzPp87Z7/KuG1OI5gr91Q3A==}
 
   '@grpc/grpc-js@1.14.4':
     resolution: {integrity: sha512-k9Dj3DV/itK9D06Y8f190Qgop7/Ui+D0njFV3LHMPwPT75DpXLQohE9Wmz0QElrJnzsjB7KPWiKJbOl7IPDArQ==}
@@ -5784,6 +5796,10 @@ snapshots:
     optionalDependencies:
       '@noble/hashes': 1.8.0
 
+  '@fontsource/inter@5.2.8': {}
+
+  '@fontsource/newsreader@5.2.10': {}
+
   '@grpc/grpc-js@1.14.4':
     dependencies:
       '@grpc/proto-loader': 0.8.1
@@ -6851,6 +6867,14 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 5.4.21(@types/node@20.17.6)(terser@5.48.0)
+
+  '@vitest/mocker@2.1.4(vite@5.4.21(@types/node@25.9.2)(terser@5.48.0))':
+    dependencies:
+      '@vitest/spy': 2.1.4
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 5.4.21(@types/node@25.9.2)(terser@5.48.0)
 
   '@vitest/pretty-format@2.1.4':
     dependencies:
@@ -9765,7 +9789,7 @@ snapshots:
   vitest@2.1.4(@types/node@25.9.2)(jsdom@29.1.1(@noble/hashes@1.8.0))(terser@5.48.0):
     dependencies:
       '@vitest/expect': 2.1.4
-      '@vitest/mocker': 2.1.4(vite@5.4.21(@types/node@20.17.6)(terser@5.48.0))
+      '@vitest/mocker': 2.1.4(vite@5.4.21(@types/node@25.9.2)(terser@5.48.0))
       '@vitest/pretty-format': 2.1.9
       '@vitest/runner': 2.1.4
       '@vitest/snapshot': 2.1.4
