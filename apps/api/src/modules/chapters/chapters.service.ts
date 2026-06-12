@@ -1,4 +1,7 @@
-import { gunzipSync } from 'node:zlib';
+import { promisify } from 'node:util';
+import { gunzip as gunzipCb } from 'node:zlib';
+
+const gunzip = promisify(gunzipCb);
 import { DRIZZLE } from '@/modules/db/db.provider';
 import { assertQueueCapacity } from '@/modules/queue/queue-capacity';
 import {
@@ -49,7 +52,7 @@ export class ChaptersService {
     let text: string | null = null;
     if (row.content && row.content.length > 0) {
       try {
-        text = gunzipSync(row.content as Buffer).toString('utf-8');
+        text = (await gunzip(row.content as Buffer)).toString('utf-8');
       } catch {
         text = (row.content as Buffer).toString('utf-8');
       }

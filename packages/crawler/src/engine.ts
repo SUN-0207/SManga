@@ -1,4 +1,5 @@
-import { gzipSync } from 'node:zlib';
+import { promisify } from 'node:util';
+import { gzip as gzipCb } from 'node:zlib';
 import type { Database } from '@smanga/db';
 import {
   chapter,
@@ -8,6 +9,8 @@ import {
   storyGenre,
   storySource,
 } from '@smanga/db/schema';
+
+const gzip = promisify(gzipCb);
 import { type CatalogPage, type StoryMetadata, storyMetadataSchema } from '@smanga/shared';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { downloadCover } from './cover.ts';
@@ -355,24 +358,27 @@ async function uniqueSlug(db: Database, base: string): Promise<string> {
 }
 
 export async function fetchChapterById(db: Database, chapterId: string): Promise<void> {
-  const [row] = await db.select().from(chapter).where(eq(chapter.id, chapterId)).limit(1);
-  if (!row) throw new Error(`chapter not found: ${chapterId}`);
-  const [src] = await db
-    .select()
-    .from(sourceTable)
-    .where(eq(sourceTable.id, row.sourceId))
+  // Lean SELECT: only the 3 columns we use. The old SELECT * dragged the
+  // gzipped content_text bytea (often tens of KB) into memory on every
+  // re-fetch for no reason.
+  const [row] = await db
+    .select({ id: chapter.id, sourceId: chapter.sourceId, externalUrl: chapter.externalUrl })
+    .from(chapter)
+    .where(eq(chapter.id, chapterId))
     .limit(1);
-  if (!src) throw new Error(`source not found: ${row.sourceId}`);
+  if (!row) throw new Error(`chapter not found: ${chapterId}`);
 
+  // rps from the adapter (single source of truth, same as import/discover/
+  // browse) — drops the extra source-table SELECT that only fed rateLimitRps.
   const adapter = getAdapter(row.sourceId);
-  const bucket = bucketFor(adapter.id, Number(src.rateLimitRps));
+  const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
   await bucket.acquire();
 
   try {
     const html = await fetchHtml(row.externalUrl);
     const content = await adapter.fetchChapterContent(html);
     const raw = Buffer.from(content.text, 'utf-8');
-    const compressed = gzipSync(raw);
+    const compressed = await gzip(raw); // libuv threadpool, off the event loop
     await db
       .update(chapter)
       .set({
