@@ -57,8 +57,8 @@ export class JobsController {
   }
 
   @Get('dead-letter')
-  listDeadLetter() {
-    return this.jobs.listDeadLetter();
+  listDeadLetter(@Query('page') page?: string, @Query('pageSize') pageSize?: string) {
+    return this.jobs.listDeadLetter(Number(page) || 1, Number(pageSize) || 50);
   }
 
   @Post('dead-letter/retry-all')

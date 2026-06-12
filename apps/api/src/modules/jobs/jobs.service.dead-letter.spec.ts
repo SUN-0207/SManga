@@ -20,11 +20,27 @@ function updateReturning(returned: unknown[]) {
 }
 
 describe('JobsService dead-letter actions', () => {
-  it('listDeadLetter returns rows from the query', async () => {
-    const rows = [{ id: 'r1' }];
-    const db = { select: vi.fn(selectChain(rows)) } as never;
+  it('listDeadLetter returns a paginated page + true total', async () => {
+    const items = [{ id: 'r1' }, { id: 'r2' }];
+    const itemsChain = {
+      from: () => itemsChain,
+      where: () => itemsChain,
+      orderBy: () => itemsChain,
+      limit: () => itemsChain,
+      offset: () => Promise.resolve(items),
+    };
+    const countChain = { from: () => countChain, where: () => Promise.resolve([{ count: 7 }]) };
+    // Promise.all builds the array left-to-right: items query first, then count.
+    const select = vi.fn().mockReturnValueOnce(itemsChain).mockReturnValueOnce(countChain);
+    const db = { select } as never;
     const svc = new JobsService(db, {} as never);
-    expect(await svc.listDeadLetter()).toBe(rows);
+    expect(await svc.listDeadLetter(2, 5)).toEqual({
+      items,
+      total: 7,
+      page: 2,
+      pageSize: 5,
+      totalPages: 2,
+    });
   });
 
   it('deadLetterRetryNow re-arms a row to pending with nextRetryAt=now', async () => {

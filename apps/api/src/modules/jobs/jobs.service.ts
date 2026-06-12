@@ -334,14 +334,34 @@ export class JobsService {
     return { enqueued, remaining, totalNullCover };
   }
 
-  /** Rows the operator should see: anything not yet resolved. */
-  async listDeadLetter() {
-    return this.db
-      .select()
-      .from(jobFailure)
-      .where(inArray(jobFailure.status, ['pending', 'retrying', 'needs_attention', 'dead']))
-      .orderBy(desc(jobFailure.lastFailedAt))
-      .limit(200);
+  /**
+   * Rows the operator should see: anything not yet resolved, newest first.
+   * Paginated so the panel stays bounded even with thousands of unresolved rows
+   * (the parser-error backlog can far exceed one screen). Returns the true total
+   * so the UI shows the real count, not just the current page size.
+   */
+  async listDeadLetter(page = 1, pageSize = 50) {
+    const size = Math.min(Math.max(1, pageSize), 100);
+    const p = Math.max(1, page);
+    const where = inArray(jobFailure.status, ['pending', 'retrying', 'needs_attention', 'dead']);
+    const [items, totalRows] = await Promise.all([
+      this.db
+        .select()
+        .from(jobFailure)
+        .where(where)
+        .orderBy(desc(jobFailure.lastFailedAt))
+        .limit(size)
+        .offset((p - 1) * size),
+      this.db.select({ count: sql<number>`count(*)::int` }).from(jobFailure).where(where),
+    ]);
+    const total = Number(totalRows[0]?.count ?? 0);
+    return {
+      items,
+      total,
+      page: p,
+      pageSize: size,
+      totalPages: Math.max(1, Math.ceil(total / size)),
+    };
   }
 
   /** Force a single row back into the retry pipeline. Works on dead /

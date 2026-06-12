@@ -1,6 +1,8 @@
 import { type DeadLetterRow, jobsApi } from '@/api/jobs';
+import { Pagination } from '@/components/ui/Pagination';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, RotateCcw, X } from 'lucide-react';
+import { useState } from 'react';
 
 const STATUS_TONE: Record<string, string> = {
   pending: 'bg-bg-subtle text-fg-muted border-border',
@@ -24,10 +26,11 @@ function formatNext(next: string | null): string {
 
 export function DeadLetterPanel({ enabled }: { enabled: boolean }) {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
 
   const rowsQ = useQuery({
-    queryKey: ['jobs', 'dead-letter'],
-    queryFn: jobsApi.deadLetter,
+    queryKey: ['jobs', 'dead-letter', page],
+    queryFn: () => jobsApi.deadLetter(page),
     enabled,
     refetchInterval: enabled ? 15000 : false,
     retry: false,
@@ -62,7 +65,9 @@ export function DeadLetterPanel({ enabled }: { enabled: boolean }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['jobs', 'auto-retry'] }),
   });
 
-  const rows: DeadLetterRow[] = rowsQ.data ?? [];
+  const rows: DeadLetterRow[] = rowsQ.data?.items ?? [];
+  const total = rowsQ.data?.total ?? 0;
+  const totalPages = rowsQ.data?.totalPages ?? 1;
   const autoRetryOn = autoRetryQ.data?.autoRetryEnabled ?? true;
 
   return (
@@ -70,7 +75,7 @@ export function DeadLetterPanel({ enabled }: { enabled: boolean }) {
       <div className="px-5 py-3 border-b border-border flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <h2 className="font-sans font-semibold text-base">Cần xử lý / Dead Letter</h2>
-          <span className="text-xs text-fg-muted tabular-nums">{rows.length}</span>
+          <span className="text-xs text-fg-muted tabular-nums">{total}</span>
         </div>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-fg-muted cursor-pointer select-none">
@@ -83,7 +88,7 @@ export function DeadLetterPanel({ enabled }: { enabled: boolean }) {
             />
             Tự động retry
           </label>
-          {rows.length > 0 && (
+          {total > 0 && (
             <button
               type="button"
               disabled={retryAll.isPending}
@@ -178,6 +183,16 @@ export function DeadLetterPanel({ enabled }: { enabled: boolean }) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {totalPages > 1 && (
+        <div className="border-t border-border px-5 pb-5">
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            isLoading={rowsQ.isFetching}
+            onChange={setPage}
+          />
         </div>
       )}
     </div>

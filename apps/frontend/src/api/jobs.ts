@@ -41,6 +41,14 @@ export interface DeadLetterRow {
   nextRetryAt: string | null;
 }
 
+export interface DeadLetterPage {
+  items: DeadLetterRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export const jobsApi = {
   /** `fresh=true` bypasses the server-side 30s cache. Use it from the
    * manual "Làm mới" button so the operator sees current numbers; omit it
@@ -55,7 +63,10 @@ export const jobsApi = {
     api.post<{ retried: number; skipped: number }>('/jobs/retry-failed').then((r) => r.data),
   refetchAllChapters: () =>
     api.post<{ enqueued: number }>('/jobs/refetch-all-chapters').then((r) => r.data),
-  deadLetter: () => api.get<DeadLetterRow[]>('/jobs/dead-letter').then((r) => r.data),
+  deadLetter: (page = 1, pageSize = 50) =>
+    api
+      .get<DeadLetterPage>('/jobs/dead-letter', { params: { page, pageSize } })
+      .then((r) => r.data),
   deadLetterRetryNow: (id: string) =>
     api.post<{ ok: boolean }>(`/jobs/dead-letter/${id}/retry-now`).then((r) => r.data),
   deadLetterDismiss: (id: string) =>
