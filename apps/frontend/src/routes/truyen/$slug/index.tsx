@@ -49,7 +49,7 @@ function StoryDetail() {
   });
 
   const progressQ = useQuery({
-    queryKey: ['reading-progress'],
+    queryKey: ['me', 'reading-progress'],
     queryFn: () => readingProgressApi.list(),
     enabled: !!user,
   });
