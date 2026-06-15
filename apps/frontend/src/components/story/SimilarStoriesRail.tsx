@@ -41,7 +41,7 @@ export function SimilarStoriesRail({ title, by, value, excludeId }: SimilarStori
             key={s.id}
             to="/truyen/$slug"
             params={{ slug: s.slug }}
-            search={{ page: 1, commentsPage: 1 }}
+            search={{ commentsPage: 1 }}
             className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
           >
             <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">

@@ -98,7 +98,7 @@ export function SuggestedStoriesSidebar() {
                 <Link
                   to="/truyen/$slug"
                   params={{ slug: item.slug }}
-                  search={{ page: 1, commentsPage: 1 }}
+                  search={{ commentsPage: 1 }}
                   className="group flex items-center gap-3 rounded-md p-1 -m-1 transition-colors duration-fast hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   <span

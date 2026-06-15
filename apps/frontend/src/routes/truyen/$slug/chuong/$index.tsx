@@ -201,7 +201,7 @@ function ChapterReader() {
               navigate({
                 to: '/truyen/$slug',
                 params: { slug },
-                search: { page: 1, commentsPage: 1 },
+                search: { commentsPage: 1 },
               })
             }
             aria-label="Quay lại trang truyện"
@@ -219,7 +219,7 @@ function ChapterReader() {
             <Link
               to="/truyen/$slug"
               params={{ slug }}
-              search={{ page: Math.max(1, Math.ceil(Number(chapter.index) / 50)), commentsPage: 1 }}
+              search={{ commentsPage: 1 }}
               aria-label="Mục lục chương"
               className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-bg-subtle transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >

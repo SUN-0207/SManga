@@ -31,7 +31,7 @@ export function ChapterNav({ slug, prev, next, current, totalChapters }: Chapter
       <Link
         to="/truyen/$slug"
         params={{ slug }}
-        search={{ page: 1, commentsPage: 1 }}
+        search={{ commentsPage: 1 }}
         className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full border border-border hover:border-foreground/40 hover:bg-muted/60 text-sm transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <List className="h-4 w-4" />

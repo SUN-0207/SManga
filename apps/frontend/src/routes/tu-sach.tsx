@@ -167,7 +167,7 @@ function LibraryCard({ item }: { item: ShelfItem }) {
     <Link
       to="/truyen/$slug"
       params={{ slug: item.slug }}
-      search={{ page: 1, commentsPage: 1 }}
+      search={{ commentsPage: 1 }}
       className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
     >
       <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">

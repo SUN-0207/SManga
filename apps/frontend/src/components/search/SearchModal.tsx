@@ -101,7 +101,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
     void navigate({
       to: '/truyen/$slug',
       params: { slug },
-      search: { page: 1, commentsPage: 1 },
+      search: { commentsPage: 1 },
     });
   }
 

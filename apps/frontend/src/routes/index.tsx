@@ -136,7 +136,7 @@ function FeaturedSlider({
               key={story.id}
               to="/truyen/$slug"
               params={{ slug: story.slug }}
-              search={{ page: 1, commentsPage: 1 }}
+              search={{ commentsPage: 1 }}
               aria-hidden={i !== active}
               tabIndex={i === active ? 0 : -1}
               className={`absolute inset-0 flex items-end p-8 sm:p-10 lg:p-12 group transition-opacity duration-500 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset ${
@@ -276,7 +276,7 @@ function LoggedInHero() {
             <Link
               to="/truyen/$slug"
               params={{ slug: cr.storySlug }}
-              search={{ page: 1, commentsPage: 1 }}
+              search={{ commentsPage: 1 }}
               className="inline-flex items-center h-11 px-5 rounded-md border border-border-strong hover:bg-bg-subtle text-body font-semibold transition-colors duration-fast cursor-pointer"
             >
               Xem truyện

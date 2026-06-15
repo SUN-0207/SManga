@@ -1,9 +1,9 @@
-import { getStoryBySlug, listChapters } from '@/api/stories';
+import { getStoryBySlug, listAllChapters } from '@/api/stories';
 import { CommentSection } from '@/components/comments/CommentSection';
 import { RatingControl } from '@/components/engagement/RatingControl';
 import { ViewCount } from '@/components/engagement/ViewCount';
 import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
-import { ChapterList } from '@/components/reader/ChapterList';
+import { ChapterBrowser } from '@/components/reader/ChapterBrowser';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
 import { SEO } from '@/components/seo/SEO';
 import {
@@ -13,14 +13,15 @@ import {
 } from '@/components/seo/builders';
 import { SimilarStoriesRail } from '@/components/story/SimilarStoriesRail';
 import { StoryCover } from '@/components/ui/StoryCover';
+import { readingProgressApi } from '@/api/reading-progress';
 import { useTrackStoryView } from '@/hooks/use-track-view';
+import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/truyen/$slug/')({
   component: StoryDetail,
   validateSearch: (s: Record<string, unknown>) => ({
-    page: Number(s.page) || 1,
     commentsPage: Number(s.commentsPage) || 1,
   }),
 });
@@ -34,16 +35,23 @@ const STATUS_LABEL: Record<string, string> = {
 
 function StoryDetail() {
   const { slug } = Route.useParams();
-  const { page } = Route.useSearch();
 
   const storyQ = useQuery({
     queryKey: ['story', slug],
     queryFn: () => getStoryBySlug(slug),
   });
 
+  const user = useAuthStore((st) => st.user);
+
   const chaptersQ = useQuery({
-    queryKey: ['chapters', slug, page],
-    queryFn: () => listChapters(slug, page),
+    queryKey: ['chapters-all', slug],
+    queryFn: () => listAllChapters(slug),
+  });
+
+  const progressQ = useQuery({
+    queryKey: ['reading-progress'],
+    queryFn: () => readingProgressApi.list(),
+    enabled: !!user,
   });
 
   // Plan D: fire view increment once per calendar day (anonymous-friendly)
@@ -65,11 +73,14 @@ function StoryDetail() {
 
   const s = storyQ.data;
 
-  const items = (chaptersQ.data?.items ?? []).map((c) => ({
+  const items = (chaptersQ.data ?? []).map((c) => ({
     index: Number(c.index),
     title: c.title,
     isCrawled: c.status === 'crawled',
   }));
+
+  const progressRow = progressQ.data?.find((r) => r.storyId === s.id);
+  const readUpToIndex = progressRow ? Number(progressRow.chapterIndex) : null;
 
   return (
     <div>
@@ -146,10 +157,20 @@ function StoryDetail() {
                 to="/truyen/$slug/chuong/$index"
                 params={{ slug: s.slug, index: '1' }}
                 search={{ commentsPage: 1 }}
-                className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-border-strong hover:bg-bg-subtle text-body font-semibold transition-colors duration-fast"
+                className="inline-flex items-center gap-2 h-11 px-5 rounded-md bg-accent text-white font-semibold shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg cursor-pointer"
               >
                 Đọc từ đầu
               </Link>
+              {s.latestChapterIndex != null && (
+                <Link
+                  to="/truyen/$slug/chuong/$index"
+                  params={{ slug: s.slug, index: String(s.latestChapterIndex) }}
+                  search={{ commentsPage: 1 }}
+                  className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-border-strong hover:bg-bg-subtle text-body font-semibold transition-colors duration-fast cursor-pointer"
+                >
+                  Đọc chương mới nhất
+                </Link>
+              )}
               {/* "Đọc tiếp Chương N" pink CTA — wired by Plan C when reading_progress exists */}
               <BookmarkToggle storyId={s.id} />
             </div>
@@ -160,27 +181,20 @@ function StoryDetail() {
       {/* Chapter list */}
       <section id="muc-luc" className="container pb-20 scroll-mt-24">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
-                Mục lục
-              </p>
-              <h2 className="font-heading font-bold text-2xl sm:text-3xl tracking-tight">
-                Danh sách chương
-              </h2>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Trang {page} / {chaptersQ.data?.totalPages ?? 1}
-              {' · '}
-              {chaptersQ.data?.total ?? 0} chương
+          <div className="mb-6">
+            <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
+              Mục lục
             </p>
+            <h2 className="font-heading font-bold text-2xl sm:text-3xl tracking-tight">
+              Danh sách chương
+            </h2>
           </div>
           <div className="h-px w-full bg-gradient-to-r from-border via-border to-transparent mb-6" />
-          <ChapterList
+          <ChapterBrowser
             slug={s.slug}
             chapters={items}
-            currentPage={page}
-            totalPages={chaptersQ.data?.totalPages ?? 1}
+            readUpToIndex={readUpToIndex}
+            isAuthenticated={!!user}
           />
         </div>
       </section>
