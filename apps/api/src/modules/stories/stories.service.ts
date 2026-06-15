@@ -502,6 +502,25 @@ export class StoriesService {
     return { items, page, totalPages, total };
   }
 
+  /** Public reader: the FULL chapter list (index/title/status only) for a
+   * story, sorted ascending. The story-detail page loads this once and does
+   * search/sort/filter/pagination client-side. LIMIT 5000 is a safety cap —
+   * the largest real story is ~2k rows. Edge-cached at the controller. */
+  async allChaptersBySlug(slug: string) {
+    const [s] = await this.db
+      .select({ id: story.id })
+      .from(story)
+      .where(eq(story.slug, slug))
+      .limit(1);
+    if (!s) throw new NotFoundException();
+    return this.db
+      .select({ index: chapter.index, title: chapter.title, status: chapter.status })
+      .from(chapter)
+      .where(eq(chapter.storyId, s.id))
+      .orderBy(asc(chapter.index))
+      .limit(5000);
+  }
+
   /** Admin chapter table: paginated (the largest story has ~2k rows — never
    * ship them all) + status counts computed server-side in one pass. */
   async listChaptersByStoryId(storyId: string, page = 1, pageSize = 50) {
