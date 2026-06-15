@@ -13,6 +13,12 @@ export interface ChapterBrowserProps {
   isAuthenticated: boolean;
 }
 
+function emptyMessage(totalChapters: number, filterRead: boolean): string {
+  if (totalChapters === 0) return 'Trang này chưa có chương nào.';
+  if (filterRead) return 'Bạn chưa đọc chương nào.';
+  return 'Không tìm thấy chương nào.';
+}
+
 const pill =
   'inline-flex items-center h-9 px-4 rounded-full text-sm border transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent';
 const pillActive = 'border-fg bg-fg text-bg';
@@ -104,11 +110,11 @@ export function ChapterBrowser({
         </p>
       )}
 
-      {pageItems.length > 0 ? (
+      {filtered.length > 0 ? (
         <ChapterGrid slug={slug} chapters={pageItems} readUpToIndex={readUpToIndex} />
       ) : (
         <p className="text-center text-sm text-fg-muted py-12">
-          {filterRead ? 'Bạn chưa đọc chương nào.' : 'Không tìm thấy chương nào.'}
+          {emptyMessage(chapters.length, filterRead)}
         </p>
       )}
 
