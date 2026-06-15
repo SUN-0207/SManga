@@ -79,6 +79,14 @@ function StoryDetail() {
     isCrawled: c.status === 'crawled',
   }));
 
+  // Latest readable chapter = highest-index crawled chapter in the loaded list.
+  // (The by-slug detail endpoint does not populate latestChapterIndex, and
+  // deriving from the list guarantees the target is a real crawled chapter.)
+  const latestChapterIndex = items.reduce<number | null>(
+    (max, c) => (c.isCrawled && (max === null || c.index > max) ? c.index : max),
+    null,
+  );
+
   const progressRow = progressQ.data?.find((r) => r.storyId === s.id);
   const readUpToIndex = progressRow ? Number(progressRow.chapterIndex) : null;
 
@@ -161,10 +169,10 @@ function StoryDetail() {
               >
                 Đọc từ đầu
               </Link>
-              {s.latestChapterIndex != null && (
+              {latestChapterIndex != null && (
                 <Link
                   to="/truyen/$slug/chuong/$index"
-                  params={{ slug: s.slug, index: String(s.latestChapterIndex) }}
+                  params={{ slug: s.slug, index: String(latestChapterIndex) }}
                   search={{ commentsPage: 1 }}
                   className="inline-flex items-center gap-2 h-11 px-5 rounded-md border border-border-strong hover:bg-bg-subtle text-body font-semibold transition-colors duration-fast cursor-pointer"
                 >
