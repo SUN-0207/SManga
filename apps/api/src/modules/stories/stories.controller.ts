@@ -66,6 +66,12 @@ export class StoriesController {
     return this.stories.getBySlug(slug);
   }
 
+  @Get('by-slug/:slug/chapters/all')
+  @Header('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
+  allChaptersBySlug(@Param('slug') slug: string) {
+    return this.stories.allChaptersBySlug(slug);
+  }
+
   @Get('by-slug/:slug/chapters')
   @Header('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600')
   chaptersBySlug(
