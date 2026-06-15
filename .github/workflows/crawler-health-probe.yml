@@ -36,7 +36,7 @@ jobs:
 
       - name: File issue on probe failure
         if: failure() && steps.probe.conclusion == 'failure'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const today = new Date().toISOString().slice(0, 10);
