@@ -124,6 +124,17 @@ export async function listChapters(
   return res.data;
 }
 
+/** Plan 2026-06-15: the FULL chapter list (index/title/status) in one cached
+ * request — the story-detail page does search/sort/filter/paging client-side. */
+export async function listAllChapters(
+  slug: string,
+): Promise<{ index: string; title: string; status: string }[]> {
+  const res = await api.get<{ index: string; title: string; status: string }[]>(
+    `/stories/by-slug/${slug}/chapters/all`,
+  );
+  return res.data;
+}
+
 export interface StorageStats {
   contentBytes: number;
   coverBytes: number;
