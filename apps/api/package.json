@@ -46,10 +46,10 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
-    "@nestjs/cli": "11.0.21",
+    "@nestjs/cli": "11.0.23",
     "@nestjs/schematics": "11.1.0",
-    "@nestjs/testing": "^11.1.24",
-    "@swc/core": "^1.15.40",
+    "@nestjs/testing": "^11.1.26",
+    "@swc/core": "^1.15.41",
     "@swc/helpers": "^0.5.23",
     "@types/bcryptjs": "2.4.6",
     "@types/bull": "4.10.4",
