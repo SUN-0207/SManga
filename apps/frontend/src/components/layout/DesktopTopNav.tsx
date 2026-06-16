@@ -1,6 +1,7 @@
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { AvatarMenu } from '@/components/reader/AvatarMenu';
 import { ReaderSettingsDrawer } from '@/components/reader/ReaderSettingsDrawer';
+import { ThemeToggle } from '@/components/reader/ThemeToggle';
 import { SearchModal } from '@/components/search/SearchModal';
 import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth-store';
@@ -71,6 +72,7 @@ export function DesktopTopNav() {
             >
               <SearchIcon className="h-4 w-4" />
             </button>
+            <ThemeToggle />
             <NotificationBell />
             {user ? (
               <AvatarMenu user={user} />

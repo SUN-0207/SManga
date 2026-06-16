@@ -8,6 +8,7 @@ import { Menu, Search as SearchIcon } from 'lucide-react';
 import { useState } from 'react';
 import { AvatarMenu } from './AvatarMenu';
 import { ReaderSettingsDrawer } from './ReaderSettingsDrawer';
+import { ThemeToggle } from './ThemeToggle';
 
 /**
  * Mobile-only mini header (rendered <lg by AppShell).
@@ -47,6 +48,7 @@ export function ReaderHeader() {
             >
               <SearchIcon className="h-4 w-4" />
             </button>
+            <ThemeToggle />
             <NotificationBell />
             {user ? (
               <AvatarMenu user={user} />
