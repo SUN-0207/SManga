@@ -1,10 +1,9 @@
 import { readingProgressApi } from '@/api/reading-progress';
 import { getStoryBySlug, listAllChapters } from '@/api/stories';
-import { CommentSection } from '@/components/comments/CommentSection';
 import { RatingControl } from '@/components/engagement/RatingControl';
 import { ViewCount } from '@/components/engagement/ViewCount';
 import { BookmarkToggle } from '@/components/reader/BookmarkToggle';
-import { ChapterBrowser } from '@/components/reader/ChapterBrowser';
+import { StoryTabs } from '@/components/reader/StoryTabs';
 import { RecommendationSection } from '@/components/recommendations/RecommendationSection';
 import { SEO } from '@/components/seo/SEO';
 import {
@@ -186,20 +185,12 @@ function StoryDetail() {
         </div>
       </section>
 
-      {/* Chapter list */}
+      {/* Chapters + comments tabs */}
       <section id="muc-luc" className="container pb-20 scroll-mt-24">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-6">
-            <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground font-medium mb-2">
-              Mục lục
-            </p>
-            <h2 className="font-heading font-bold text-2xl sm:text-3xl tracking-tight">
-              Danh sách chương
-            </h2>
-          </div>
-          <div className="h-px w-full bg-gradient-to-r from-border via-border to-transparent mb-6" />
-          <ChapterBrowser
+          <StoryTabs
             slug={s.slug}
+            storyId={s.id}
             chapters={items}
             readUpToIndex={readUpToIndex}
             isAuthenticated={!!user}
@@ -219,8 +210,6 @@ function StoryDetail() {
         />
       )}
       <RecommendationSection kind="similar" storyId={s.id} />
-
-      <CommentSection targetType="story" targetId={s.id} slug={s.slug} />
     </div>
   );
 }
