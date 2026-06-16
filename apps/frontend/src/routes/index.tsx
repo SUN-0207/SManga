@@ -1,5 +1,6 @@
 import { meApi } from '@/api/me';
 import { type StorySummary, listStories } from '@/api/stories';
+import { HeroCoverBackdrop } from '@/components/home/HeroCoverBackdrop';
 import { TwoColumnSection } from '@/components/home/TwoColumnSection';
 import { SEO } from '@/components/seo/SEO';
 import { buildOrganizationSchema, buildWebSiteSchema } from '@/components/seo/builders';
@@ -124,13 +125,14 @@ function FeaturedSlider({
         </div>
 
         <div className="relative min-h-[420px] lg:min-h-[540px] overflow-hidden">
-          <div
-            aria-hidden
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'linear-gradient(135deg, rgba(236,72,153,0.18), rgba(244,114,182,0.04))',
-            }}
-          />
+          {slides.map((story, i) => (
+            <HeroCoverBackdrop
+              key={`bd-${story.id}`}
+              storyId={story.id}
+              hasCover={story.hasCover}
+              active={i === active}
+            />
+          ))}
           {slides.map((story, i) => (
             <Link
               key={story.id}
@@ -139,7 +141,7 @@ function FeaturedSlider({
               search={{ commentsPage: 1 }}
               aria-hidden={i !== active}
               tabIndex={i === active ? 0 : -1}
-              className={`absolute inset-0 flex items-end p-8 sm:p-10 lg:p-12 group transition-opacity duration-500 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset ${
+              className={`absolute inset-0 z-10 flex items-end p-8 sm:p-10 lg:p-12 group transition-opacity duration-500 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset ${
                 i === active ? 'opacity-100' : 'opacity-0 pointer-events-none'
               }`}
             >
@@ -153,17 +155,17 @@ function FeaturedSlider({
                 />
               </div>
               <div className="relative max-w-[58%]">
-                <p className="text-label text-fg-muted uppercase tracking-[0.18em]">
+                <p className="text-label uppercase tracking-[0.18em] text-white/80">
                   {fromFeaturedPool ? 'TRUYỆN NỔI BẬT' : 'MỚI CẬP NHẬT'}
                 </p>
-                <h3 className="mt-2 text-heading-lg lg:text-display-sm font-prose font-bold line-clamp-2">
+                <h3 className="mt-2 text-heading-lg lg:text-display-sm font-prose font-bold line-clamp-2 text-white [text-shadow:0_2px_14px_rgba(0,0,0,0.55)]">
                   {story.title}
                 </h3>
-                <p className="mt-2 text-body-sm text-fg-muted truncate">
+                <p className="mt-2 text-body-sm text-white/85 truncate">
                   {story.author ?? 'Khuyết danh'} · {story.totalChapters.toLocaleString('vi-VN')}{' '}
                   chương
                 </p>
-                <span className="mt-4 inline-flex items-center gap-1.5 text-body font-semibold text-fg group-hover:gap-2.5 transition-all duration-fast">
+                <span className="mt-4 inline-flex items-center gap-1.5 text-body font-semibold text-white group-hover:gap-2.5 transition-all duration-fast">
                   Đọc ngay
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </span>
@@ -186,7 +188,7 @@ function FeaturedSlider({
                   aria-label={`Truyện ${i + 1}: ${s.title}`}
                   onClick={() => setActive(i)}
                   className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated ${
-                    i === active ? 'w-6 bg-accent' : 'w-1.5 bg-fg-muted/40 hover:bg-fg-muted/70'
+                    i === active ? 'w-6 bg-accent' : 'w-1.5 bg-white/40 hover:bg-white/70'
                   }`}
                 />
               ))}
@@ -239,13 +241,10 @@ function LoggedInHero() {
   if (!cr) return null;
   const chapter = Math.floor(Number(cr.chapterIndex));
   return (
-    <section className="relative overflow-hidden rounded-xl border border-accent/20 bg-bg-elevated p-8 lg:p-12">
-      <div
-        aria-hidden
-        className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-accent/20 blur-3xl"
-      />
-      <div className="relative flex flex-col sm:flex-row gap-6 sm:items-center">
-        <div className="hidden sm:block h-32 w-24 rounded-md overflow-hidden border border-border flex-shrink-0">
+    <section className="relative overflow-hidden rounded-xl border border-white/10 bg-bg-elevated p-8 lg:p-12">
+      <HeroCoverBackdrop storyId={cr.storyId} hasCover={cr.hasCover} />
+      <div className="relative z-10 flex flex-col sm:flex-row gap-6 sm:items-center">
+        <div className="hidden sm:block h-32 w-24 rounded-md overflow-hidden border border-white/20 flex-shrink-0 shadow-elev">
           <StoryCover
             storyId={cr.storyId}
             title={cr.storyTitle}
@@ -254,14 +253,14 @@ function LoggedInHero() {
           />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-label text-accent uppercase mb-2 flex items-center gap-1.5">
+          <p className="text-label uppercase mb-2 flex items-center gap-1.5 text-white/85">
             <BookOpen className="h-3.5 w-3.5" aria-hidden />
             ĐỌC TIẾP · CHƯƠNG {chapter} / {cr.totalChapters}
           </p>
-          <h1 className="text-display-sm sm:text-display-md font-prose font-semibold truncate">
+          <h1 className="text-display-sm sm:text-display-md font-prose font-semibold truncate text-white [text-shadow:0_2px_14px_rgba(0,0,0,0.5)]">
             {cr.storyTitle}
           </h1>
-          <p className="mt-3 text-body text-fg-muted">
+          <p className="mt-3 text-body text-white/85">
             Bạn đang đọc dở chương {chapter}. Tiếp tục ngay nào.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
@@ -277,7 +276,7 @@ function LoggedInHero() {
               to="/truyen/$slug"
               params={{ slug: cr.storySlug }}
               search={{ commentsPage: 1 }}
-              className="inline-flex items-center h-11 px-5 rounded-md border border-border-strong hover:bg-bg-subtle text-body font-semibold transition-colors duration-fast cursor-pointer"
+              className="inline-flex items-center h-11 px-5 rounded-md border border-white/30 text-white hover:bg-white/10 text-body font-semibold transition-colors duration-fast cursor-pointer"
             >
               Xem truyện
             </Link>
