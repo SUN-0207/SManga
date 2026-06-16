@@ -48,6 +48,11 @@ carries only `{ chapterId }` (`FetchChapterJobData`).
 `fetchChapterContent` → `parseChapterContentHtml`
 (`packages/crawler/src/sources/truyenfull/parsers.ts`).
 
+![06-runtime-view — diagram 1](../diagrams/architecture-06-runtime-view-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -79,6 +84,8 @@ sequenceDiagram
     Eng->>DB: UPDATE chapter SET contentText=gzip bytes, contentByteSize=raw len,<br/>status='crawled', crawledAt=now, lastError=null
     Note over Eng,DB: on any throw - UPDATE status='failed', lastError=message, then re-throw
 ```
+
+</details>
 
 **Key facts (verified against `engine.fetchChapterById`):**
 
@@ -132,6 +139,11 @@ paginating every story's chapter list. An operator can kick this off two ways:
 The full-auto chain is driven by the `autoCrawl` flag carried through the job
 payloads (`ImportStoryJobData.autoCrawl` → `DiscoverChaptersJobData.autoCrawl`).
 
+![06-runtime-view — diagram 2](../diagrams/architecture-06-runtime-view-2.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -175,6 +187,8 @@ sequenceDiagram
     Note over DCP,Bull: fetch-chapter jobs then run the §6.1 flow
 ```
 
+</details>
+
 **Key facts:**
 
 - **Phase A — `importStoryMetadata`** (`engine.ts`): fetches the story page,
@@ -213,6 +227,11 @@ route `/truyen/$slug` and the chapter reader route `/truyen/$slug/chuong/$index`
 (`apps/frontend/src/routes/truyen/$slug/index.tsx` and
 `apps/frontend/src/routes/truyen/$slug/chuong/$index.tsx`).
 
+![06-runtime-view — diagram 3](../diagrams/architecture-06-runtime-view-3.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -242,6 +261,8 @@ sequenceDiagram
     CF-->>Reader: chapter JSON, Cache-Control public s-maxage=86400 SWR=3600
     Note over Reader: views tracked client-side: story once per day, chapter after 3s
 ```
+
+</details>
 
 **Key facts (verified against the controllers/service):**
 
@@ -277,6 +298,11 @@ Auth is **passport-jwt over an httpOnly cookie**. There is no Edge-runtime split
 guarded request. Code: `apps/api/src/modules/auth/{auth.controller,auth.service,jwt.strategy}.ts`
 and the guards in `apps/api/src/common/guards/`.
 
+![06-runtime-view — diagram 4](../diagrams/architecture-06-runtime-view-4.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -301,6 +327,8 @@ sequenceDiagram
     Svc->>DB: SELECT id,email,name,image,role
     Svc-->>User: current user (or 401 if token missing/invalid)
 ```
+
+</details>
 
 **Key facts:**
 
@@ -337,6 +365,11 @@ work. Code: `AutoCrawlFeederProcessor`
 toggle in `app_setting` (`packages/db/src/schema/app-setting.ts`), edited via
 `PATCH /api/v1/admin/settings/auto-crawl` (`auto-crawl.controller.ts`).
 
+![06-runtime-view — diagram 5](../diagrams/architecture-06-runtime-view-5.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -361,6 +394,8 @@ sequenceDiagram
         end
     end
 ```
+
+</details>
 
 **Key facts (verified against `auto-crawl-feeder.processor.ts` + the schema):**
 

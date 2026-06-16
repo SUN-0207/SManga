@@ -109,6 +109,11 @@ raw `view_count` — reading activity, not page hits.
 moderated comment system over the `comment` / `comment_reaction` / `notification`
 tables.
 
+![reading-and-engagement — diagram 1](../diagrams/business-logic-reading-and-engagement-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart TD
     L["GET comments?targetType&targetId&page (anonymous OK)"] --> Roots[paginate ROOT comments, newest-first]
@@ -123,6 +128,8 @@ flowchart TD
     D["DELETE comments/:id"] --> Own{owner OR admin?}
     Own -->|yes| Soft[soft-delete: set deleted_at, body hidden]
 ```
+
+</details>
 
 Business rules:
 

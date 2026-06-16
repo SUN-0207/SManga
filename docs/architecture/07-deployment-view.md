@@ -20,6 +20,11 @@ Authoritative sources for this view:
 
 ## 7.1 Deployment diagram
 
+![07-deployment-view — diagram 1](../diagrams/architecture-07-deployment-view-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart TB
     reader([Reader / Admin browser])
@@ -71,6 +76,8 @@ flowchart TB
     timer --> hdd
     hdd -->|gzip + rclone rcat| gdrive
 ```
+
+</details>
 
 ---
 
@@ -144,6 +151,11 @@ created by `deploy/home/init-db.sh` on first database init; the migrations then 
 
 ## 7.6 CI/CD pipeline
 
+![07-deployment-view — diagram 2](../diagrams/architecture-07-deployment-view-2.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart LR
     push["git push origin main"] --> ci["CI (ci.yml)<br/>lint · typecheck · test · build api+frontend"]
@@ -153,6 +165,8 @@ flowchart LR
     wt --> recreate["pull + recreate api / frontend"]
     recreate --> migrate["api boot: db migrate → main.js"]
 ```
+
+</details>
 
 - **`ci.yml`** runs on PRs and pushes to `main`: spins up `postgres:16-alpine` + `redis:7-alpine` service containers, then `pnpm install --frozen-lockfile`, `pnpm lint` (Biome), `pnpm typecheck`, `pnpm test`, and builds both `@smanga/api` and `@smanga/frontend`. It is a gate, not a deployer.
 - **`build-images.yml`** runs on pushes to `main` that touch `apps/api/**`, `apps/frontend/**`, `packages/**`, `pnpm-lock.yaml`, or the workflow itself (also `workflow_dispatch`). Two parallel jobs build `apps/api/Dockerfile` and `apps/frontend/Dockerfile` with `context: .`, push to GHCR tagged `:latest` and `:${{ github.sha }}`, using GHA build cache. The owner is lowercased for the GHCR path.
@@ -166,6 +180,11 @@ flowchart LR
 
 ## 7.7 Backups
 
+![07-deployment-view — diagram 3](../diagrams/architecture-07-deployment-view-3.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart LR
     timer["systemd smanga-backup.timer<br/>OnCalendar *-*-* 02:30, Persistent"] --> svc["smanga-backup.service (oneshot, user smanga)"]
@@ -174,6 +193,8 @@ flowchart LR
     hdd --> gz["gzip -c | rclone rcat"]
     gz --> gdrive[("gdrive:smanga-backups/*.dump.gz<br/>retention: --min-age 14d deleted")]
 ```
+
+</details>
 
 `deploy/home/scripts/backup.sh` (driven by `smanga-backup.timer` →
 `smanga-backup.service`) is dual-tier:

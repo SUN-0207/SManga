@@ -211,6 +211,11 @@ Images are pushed to **GitHub Container Registry (GHCR)** using the repo's
 
 ### Deployment flow
 
+![testing-and-ci — diagram 1](../diagrams/how-to-testing-and-ci-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 sequenceDiagram
   participant Dev as Developer
@@ -226,6 +231,8 @@ sequenceDiagram
   WT->>Prod: pull new image, restart container
   Note over Prod: api boot runs `pnpm --filter @smanga/db migrate`<br/>via the prod compose command override, then main.js
 ```
+
+</details>
 
 Watchtower on the production laptop polls GHCR every 5 minutes.  When a new
 `:latest` digest is detected it pulls the image and restarts the container.

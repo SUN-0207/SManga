@@ -21,6 +21,11 @@ The schema files are wired into the barrel `packages/db/src/schema/index.ts`
 
 ## Entity-relationship diagram
 
+![domain-model — diagram 1](../diagrams/business-logic-domain-model-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 erDiagram
     source ||--o{ story_source : "links"
@@ -147,6 +152,8 @@ erDiagram
     }
 ```
 
+</details>
+
 > The diagram omits the standalone operational tables `job_failure` and
 > `app_setting` — neither carries a foreign key. They are described in their own
 > sections below.
@@ -256,6 +263,11 @@ holding runtime-tunable operator config: the scheduled auto-refresh policy
 A chapter row is created in `pending` during discovery, then transitions when
 `fetchChapterById` runs (`packages/crawler/src/engine.ts`).
 
+![domain-model — diagram 2](../diagrams/business-logic-domain-model-2.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 stateDiagram-v2
     [*] --> pending : discoverChapters inserts row
@@ -266,6 +278,8 @@ stateDiagram-v2
     crawled --> crawled : re-fetch (refetch-all-chapters)
 ```
 
+</details>
+
 `pending` and `failed` are exactly the two states the partial index
 `chapter_needs_crawl_idx` and the auto-crawl feeder treat as "needs crawl".
 
@@ -274,6 +288,11 @@ stateDiagram-v2
 A story is imported metadata-only as `pending` (a "stub"), then chapter
 discovery walks it through `running` to `complete` or `failed`
 (`importStoryMetadata` / `discoverChapters` in `packages/crawler/src/engine.ts`).
+
+![domain-model — diagram 3](../diagrams/business-logic-domain-model-3.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
 
 ```mermaid
 stateDiagram-v2
@@ -284,6 +303,8 @@ stateDiagram-v2
     failed --> running : retry discovery
     complete --> running : re-discover (refresh)
 ```
+
+</details>
 
 Only `complete` stories are eligible for the auto-crawl backlog drainer and the
 scheduled refresh.

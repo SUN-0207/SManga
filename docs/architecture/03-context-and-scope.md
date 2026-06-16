@@ -8,6 +8,11 @@ SManga is a Vietnamese web novel reader: it crawls novels from external source s
 
 ## System Context (C4 L1)
 
+![03-context-and-scope — diagram 1](../diagrams/architecture-03-context-and-scope-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart TB
     reader([Reader<br/>web browser])
@@ -33,6 +38,8 @@ flowchart TB
     sys -.->|"nightly pg_dump upload"| gdrive
     ghcr -.->|"Watchtower pulls :latest images"| sys
 ```
+
+</details>
 
 ## External actors and systems
 

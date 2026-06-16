@@ -14,6 +14,11 @@ A home/residential connection has no static public IP and typically cannot accep
 
 Run **production on a home laptop** (`sunny-server`, Ubuntu 24.04), exposed publicly via a **Cloudflare Tunnel** (outbound-only connection, no port forwarding or public IP). The topology:
 
+![0006-laptop-self-host-cloudflare-tunnel — diagram 1](../diagrams/adr-0006-laptop-self-host-cloudflare-tunnel-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart LR
   user([Reader / Admin]) -->|HTTPS| cf[Cloudflare edge: CDN + cache + TLS]
@@ -25,6 +30,8 @@ flowchart LR
   api --> redis[("redis:7")]
   wt[watchtower] -.poll every 5 min.-> ghcr[(GHCR images)]
 ```
+
+</details>
 
 - A **5-container docker compose**: `postgres:17-alpine`, `redis:7-alpine`, `api`, `frontend`, `caddy`, plus `watchtower` (the prod compose adds Caddy as a sixth container; `CLAUDE.md`'s "5-container" count is the app set — postgres, redis, api, frontend, watchtower).
 - `cloudflared` runs **natively** under systemd (not in docker).

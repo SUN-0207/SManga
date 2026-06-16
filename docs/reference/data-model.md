@@ -427,6 +427,11 @@ Singleton settings table — always exactly one row (`id = 1`, enforced by a CHE
 
 ## Entity-relationship overview
 
+![data-model — diagram 1](../diagrams/reference-data-model-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 erDiagram
     source {
@@ -557,3 +562,5 @@ erDiagram
     user ||--o{ notification : "receives"
     comment ||--o{ notification : "triggers"
 ```
+
+</details>

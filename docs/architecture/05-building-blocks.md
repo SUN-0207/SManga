@@ -6,6 +6,11 @@
 
 The deployed system is a 5-container Docker Compose stack on the laptop, plus the `cli` and `crawler` which are *libraries/processes* rather than long-running services. The crawler engine is a workspace **package** (`@smanga/crawler`) imported by both the API (for its queue processors) and the standalone CLI.
 
+![05-building-blocks — diagram 1](../diagrams/architecture-05-building-blocks-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart TB
     browser([Reader / Admin browser])
@@ -34,6 +39,8 @@ flowchart TB
     watchtower -.->|"pull :latest, restart"| frontend
 ```
 
+</details>
+
 **Container responsibilities**
 
 | Container / unit | Tech | Responsibility | Protocol(s) |
@@ -51,6 +58,11 @@ Other workspace packages that aren't containers: `@smanga/db` (Drizzle schema + 
 ## Level 3a — API modules (component view)
 
 The API root module (`apps/api/src/app.module.ts`) wires the following feature modules. Each is a directory under `apps/api/src/modules/`.
+
+![05-building-blocks — diagram 2](../diagrams/architecture-05-building-blocks-2.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
 
 ```mermaid
 flowchart TB
@@ -93,6 +105,8 @@ flowchart TB
     reader --> db
 ```
 
+</details>
+
 **Module → responsibility → key files** (controller path prefixes are under the global `/api/v1`; verified from each `@Controller(...)` decorator):
 
 | Module | Responsibility | Key files |
@@ -124,6 +138,11 @@ flowchart TB
 
 `@smanga/crawler` (`packages/crawler/src/`) is the pipeline behind every crawl job. The engine never receives a `SourceAdapter` directly: it resolves one from the **registry** (by id or by URL hostname) and calls adapter methods with **HTML strings**, not URLs — the engine owns fetching, rate-limiting, retries, cover download, and persistence.
 
+![05-building-blocks — diagram 3](../diagrams/architecture-05-building-blocks-3.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart LR
     caller["Caller<br/>(API processor or CLI)"]
@@ -143,6 +162,8 @@ flowchart LR
     bucket --> cover
     cover -->|"image bytes + mime"| persist
 ```
+
+</details>
 
 **Engine flow (the `fetch-chapter` path, `packages/crawler/src/engine.ts::fetchChapterById`)**
 

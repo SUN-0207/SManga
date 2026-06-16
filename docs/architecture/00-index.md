@@ -38,6 +38,11 @@ Related material that lives outside arc42:
 The architecture diagrams use the [C4 model](https://c4model.com/) levels, drawn as
 Mermaid `flowchart`s:
 
+![00-index — diagram 1](../diagrams/architecture-00-index-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart LR
   P["Person<br/>(human actor:<br/>reader, admin)"]
@@ -49,6 +54,8 @@ flowchart LR
   S -->|"is made of"| C
   C -->|"is made of"| Cmp
 ```
+
+</details>
 
 - **Level 1 — System Context** ([§03](03-context-and-scope.md)): SManga as one box, surrounded by the people and external systems it talks to.
 - **Level 2 — Container** ([§05](05-building-blocks.md)): the runnable parts inside SManga (frontend SPA, API, Postgres, Redis) and the libraries they share.

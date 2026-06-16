@@ -84,6 +84,11 @@ Importing a story is split into two phases so a bulk catalog import can persist
 hundreds of cheap metadata stubs without paying for chapter-list pagination up
 front (Plan 7, `2026-05-30-smanga-catalog-discovery.md`).
 
+![crawling-and-discovery — diagram 1](../diagrams/business-logic-crawling-and-discovery-1.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart TD
     A[Admin: browse catalog feed] -->|browseCatalog| B[parseCatalogPage -> StoryListItem stubs]
@@ -95,6 +100,8 @@ flowchart TD
     G -->|autoCrawl? chain fetch-chapter per pending| H[fetch-chapter jobs]
     H -->|fetchChapterById| I[chapter content gzipped, status=crawled]
 ```
+
+</details>
 
 - **Phase A — `importStoryMetadata`** fetches the story page, dedups by
   `(sourceId, externalId)` against `story_source` *before* any cover download,
@@ -138,6 +145,11 @@ queue or preempting operator-initiated work
 (`apps/api/src/modules/app-settings/auto-crawl-feeder.processor.ts`, spec
 `2026-06-12-smart-auto-crawl-design.md`).
 
+![crawling-and-discovery — diagram 2](../diagrams/business-logic-crawling-and-discovery-2.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart TD
     Cron["repeatable cron */1 (Asia/Ho_Chi_Minh)"] --> Tick[autocrawl-feed tick]
@@ -151,6 +163,8 @@ flowchart TD
     Empty -->|yes| Noop3[no-op: reason=idle]
     Empty -->|no| Enq["enqueueChunked fetch-chapter @ priority AUTOCRAWL_FETCH (30)"]
 ```
+
+</details>
 
 Key business rules:
 
@@ -208,6 +222,11 @@ extending `CrawlerError`:
 
 ### Two-tier retry
 
+![crawling-and-discovery — diagram 3](../diagrams/business-logic-crawling-and-discovery-3.svg)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
+
 ```mermaid
 flowchart TD
     F[fetch-chapter fails] --> Bull{Bull in-process attempts left?}
@@ -223,6 +242,8 @@ flowchart TD
     ReEnq --> F
     F -->|eventually succeeds| Resolved[OnQueueCompleted -> status=resolved, generation reset to 0]
 ```
+
+</details>
 
 1. **Bull in-process retry** — fine-grained. The standard chained `fetch-chapter`
    job inherits the queue's `defaultJobOptions` (`queue.module.ts`):
