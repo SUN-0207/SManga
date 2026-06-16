@@ -75,7 +75,7 @@ export function SuggestedStoriesSidebar() {
 
   return (
     <aside aria-label="Truyện gợi ý" className="lg:sticky lg:top-20">
-      <div className="rounded-lg border border-border bg-bg-elevated p-5">
+      <div className="rounded-lg border border-border-strong bg-bg-elevated p-5 shadow-sm">
         <h2 className="text-heading-md inline-flex items-center gap-2 mb-4">
           <BookOpen className="h-4 w-4 text-accent" aria-hidden />
           Truyện gợi ý

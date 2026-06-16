@@ -34,9 +34,9 @@ export function StoryGridCard({ story }: { story: StorySummary }) {
       to="/truyen/$slug"
       params={{ slug: story.slug }}
       search={{ commentsPage: 1 }}
-      className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md"
+      className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-md transition-transform duration-200 hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-md border border-border bg-bg-subtle shadow-sm transition-shadow duration-200 group-hover:shadow-elev">
         <StoryCover
           storyId={story.id}
           title={story.title}
