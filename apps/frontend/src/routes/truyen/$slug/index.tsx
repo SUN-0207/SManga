@@ -180,7 +180,7 @@ function StoryDetail() {
                 </Link>
               )}
               {/* "Đọc tiếp Chương N" pink CTA — wired by Plan C when reading_progress exists */}
-              <BookmarkToggle storyId={s.id} />
+              <BookmarkToggle storyId={s.id} slug={s.slug} />
             </div>
           </div>
         </div>

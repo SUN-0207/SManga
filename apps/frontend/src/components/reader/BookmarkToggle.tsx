@@ -1,9 +1,16 @@
 import { bookmarksApi } from '@/api/bookmarks';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { Heart } from 'lucide-react';
 
-export function BookmarkToggle({ storyId }: { storyId: string }) {
+const activeClass =
+  'group inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-body-sm font-medium text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed';
+
+const inactiveClass =
+  'group inline-flex items-center gap-1.5 rounded-full border border-border bg-bg px-4 py-1.5 text-body-sm font-medium text-fg transition-colors duration-fast hover:border-border-strong hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed';
+
+export function BookmarkToggle({ storyId, slug }: { storyId: string; slug: string }) {
   const user = useAuthStore((s) => s.user);
   const qc = useQueryClient();
 
@@ -26,13 +33,18 @@ export function BookmarkToggle({ storyId }: { storyId: string }) {
     },
   });
 
-  if (!user) return null;
-
-  const activeClass =
-    'group inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-body-sm font-medium text-white shadow-glow-pink-soft transition-opacity duration-fast hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed';
-
-  const inactiveClass =
-    'group inline-flex items-center gap-1.5 rounded-full border border-border bg-bg px-4 py-1.5 text-body-sm font-medium text-fg transition-colors duration-fast hover:border-border-strong hover:bg-bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed';
+  // Guests still see the button; clicking sends them to login and back to the story.
+  if (!user) {
+    return (
+      <Link to="/dang-nhap" search={{ redirect: `/truyen/${slug}` }} className={inactiveClass}>
+        <Heart
+          className="h-4 w-4 transition-transform duration-200 group-hover:scale-110"
+          fill="none"
+        />
+        Lưu truyện
+      </Link>
+    );
+  }
 
   return (
     <button
