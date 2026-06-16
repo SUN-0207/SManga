@@ -81,9 +81,15 @@ function FeaturedSlider({
   if (slides.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-border bg-bg-elevated">
+    <section className="relative overflow-hidden rounded-xl border border-border-strong bg-bg-elevated shadow-[0_14px_44px_rgba(24,16,20,0.14)]">
       <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr]">
-        <div className="relative p-8 sm:p-12 lg:p-16">
+        <div
+          className="relative p-8 sm:p-12 lg:p-16"
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(236,72,153,0.10) 0%, rgba(244,114,182,0.03) 45%, transparent 75%)',
+          }}
+        >
           <div
             aria-hidden
             className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-accent/15 blur-3xl pointer-events-none"
