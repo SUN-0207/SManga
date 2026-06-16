@@ -15,6 +15,9 @@ interface Props {
   targetId: string;
   slug: string;
   chapterIndex?: string;
+  /** When true, suppress the internal "Bình luận (N)" heading (e.g. when the
+   * section sits inside a tab whose label already says "Bình luận"). */
+  hideHeading?: boolean;
 }
 
 /** Flatten all users from nested tree for @mention suggestions */
@@ -35,6 +38,7 @@ export function CommentSection({
   targetId,
   slug: _slug,
   chapterIndex: _chapterIndex,
+  hideHeading = false,
 }: Props) {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
@@ -72,9 +76,11 @@ export function CommentSection({
 
   return (
     <section className="container max-w-3xl mx-auto py-12">
-      <h2 className="font-sans font-bold text-heading-lg tracking-tight mb-6">
-        Bình luận{data?.total != null && data.total > 0 ? ` (${data.total})` : ''}
-      </h2>
+      {!hideHeading && (
+        <h2 className="font-sans font-bold text-heading-lg tracking-tight mb-6">
+          Bình luận{data?.total != null && data.total > 0 ? ` (${data.total})` : ''}
+        </h2>
+      )}
 
       {/* Top-level comment form */}
       {user ? (
