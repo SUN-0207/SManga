@@ -22,6 +22,11 @@ pnpm dev:frontend    # Vite on http://localhost:3000
 
 Full runbook: [`docs/operations.md`](docs/operations.md).
 
+## Documentation
+
+- **[ONBOARDING.md](ONBOARDING.md)** — Day-1 guide: prerequisites, local setup, first change, monorepo tour.
+- **[docs/README.md](docs/README.md)** — Full docs map (arc42 architecture, business logic, reference, ADRs, how-to guides).
+
 ## Layout
 
 ```
