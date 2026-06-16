@@ -1,3 +1,4 @@
+import { readingProgressApi } from '@/api/reading-progress';
 import { getStoryBySlug, listAllChapters } from '@/api/stories';
 import { CommentSection } from '@/components/comments/CommentSection';
 import { RatingControl } from '@/components/engagement/RatingControl';
@@ -13,7 +14,6 @@ import {
 } from '@/components/seo/builders';
 import { SimilarStoriesRail } from '@/components/story/SimilarStoriesRail';
 import { StoryCover } from '@/components/ui/StoryCover';
-import { readingProgressApi } from '@/api/reading-progress';
 import { useTrackStoryView } from '@/hooks/use-track-view';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
