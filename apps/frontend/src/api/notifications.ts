@@ -10,11 +10,19 @@ export interface NotificationSourceComment {
   chapterIndex: string | null;
 }
 
+export interface NotificationNewChapter {
+  storySlug: string;
+  storyTitle: string;
+  newCount: number;
+  targetChapterIndex: string;
+}
+
 export interface Notification {
   id: string;
-  type: 'comment_reply' | 'comment_mention';
+  type: 'comment_reply' | 'comment_mention' | 'new_chapter';
   actor: { id: string; name: string; image: string | null } | null;
   sourceComment: NotificationSourceComment | null;
+  newChapter: NotificationNewChapter | null;
   readAt: string | null;
   createdAt: string;
 }
