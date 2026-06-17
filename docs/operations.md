@@ -40,8 +40,11 @@ docker exec smanga-postgres psql -U smanga -d smanga -c "SELECT COUNT(*) FROM st
 # Pending chapters per story:
 docker exec smanga-postgres psql -U smanga -d smanga -c "SELECT story_id, COUNT(*) FROM chapter WHERE status='pending' GROUP BY story_id;"
 
-# Bull queue (Redis-backed — use Swagger UI or Bull Board at /api/queues):
-# GET http://localhost:3001/api/queues  (Bull Board dashboard)
+# Bull queue (Redis-backed) — inspect via the admin Jobs page or the jobs API
+# (there is no Bull Board dashboard):
+#   open /admin/jobs in the app, or
+#   GET http://localhost:3001/api/v1/jobs/stats   (queue + per-status counts)
+#   GET http://localhost:3001/api/v1/jobs          (recent jobs)
 
 # Reset everything:
 docker compose -f docker-compose.dev.yml down -v

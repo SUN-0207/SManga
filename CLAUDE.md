@@ -40,7 +40,7 @@ docs/superpowers/plans/   Implementation plans
 8. **bcrypt** — `apps/api` uses `bcryptjs` (pure JS, no native module issues). No `serverExternalPackages` needed. webpack alias not required for bcryptjs.
 9. ~~**Auth.js v5 middleware split**~~ — OBSOLETE. `apps/web` deleted. NestJS uses passport-jwt (no Edge runtime constraints).
 10. ~~**pg-boss v10 column naming**~~ — OBSOLETE. pg-boss replaced by Bull/Redis in Plan 4. `services/crawler-worker` deleted.
-11. **`chapter.contentText` is gzipped bytea.** Always `gunzipSync` on read. Crawler `engine.fetchChapterById` gzips on write. `contentByteSize` stores the UNCOMPRESSED length for stats.
+11. **`chapter.contentText` is gzipped bytea.** Decompress with async `gunzip` (promisified) on read — `apps/api/src/modules/chapters/chapters.service.ts`. Crawler `engine.fetchChapterById` compresses with async `gzip` (promisified) on write. Both run off the event loop via the libuv threadpool — moved from sync `gzipSync`/`gunzipSync` during the perf work. `contentByteSize` stores the UNCOMPRESSED length for stats.
 12. **TanStack Router `routeTree.gen.ts`** (when Plan 4 Task 9 lands) is auto-generated. Add to `.gitignore`.
 13. **Vietnamese-friendly search** — use the existing GIN index over `immutable_unaccent(lower(title || ' ' || author))` with `pg_trgm`. Query with `ILIKE '%' || immutable_unaccent(lower(:q)) || '%'`.
 14. **NestJS dev watch needs `RunScriptWebpackPlugin`** — `nest start --watch` rebuilds the bundle on source change but does NOT restart the Node process under our custom webpack config. The plugin is wired in `apps/api/webpack.config.js` when `--watch` is detected. If you ever switch off webpack mode in nest-cli.json, this block can go away.
