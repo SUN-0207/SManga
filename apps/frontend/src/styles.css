@@ -4,32 +4,40 @@
 
 :root,
 :root[data-theme="dark"] {
-  /* Surfaces */
-  --bg: #0a0a0a;
-  --bg-elevated: #18181b;
-  --bg-subtle: rgba(255, 255, 255, 0.04);
+  /* Surfaces — Branded Ink: deep plum, clearly stepped solid hexes */
+  --bg: #0c0a12;
+  --bg-elevated: #1a1622;
+  --bg-subtle: #15121c;
 
   /* Foreground */
-  --fg: #fafafa;
-  --fg-muted: rgba(255, 255, 255, 0.6);
-  --fg-subtle: rgba(255, 255, 255, 0.4);
+  --fg: #f6f4f8;
+  --fg-muted: #a8a1b4;
+  --fg-subtle: #6e6878;
 
-  /* Brand */
-  --accent: #ec4899;
-  --accent-strong: #f472b6;
+  /* Brand — brighter pink reads better on ink */
+  --accent: #f25ea6;
+  --accent-strong: #f98ac8;
 
-  /* Borders */
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  /* Borders — visible plum */
+  --border: #2c2536;
+  --border-strong: #3c3448;
 
   /* Status */
   --destructive: #f43f5e;
   --positive: #34d399;
 
   /* Shadows (signature) */
-  --glow-pink: 0 0 24px rgba(236, 72, 153, 0.4), 0 0 64px rgba(236, 72, 153, 0.15);
-  --glow-pink-soft: 0 0 16px rgba(236, 72, 153, 0.2);
-  --shadow-elev: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --glow-pink: 0 0 26px rgba(242, 94, 166, 0.45), 0 0 64px rgba(242, 94, 166, 0.18);
+  --glow-pink-soft: 0 0 18px rgba(242, 94, 166, 0.28);
+  --shadow-elev: 0 10px 30px rgba(0, 0, 0, 0.55);
+
+  /* FeaturedSlider left-column wash (theme-aware) */
+  --hero-wash: linear-gradient(
+    135deg,
+    rgba(242, 94, 166, 0.14) 0%,
+    rgba(168, 85, 247, 0.06) 45%,
+    transparent 78%
+  );
 
   color-scheme: dark;
 }
@@ -55,6 +63,13 @@
   --glow-pink: 0 0 24px rgba(236, 72, 153, 0.3), 0 0 64px rgba(236, 72, 153, 0.1);
   --glow-pink-soft: 0 0 16px rgba(236, 72, 153, 0.15);
   --shadow-elev: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+  --hero-wash: linear-gradient(
+    135deg,
+    rgba(236, 72, 153, 0.1) 0%,
+    rgba(244, 114, 182, 0.03) 45%,
+    transparent 75%
+  );
 
   color-scheme: light;
 }
