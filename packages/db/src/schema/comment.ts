@@ -3,16 +3,20 @@ import {
   type AnyPgColumn,
   check,
   index,
+  integer,
+  numeric,
   pgTable,
   primaryKey,
   smallint,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 // Internal cross-schema imports MUST use .ts extensions (CLAUDE.md workaround #1)
 import { user } from './auth.ts';
 import { commentTargetTypeEnum } from './enums.ts';
+import { story } from './story.ts';
 
 export const comment = pgTable(
   'comment',
@@ -56,17 +60,35 @@ export const commentReaction = pgTable(
   }),
 );
 
-export const notification = pgTable('notification', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  type: text('type').notNull(),
-  sourceCommentId: uuid('source_comment_id').references(() => comment.id, { onDelete: 'cascade' }),
-  actorUserId: text('actor_user_id').references(() => user.id, { onDelete: 'set null' }),
-  readAt: timestamp('read_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const notification = pgTable(
+  'notification',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(),
+    sourceCommentId: uuid('source_comment_id').references(() => comment.id, {
+      onDelete: 'cascade',
+    }),
+    actorUserId: text('actor_user_id').references(() => user.id, { onDelete: 'set null' }),
+    // new_chapter notifications: which story updated + the latest crawled index +
+    // how many new chapters this (coalesced) row represents. NULL for comment rows.
+    storyId: uuid('story_id').references(() => story.id, { onDelete: 'cascade' }),
+    chapterIndex: numeric('chapter_index', { precision: 10, scale: 2 }),
+    newCount: integer('new_count').notNull().default(1),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    // At most ONE unread new_chapter notification per (user, story) — the target
+    // of the coalescing ON CONFLICT upsert in the sweep. Once read, a new advance
+    // creates a fresh row (the predicate only constrains unread rows).
+    newChapterUnreadUniq: uniqueIndex('notification_new_chapter_unread_uniq')
+      .on(t.userId, t.storyId)
+      .where(sql`type = 'new_chapter' AND read_at IS NULL`),
+  }),
+);
 
 export type Comment = typeof comment.$inferSelect;
 export type NewComment = typeof comment.$inferInsert;

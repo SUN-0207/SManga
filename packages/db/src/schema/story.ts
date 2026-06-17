@@ -4,6 +4,7 @@ import {
   customType,
   index,
   integer,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -43,6 +44,10 @@ export const story = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     viewCount: integer('view_count').notNull().default(0),
+    /** High-water mark of the last CRAWLED chapter index we've sent new-chapter
+     *  notifications for. NULL = not yet baselined (the sweep baselines without
+     *  notifying, so a fresh import never blasts its backlog). */
+    lastNotifiedChapterIndex: numeric('last_notified_chapter_index', { precision: 10, scale: 2 }),
   },
   (t) => ({
     searchIdx: index('story_search_idx').using(

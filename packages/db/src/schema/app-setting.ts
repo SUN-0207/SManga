@@ -22,6 +22,9 @@ export const appSetting = pgTable('app_setting', {
   /** Max fetch-chapter jobs the feeder keeps queued — the bound that makes it
    * non-disruptive. Clamped [50,2000] in the DTO/service. */
   autoCrawlWatermark: integer('auto_crawl_watermark').notNull().default(500),
+  /** Kill switch for the new-chapter notification sweep. Default ON — purely
+   *  additive + safe; flip OFF to pause notifications during an incident. */
+  newChapterNotifyEnabled: boolean('new_chapter_notify_enabled').notNull().default(true),
   lastRunAt: timestamp('last_run_at', { withTimezone: true }),
   lastRunCount: integer('last_run_count'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
