@@ -8,7 +8,7 @@ const rowsOf = <T>(r: unknown): T[] =>
 
 export interface NotificationItem {
   id: string;
-  type: 'comment_reply' | 'comment_mention';
+  type: 'comment_reply' | 'comment_mention' | 'new_chapter';
   actor: { id: string; name: string; image: string | null } | null;
   sourceComment: {
     id: string;
@@ -18,6 +18,12 @@ export interface NotificationItem {
     parentId: string | null;
     storySlug: string | null;
     chapterIndex: string | null;
+  } | null;
+  newChapter: {
+    storySlug: string;
+    storyTitle: string;
+    newCount: number;
+    targetChapterIndex: string;
   } | null;
   readAt: string | null;
   createdAt: string;
@@ -56,6 +62,10 @@ export class NotificationsService {
       sc_deleted_at: string | null;
       story_slug: string | null;
       chapter_index: string | null;
+      nc_slug: string | null;
+      nc_title: string | null;
+      nc_new_count: number | null;
+      nc_target_index: string | null;
     }>(
       await this.db.execute(sql`
         SELECT
@@ -82,9 +92,20 @@ export class NotificationsService {
             WHEN sc.target_type = 'chapter'
               THEN (SELECT ch.index::text FROM chapter ch WHERE ch.id = sc.target_id LIMIT 1)
           END AS chapter_index
+          ,st.slug  AS nc_slug
+          ,st.title AS nc_title
+          ,n.new_count AS nc_new_count
+          ,CASE WHEN n.type = 'new_chapter' THEN
+             greatest(
+               least(floor(coalesce(rp.chapter_index, 0))::int + 1, floor(n.chapter_index)::int),
+               1
+             )::text
+           END AS nc_target_index
         FROM notification n
         LEFT JOIN "user" au ON au.id = n.actor_user_id
         LEFT JOIN "comment" sc ON sc.id = n.source_comment_id
+        LEFT JOIN story st ON st.id = n.story_id
+        LEFT JOIN reading_progress rp ON rp.user_id = n.user_id AND rp.story_id = n.story_id
         WHERE n.user_id = ${userId}
         ${filter}
         ORDER BY n.created_at DESC
@@ -94,7 +115,7 @@ export class NotificationsService {
 
     const items: NotificationItem[] = rows.map((r) => ({
       id: r.id,
-      type: r.type as 'comment_reply' | 'comment_mention',
+      type: r.type as NotificationItem['type'],
       actor: r.actor_id ? { id: r.actor_id, name: r.actor_name ?? '', image: r.actor_image } : null,
       sourceComment: r.sc_id
         ? {
@@ -107,6 +128,15 @@ export class NotificationsService {
             chapterIndex: r.chapter_index,
           }
         : null,
+      newChapter:
+        r.type === 'new_chapter' && r.nc_slug
+          ? {
+              storySlug: r.nc_slug,
+              storyTitle: r.nc_title ?? '',
+              newCount: Number(r.nc_new_count ?? 1),
+              targetChapterIndex: r.nc_target_index ?? '1',
+            }
+          : null,
       readAt: r.read_at,
       createdAt: r.created_at,
     }));
