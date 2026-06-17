@@ -4,23 +4,23 @@
 
 :root,
 :root[data-theme="dark"] {
-  /* Surfaces — Editorial Noir: cool near-neutral, clearly stepped */
-  --bg: #0a0a0c;
-  --bg-elevated: #212127;
-  --bg-subtle: #17171b;
+  /* Surfaces — Warm Dim: warm charcoal, low blue-light, clearly stepped */
+  --bg: #1c1a17;
+  --bg-elevated: #272320;
+  --bg-subtle: #211e1a;
 
-  /* Foreground */
-  --fg: #fafafa;
-  --fg-muted: #a1a1aa;
-  --fg-subtle: #71717a;
+  /* Foreground — warm off-white (not pure white) for comfortable reading */
+  --fg: #ece7dd;
+  --fg-muted: #ada593;
+  --fg-subtle: #76705f;
 
-  /* Brand — vivid pink pops against the cool neutral ground */
+  /* Brand — vivid pink pops against the warm neutral ground */
   --accent: #f0529c;
   --accent-strong: #f77fbf;
 
-  /* Borders — visible cool gray */
-  --border: #2a2a31;
-  --border-strong: #3b3b44;
+  /* Borders — warm gray, subtle */
+  --border: #3a352e;
+  --border-strong: #4a443b;
 
   /* Status */
   --destructive: #f43f5e;
@@ -29,13 +29,13 @@
   /* Shadows (signature) */
   --glow-pink: 0 0 24px rgba(240, 82, 156, 0.45), 0 0 60px rgba(240, 82, 156, 0.18);
   --glow-pink-soft: 0 0 16px rgba(240, 82, 156, 0.28);
-  --shadow-elev: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-elev: 0 12px 32px rgba(0, 0, 0, 0.5);
 
-  /* FeaturedSlider left-column wash (theme-aware) */
+  /* FeaturedSlider left-column wash (theme-aware) — pink over warm dark */
   --hero-wash: linear-gradient(
     135deg,
     rgba(240, 82, 156, 0.13) 0%,
-    rgba(129, 140, 248, 0.05) 45%,
+    rgba(251, 191, 120, 0.05) 45%,
     transparent 78%
   );
 

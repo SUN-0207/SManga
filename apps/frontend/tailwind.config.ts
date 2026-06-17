@@ -32,6 +32,15 @@ const config: Config = {
         primary: { DEFAULT: 'var(--accent)', foreground: '#FFFFFF' },
         muted: { DEFAULT: 'var(--bg-subtle)', foreground: 'var(--fg-muted)' },
       },
+      // Make the default border color theme-aware. Tailwind Preflight otherwise
+      // defaults every element's border-color to gray-200 (#e5e7eb); a
+      // `border-<token>/<opacity>` class on a CSS-var color can't be alpha-
+      // composited, so it emits no valid color and falls through to that bright
+      // gray — which reads as harsh white lines on dark themes. Falling back to
+      // var(--border) keeps stray borders subtle and on-theme in both modes.
+      borderColor: {
+        DEFAULT: 'var(--border)',
+      },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         prose: ['Newsreader', 'Source Serif Pro', 'Georgia', 'serif'],

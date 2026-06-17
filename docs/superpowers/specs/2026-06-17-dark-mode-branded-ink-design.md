@@ -1,6 +1,6 @@
 # Dark Mode — "Branded Ink" Redesign
 
-> **Status:** SUPERSEDED 2026-06-17 — shipped as branded-ink, then revised to **Editorial Noir** via the `ui-ux-pro-max` skill (see Amendment below). Final shipped commit `819ce6d`.
+> **Status:** SUPERSEDED 2026-06-17 — shipped as branded-ink → revised to **Editorial Noir** → revised again to **Warm Dim** (current). See the two Amendments below. Editorial Noir shipped as `819ce6d`; Warm Dim is the latest.
 > **Problem:** The dark theme reads muddy and "not eye-catching": surfaces don't separate (page `#0a0a0a`, `bg-subtle` = `rgba(255,255,255,.04)`, `bg-elevated` `#18181b`, borders `rgba(255,255,255,.08)` — all near-black, barely distinguishable), card-lift shadows are invisible on black, the homepage hero's light-mode pink wash turns into a muddy maroon smear, and the pink accent is underused.
 
 ## Amendment (2026-06-17) — revised to "Editorial Noir"
@@ -21,6 +21,23 @@ The branded-ink (plum) palette below shipped first but still read "not eye-catch
 | `--hero-wash` (dark) | `linear-gradient(135deg, rgba(240,82,156,.13), rgba(129,140,248,.05) 45%, transparent 78%)` |
 
 Light theme + `--hero-wash` (light) unchanged. The "branded ink" sections below are retained as the design trail.
+
+## Amendment 2 (2026-06-17) — revised to "Warm Dim" + the white-line root-cause fix
+
+Editorial Noir's near-black `#0a0a0c` base with `#fafafa` (near-white) text read **harsh** ("chữ trắng trên nền đen không hợp"). After previewing three alternatives live (Soft Slate / Warm Dim / Sepia), the user picked **Warm Dim**: a *warm charcoal* base with *warm off-white* text (not pure white), which lowers blue-light glare and is easier on the eyes for long reading. The pink accent is unchanged — it still pops against the warm-neutral ground.
+
+| Token | Warm Dim (current) |
+|---|---|
+| `--bg` | `#1c1a17` (warm charcoal) |
+| `--bg-subtle` | `#211e1a` |
+| `--bg-elevated` | `#272320` |
+| `--fg` / `--fg-muted` / `--fg-subtle` | `#ece7dd` / `#ada593` / `#76705f` (warm off-white ramp) |
+| `--accent` / `--accent-strong` | `#f0529c` / `#f77fbf` (unchanged) |
+| `--border` / `--border-strong` | `#3a352e` / `#4a443b` (warm gray) |
+| `--shadow-elev` | `0 12px 32px rgba(0,0,0,.5)` |
+| `--hero-wash` (dark) | `linear-gradient(135deg, rgba(240,82,156,.13), rgba(251,191,120,.05) 45%, transparent 78%)` (pink → faint warm) |
+
+**White-line root-cause fix (separate from the palette).** Reported as "nhiều đường kẻ màu trắng không thuận mắt." Cause: Tailwind Preflight defaults every element's `border-color` to `gray-200` (`#e5e7eb`); a `border-<token>/<opacity>` class on a CSS-var color (e.g. `border-border/60`) can't be alpha-composited, so it emits **no** valid color and falls through to that bright gray — invisible on light, glaring on dark. Fix: set `theme.extend.borderColor.DEFAULT = 'var(--border)'` in `apps/frontend/tailwind.config.ts`, making the fallback theme-aware. Verified: on the story-detail page, **0** elements render gray-200 borders (was 50+ chapter rows); all 204 bordered edges now use `var(--border)`. Light theme's default border shifts only `#e5e7eb` → `#e4e4e7` (visually identical). One config line fixes every affected component at once — no per-file edits needed.
 
 ## Goal
 
