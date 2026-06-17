@@ -20,7 +20,11 @@ function makeExecute(results: unknown[][]) {
 describe('NotifyNewChaptersService.handle', () => {
   it('no-ops when new_chapter_notify is disabled', async () => {
     const execute = vi.fn();
-    const db = { select: vi.fn(selectChain([{ enabled: false }])), execute } as never;
+    const db = {
+      select: vi.fn(selectChain([{ enabled: false }])),
+      execute,
+      transaction: (fn: (tx: { execute: typeof execute }) => unknown) => fn({ execute }),
+    } as never;
     const svc = new NotifyNewChaptersService(db, {} as never);
     const res = await svc.handle({} as never);
     expect(res).toEqual({ notified: 0, baselined: 0, skipped: true });
@@ -32,7 +36,11 @@ describe('NotifyNewChaptersService.handle', () => {
       [{ id: 's1', watermark: null, max_idx: '10', new_count: 5 }], // candidates
       [], // watermark UPDATE
     ]);
-    const db = { select: vi.fn(selectChain([{ enabled: true }])), execute } as never;
+    const db = {
+      select: vi.fn(selectChain([{ enabled: true }])),
+      execute,
+      transaction: (fn: (tx: { execute: typeof execute }) => unknown) => fn({ execute }),
+    } as never;
     const svc = new NotifyNewChaptersService(db, {} as never);
     const res = await svc.handle({} as never);
     expect(res).toEqual({ notified: 0, baselined: 1, skipped: false });
@@ -45,7 +53,11 @@ describe('NotifyNewChaptersService.handle', () => {
       [{ user_id: 'u1' }, { user_id: 'u2' }], // upsert RETURNING
       [], // watermark UPDATE
     ]);
-    const db = { select: vi.fn(selectChain([{ enabled: true }])), execute } as never;
+    const db = {
+      select: vi.fn(selectChain([{ enabled: true }])),
+      execute,
+      transaction: (fn: (tx: { execute: typeof execute }) => unknown) => fn({ execute }),
+    } as never;
     const svc = new NotifyNewChaptersService(db, {} as never);
     const res = await svc.handle({} as never);
     expect(res).toEqual({ notified: 2, baselined: 0, skipped: false });

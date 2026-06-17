@@ -114,25 +114,29 @@ export class NotifyNewChaptersService implements OnModuleInit {
         baselined += 1;
         continue;
       }
-      // Real advance: coalesced fan-out to every bookmarker, then advance watermark.
-      const inserted = rowsOf<{ user_id: string }>(
-        await this.db.execute(sql`
-          INSERT INTO notification (user_id, type, story_id, chapter_index, new_count)
-          SELECT b.user_id, 'new_chapter', ${c.id}::uuid, ${c.max_idx}::numeric, ${c.new_count}
-          FROM bookmark b
-          WHERE b.story_id = ${c.id}::uuid
-          ON CONFLICT (user_id, story_id) WHERE type = 'new_chapter' AND read_at IS NULL
-          DO UPDATE SET chapter_index = EXCLUDED.chapter_index,
-                        new_count     = notification.new_count + EXCLUDED.new_count,
-                        created_at    = now()
-          RETURNING user_id
-        `),
-      );
-      await this.db.execute(sql`
-        UPDATE story SET last_notified_chapter_index = ${c.max_idx}::numeric
-        WHERE id = ${c.id}::uuid
-      `);
-      notified += inserted.length;
+      // Real advance: coalesced fan-out + watermark advance, atomically.
+      let insertedCount = 0;
+      await this.db.transaction(async (tx) => {
+        const inserted = rowsOf<{ user_id: string }>(
+          await tx.execute(sql`
+            INSERT INTO notification (user_id, type, story_id, chapter_index, new_count)
+            SELECT b.user_id, 'new_chapter', ${c.id}::uuid, ${c.max_idx}::numeric, ${c.new_count}
+            FROM bookmark b
+            WHERE b.story_id = ${c.id}::uuid
+            ON CONFLICT (user_id, story_id) WHERE type = 'new_chapter' AND read_at IS NULL
+            DO UPDATE SET chapter_index = EXCLUDED.chapter_index,
+                          new_count     = notification.new_count + EXCLUDED.new_count,
+                          created_at    = now()
+            RETURNING user_id
+          `),
+        );
+        await tx.execute(sql`
+          UPDATE story SET last_notified_chapter_index = ${c.max_idx}::numeric
+          WHERE id = ${c.id}::uuid
+        `);
+        insertedCount = inserted.length;
+      });
+      notified += insertedCount;
     }
 
     if (candidates.length === NOTIFY_BATCH_CAP) {

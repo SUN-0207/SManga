@@ -28,13 +28,13 @@ export const JOB_NOTIFY_NEW_CHAPTERS = 'notify-new-chapters';
 export const JOB_PRIORITY = {
   FETCH_CHAPTER: 1,
   RETRY_RECONCILER: 2,
-  // Notify sweep — light DB work; deferrable behind all crawl jobs but ahead of
-  // the background backlog drain so it ticks promptly.
-  NOTIFY_NEW_CHAPTERS: 22,
   DISCOVER_CHAPTERS: 5,
   DISCOVER_ALL_SOURCE: 8,
   IMPORT_STORY: 10,
   REFRESH_ALL_STORIES: 20,
+  // Notify sweep — light DB work; deferrable behind all crawl jobs but ahead of
+  // the background backlog drain so it ticks promptly.
+  NOTIFY_NEW_CHAPTERS: 22,
   // 30) Background auto-crawl backlog drain — lowest priority so manual
   //     crawl-missing / "Chỉ crawl lỗi" / discover / reconciler always preempt.
   AUTOCRAWL_FETCH: 30,
