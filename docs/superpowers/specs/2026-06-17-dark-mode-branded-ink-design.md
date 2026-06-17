@@ -1,7 +1,26 @@
 # Dark Mode — "Branded Ink" Redesign
 
-> **Status:** Approved 2026-06-17. Next step: writing-plans.
+> **Status:** SUPERSEDED 2026-06-17 — shipped as branded-ink, then revised to **Editorial Noir** via the `ui-ux-pro-max` skill (see Amendment below). Final shipped commit `819ce6d`.
 > **Problem:** The dark theme reads muddy and "not eye-catching": surfaces don't separate (page `#0a0a0a`, `bg-subtle` = `rgba(255,255,255,.04)`, `bg-elevated` `#18181b`, borders `rgba(255,255,255,.08)` — all near-black, barely distinguishable), card-lift shadows are invisible on black, the homepage hero's light-mode pink wash turns into a muddy maroon smear, and the pink accent is underused.
+
+## Amendment (2026-06-17) — revised to "Editorial Noir"
+
+The branded-ink (plum) palette below shipped first but still read "not eye-catching." Using the `ui-ux-pro-max` design skill (top palette match: *"editorial black + accent pink #EC4899"*; OLED dark-mode guidance), we pivoted to a **cool near-neutral** base so the warm pink accent *pops* (warm-on-cool contrast) instead of muddying (warm-on-warm). This is what shipped (commit `819ce6d`); the dark token block in `apps/frontend/src/styles.css` now reads:
+
+| Token | Editorial Noir (shipped) |
+|---|---|
+| `--bg` | `#0a0a0c` (cool zinc-black) |
+| `--bg-subtle` | `#17171b` |
+| `--bg-elevated` | `#212127` |
+| `--fg` / `--fg-muted` / `--fg-subtle` | `#fafafa` / `#a1a1aa` / `#71717a` |
+| `--accent` / `--accent-strong` | `#f0529c` / `#f77fbf` (vivid pink) |
+| `--border` / `--border-strong` | `#2a2a31` / `#3b3b44` |
+| `--glow-pink` | `0 0 24px rgba(240,82,156,.45), 0 0 60px rgba(240,82,156,.18)` |
+| `--glow-pink-soft` | `0 0 16px rgba(240,82,156,.28)` |
+| `--shadow-elev` | `0 12px 32px rgba(0,0,0,.6)` |
+| `--hero-wash` (dark) | `linear-gradient(135deg, rgba(240,82,156,.13), rgba(129,140,248,.05) 45%, transparent 78%)` |
+
+Light theme + `--hero-wash` (light) unchanged. The "branded ink" sections below are retained as the design trail.
 
 ## Goal
 
