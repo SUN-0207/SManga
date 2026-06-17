@@ -1,11 +1,14 @@
 import {
   type AutoCrawlSetting,
   type AutoRefreshSetting,
+  type NewChapterNotifySetting,
   getAutoCrawl,
   getAutoRefresh,
+  getNewChapterNotify,
   runAutoRefreshNow,
   updateAutoCrawl,
   updateAutoRefresh,
+  updateNewChapterNotify,
 } from '@/api/settings';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
@@ -34,6 +37,10 @@ function AdminSettingsPage() {
     queryKey: ['admin', 'settings', 'auto-crawl'],
     queryFn: getAutoCrawl,
   });
+  const notifyQ = useQuery({
+    queryKey: ['admin', 'settings', 'new-chapter-notify'],
+    queryFn: getNewChapterNotify,
+  });
 
   return (
     <div className="space-y-8 max-w-3xl">
@@ -60,6 +67,14 @@ function AdminSettingsPage() {
         <AutoCrawlCard
           setting={autoCrawlQ.data}
           onUpdated={() => qc.invalidateQueries({ queryKey: ['admin', 'settings', 'auto-crawl'] })}
+        />
+      )}
+      {notifyQ.data && (
+        <NewChapterNotifyCard
+          setting={notifyQ.data}
+          onUpdated={() =>
+            qc.invalidateQueries({ queryKey: ['admin', 'settings', 'new-chapter-notify'] })
+          }
         />
       )}
     </div>
@@ -345,6 +360,85 @@ function AutoCrawlCard({
         {errorText && <p className="text-sm text-destructive">{errorText}</p>}
 
         <div className="pt-2 border-t border-border/60 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => saveM.mutate()}
+            disabled={!dirty || saveM.isPending}
+            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md text-sm font-medium bg-fg text-bg hover:opacity-90 transition-opacity duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saveM.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+            Lưu thay đổi
+          </button>
+          {okFlash && (
+            <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
+              <Check className="h-4 w-4" /> Đã lưu
+            </span>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function NewChapterNotifyCard({
+  setting,
+  onUpdated,
+}: {
+  setting: NewChapterNotifySetting;
+  onUpdated: () => void;
+}) {
+  const [enabled, setEnabled] = useState(setting.newChapterNotifyEnabled);
+  const [okFlash, setOkFlash] = useState(false);
+
+  useEffect(() => {
+    setEnabled(setting.newChapterNotifyEnabled);
+  }, [setting.newChapterNotifyEnabled]);
+
+  const saveM = useMutation({
+    mutationFn: () => updateNewChapterNotify(enabled),
+    onSuccess: () => {
+      setOkFlash(true);
+      setTimeout(() => setOkFlash(false), 2500);
+      onUpdated();
+    },
+  });
+
+  const dirty = enabled !== setting.newChapterNotifyEnabled;
+  const errMsg = saveM.error as { response?: { data?: { message?: string } } } | null;
+  const errorText = errMsg?.response?.data?.message ?? null;
+
+  return (
+    <section className="rounded-xl border border-border bg-bg overflow-hidden">
+      <div className="px-5 sm:px-6 py-4 border-b border-border flex items-start gap-3">
+        <SettingsIcon className="h-5 w-5 text-fg-muted mt-0.5 shrink-0" aria-hidden />
+        <div className="min-w-0">
+          <h2 className="font-sans font-semibold text-lg">Thông báo chương mới</h2>
+          <p className="text-sm text-fg-muted mt-1">
+            Định kỳ gửi thông báo "có chương mới" cho người đã lưu truyện. Gộp nhiều chương thành
+            một thông báo, không gửi lại với chương đã crawl trước đó.
+          </p>
+        </div>
+      </div>
+
+      <div className="p-5 sm:p-6 space-y-5">
+        <label className="flex items-start gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-border accent-[var(--accent)] cursor-pointer"
+          />
+          <span>
+            <span className="block text-sm font-medium">Bật thông báo chương mới</span>
+            <span className="block text-xs text-fg-muted mt-0.5">
+              Khi tắt, vòng quét tạm dừng (mốc theo dõi được giữ nguyên).
+            </span>
+          </span>
+        </label>
+
+        {errorText && <p className="text-sm text-destructive">{errorText}</p>}
+
+        <div className="pt-2 border-t border-border flex items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => saveM.mutate()}

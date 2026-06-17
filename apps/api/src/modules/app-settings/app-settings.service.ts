@@ -126,6 +126,21 @@ export class AppSettingsService implements OnModuleInit {
     };
   }
 
+  async getNewChapterNotify(): Promise<{ newChapterNotifyEnabled: boolean }> {
+    const s = await this.getOrSeed();
+    return { newChapterNotifyEnabled: s.newChapterNotifyEnabled };
+  }
+
+  async setNewChapterNotify(enabled: boolean): Promise<{ newChapterNotifyEnabled: boolean }> {
+    const [updated] = await this.db
+      .update(appSetting)
+      .set({ newChapterNotifyEnabled: enabled, updatedAt: new Date() })
+      .where(eq(appSetting.id, 1))
+      .returning();
+    if (!updated) throw new BadRequestException('app_setting row missing — re-run migrations');
+    return { newChapterNotifyEnabled: updated.newChapterNotifyEnabled };
+  }
+
   private async getOrSeed() {
     const [row] = await this.db.select().from(appSetting).where(eq(appSetting.id, 1)).limit(1);
     if (row) return row;

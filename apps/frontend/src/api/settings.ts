@@ -54,3 +54,19 @@ export async function updateAutoCrawl(patch: UpdateAutoCrawlPatch): Promise<Auto
   const res = await api.patch<AutoCrawlSetting>('/admin/settings/auto-crawl', patch);
   return res.data;
 }
+
+export interface NewChapterNotifySetting {
+  newChapterNotifyEnabled: boolean;
+}
+
+export async function getNewChapterNotify(): Promise<NewChapterNotifySetting> {
+  const res = await api.get<NewChapterNotifySetting>('/admin/settings/new-chapter-notify');
+  return res.data;
+}
+
+export async function updateNewChapterNotify(enabled: boolean): Promise<NewChapterNotifySetting> {
+  const res = await api.patch<NewChapterNotifySetting>('/admin/settings/new-chapter-notify', {
+    enabled,
+  });
+  return res.data;
+}

@@ -33,3 +33,22 @@ describe('AppSettingsService auto-retry toggle', () => {
     expect((set.mock.calls as unknown[][])[0]?.[0]).toMatchObject({ autoRetryEnabled: false });
   });
 });
+
+describe('AppSettingsService new-chapter-notify toggle', () => {
+  it('getNewChapterNotify reads the persisted flag', async () => {
+    const db = { select: vi.fn(selectChain([{ newChapterNotifyEnabled: true }])) } as never;
+    const svc = new AppSettingsService(db, {} as never);
+    expect(await svc.getNewChapterNotify()).toEqual({ newChapterNotifyEnabled: true });
+  });
+
+  it('setNewChapterNotify persists the flag and echoes it back', async () => {
+    const { update, set } = updateReturning([{ newChapterNotifyEnabled: false }]);
+    const db = { update } as never;
+    const svc = new AppSettingsService(db, {} as never);
+    const res = await svc.setNewChapterNotify(false);
+    expect(res).toEqual({ newChapterNotifyEnabled: false });
+    expect((set.mock.calls as unknown[][])[0]?.[0]).toMatchObject({
+      newChapterNotifyEnabled: false,
+    });
+  });
+});
