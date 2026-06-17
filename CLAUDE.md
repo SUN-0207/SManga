@@ -58,16 +58,13 @@ docs/superpowers/plans/   Implementation plans
 
 ## Design system — Plan 4 onwards
 
-Before any frontend code, read:
+**Source of truth for tokens is the code**, NOT `design-system/smanga/MASTER.md` (MASTER.md is STALE — it still shows a sky-blue/Outfit theme that was never shipped). Style via the semantic Tailwind tokens defined in `apps/frontend/src/styles.css` (CSS vars) + `apps/frontend/tailwind.config.ts`: `bg`, `bg-elevated`, `bg-subtle`, `fg`, `fg-muted`, `fg-subtle`, `accent`, `accent-strong`, `border`, `border-strong`. Page overrides (when present) live in `design-system/smanga/pages/<page>.md`.
 
-- `design-system/smanga/MASTER.md` — global tokens
-- `design-system/smanga/pages/<page>.md` — page-specific overrides (when present)
+Headline tokens (actual, shipped):
 
-Headline tokens:
-
-- Primary `#18181B` (zinc-900), CTA `#EC4899` (pink-500), Background `#FAFAFA`
-- Heading font `Newsreader`, body font `Roboto` — literary editorial vibe
-- 150-300ms transitions, 8/12/16px radii, 4.5:1 contrast minimum
+- Light theme: Background `#FAFAFA` / cards `#FFFFFF`, text `#18181B` (zinc-900), CTA/accent `#EC4899` (pink-500). A full dark theme also exists (`#0A0A0A` + pink glow) — toggled via `useReaderPrefs` (header `ThemeToggle` + reader-settings drawer).
+- Fonts: sans + heading `Inter`, prose/serif `Newsreader` (literary editorial vibe) — NOT Roboto/Fraunces/Outfit.
+- 150-300ms transitions, radii sm/md/lg/xl = `6/10/16/24px`, 4.5:1 contrast minimum
 - No emoji icons (use Lucide), cursor-pointer everywhere, focus rings visible, prefers-reduced-motion respected
 
 When implementing a new page, generate an override first:
