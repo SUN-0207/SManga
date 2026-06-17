@@ -4,38 +4,38 @@
 
 :root,
 :root[data-theme="dark"] {
-  /* Surfaces — Branded Ink: deep plum, clearly stepped solid hexes */
-  --bg: #0c0a12;
-  --bg-elevated: #1a1622;
-  --bg-subtle: #15121c;
+  /* Surfaces — Editorial Noir: cool near-neutral, clearly stepped */
+  --bg: #0a0a0c;
+  --bg-elevated: #212127;
+  --bg-subtle: #17171b;
 
   /* Foreground */
-  --fg: #f6f4f8;
-  --fg-muted: #a8a1b4;
-  --fg-subtle: #6e6878;
+  --fg: #fafafa;
+  --fg-muted: #a1a1aa;
+  --fg-subtle: #71717a;
 
-  /* Brand — brighter pink reads better on ink */
-  --accent: #f25ea6;
-  --accent-strong: #f98ac8;
+  /* Brand — vivid pink pops against the cool neutral ground */
+  --accent: #f0529c;
+  --accent-strong: #f77fbf;
 
-  /* Borders — visible plum */
-  --border: #2c2536;
-  --border-strong: #3c3448;
+  /* Borders — visible cool gray */
+  --border: #2a2a31;
+  --border-strong: #3b3b44;
 
   /* Status */
   --destructive: #f43f5e;
   --positive: #34d399;
 
   /* Shadows (signature) */
-  --glow-pink: 0 0 26px rgba(242, 94, 166, 0.45), 0 0 64px rgba(242, 94, 166, 0.18);
-  --glow-pink-soft: 0 0 18px rgba(242, 94, 166, 0.28);
-  --shadow-elev: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --glow-pink: 0 0 24px rgba(240, 82, 156, 0.45), 0 0 60px rgba(240, 82, 156, 0.18);
+  --glow-pink-soft: 0 0 16px rgba(240, 82, 156, 0.28);
+  --shadow-elev: 0 12px 32px rgba(0, 0, 0, 0.6);
 
   /* FeaturedSlider left-column wash (theme-aware) */
   --hero-wash: linear-gradient(
     135deg,
-    rgba(242, 94, 166, 0.14) 0%,
-    rgba(168, 85, 247, 0.06) 45%,
+    rgba(240, 82, 156, 0.13) 0%,
+    rgba(129, 140, 248, 0.05) 45%,
     transparent 78%
   );
 
