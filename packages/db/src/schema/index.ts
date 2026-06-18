@@ -8,3 +8,4 @@ export * from './app-setting.ts';
 export * from './engagement.ts';
 export * from './comment.ts';
 export * from './job-failure.ts';
+export * from './report.ts';

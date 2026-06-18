@@ -17,6 +17,7 @@ import { JobsModule } from './modules/jobs/jobs.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { RankingsModule } from './modules/rankings/rankings.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { SearchModule } from './modules/search/search.module';
 import { SeoModule } from './modules/seo/seo.module';
 import { SourcesModule } from './modules/sources/sources.module';
@@ -61,6 +62,7 @@ import { UsersModule } from './modules/users/users.module';
     RankingsModule,
     CommentsModule,
     RecommendationsModule,
+    ReportsModule,
     SeoModule,
   ],
 })
