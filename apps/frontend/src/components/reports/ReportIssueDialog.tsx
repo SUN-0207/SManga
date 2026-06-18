@@ -2,6 +2,7 @@ import { type CreateReportBody, type ReportCategory, submitReport } from '@/api/
 import { useMutation } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ReportIssueDialogProps {
   open: boolean;
@@ -105,7 +106,7 @@ export function ReportIssueDialog({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <button
@@ -218,6 +219,7 @@ export function ReportIssueDialog({
           </button>
         </form>
       </dialog>
-    </div>
+    </div>,
+    document.body,
   );
 }
