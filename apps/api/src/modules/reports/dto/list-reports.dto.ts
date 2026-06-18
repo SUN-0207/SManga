@@ -1,4 +1,5 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
 import { REPORT_CATEGORIES } from './create-report.dto';
 import { REPORT_STATUSES } from './update-report.dto';
 
@@ -11,5 +12,15 @@ export class ListReportsDto {
   @IsEnum(REPORT_CATEGORIES)
   category?: (typeof REPORT_CATEGORIES)[number];
 
-  // page/limit parsed/clamped in the controller (mirror the stories admin list).
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number;
 }

@@ -20,11 +20,12 @@ export class AdminReportsController {
   }
 
   @Get()
-  list(@Query() dto: ListReportsDto, @Query('page') page = '1', @Query('limit') limit = '20') {
+  list(@Query() dto: ListReportsDto) {
     return this.svc.listForAdmin({
-      ...dto,
-      page: Math.max(1, Number(page) || 1),
-      limit: Math.min(100, Math.max(1, Number(limit) || 20)),
+      status: dto.status,
+      category: dto.category,
+      page: Math.max(1, dto.page ?? 1),
+      limit: Math.min(100, Math.max(1, dto.limit ?? 20)),
     });
   }
 

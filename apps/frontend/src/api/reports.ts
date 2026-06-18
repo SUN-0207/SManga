@@ -41,12 +41,17 @@ export interface AdminReportsPage {
 }
 
 export async function getAdminReports(params: {
-  status?: ReportStatus;
-  category?: ReportCategory;
+  status?: ReportStatus | 'all';
+  category?: ReportCategory | 'all';
   page?: number;
   limit?: number;
 }): Promise<AdminReportsPage> {
-  const { data } = await api.get<AdminReportsPage>('/admin/reports', { params });
+  const query: Record<string, string | number> = {};
+  if (params.status && params.status !== 'all') query.status = params.status;
+  if (params.category && params.category !== 'all') query.category = params.category;
+  if (params.page != null) query.page = params.page;
+  if (params.limit != null) query.limit = params.limit;
+  const { data } = await api.get<AdminReportsPage>('/admin/reports', { params: query });
   return data;
 }
 
