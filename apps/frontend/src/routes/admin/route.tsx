@@ -1,10 +1,13 @@
 import { me } from '@/api/auth';
+import { getReportsOpenCount } from '@/api/reports';
 import { SEO } from '@/components/seo/SEO';
 import { api } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth-store';
+import { useQuery } from '@tanstack/react-query';
 import { Link, Outlet, createFileRoute, redirect, useRouterState } from '@tanstack/react-router';
 import {
   Activity,
+  AlertTriangle,
   BookOpen,
   Database,
   ExternalLink,
@@ -33,6 +36,7 @@ const NAV = [
   { href: '/admin/stories' as const, label: 'Truyện', icon: BookOpen, exact: false },
   { href: '/admin/jobs' as const, label: 'Jobs', icon: Activity, exact: false },
   { href: '/admin/users' as const, label: 'Người dùng', icon: Users, exact: false },
+  { href: '/admin/reports' as const, label: 'Báo lỗi', icon: AlertTriangle, exact: false },
   { href: '/admin/settings' as const, label: 'Cài đặt', icon: SettingsIcon, exact: false },
 ];
 
@@ -153,6 +157,13 @@ function SidebarBrand() {
 }
 
 function SidebarNav({ path }: { path: string }) {
+  const openCountQ = useQuery({
+    queryKey: ['admin', 'reports', 'open-count'],
+    queryFn: getReportsOpenCount,
+    refetchInterval: 60_000,
+  });
+  const openCount = openCountQ.data?.openCount ?? 0;
+
   return (
     <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
       <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-[0.25em] text-fg-muted">
@@ -161,6 +172,7 @@ function SidebarNav({ path }: { path: string }) {
       {NAV.map((n) => {
         const active = n.exact ? path === n.href : path.startsWith(n.href);
         const Icon = n.icon;
+        const showBadge = n.href === '/admin/reports' && openCount > 0;
         return (
           <Link
             key={n.href}
@@ -172,7 +184,12 @@ function SidebarNav({ path }: { path: string }) {
             }
           >
             <Icon className="h-4 w-4" />
-            {n.label}
+            <span className="flex-1">{n.label}</span>
+            {showBadge && (
+              <span className="ml-auto inline-flex items-center justify-center h-4 min-w-4 rounded-full bg-accent px-1 text-[10px] font-semibold text-white tabular-nums">
+                {openCount > 99 ? '99+' : openCount}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -195,11 +212,19 @@ function SidebarFooter() {
 }
 
 function MobileDrawerNav({ path, onClose }: { path: string; onClose: () => void }) {
+  const openCountQ = useQuery({
+    queryKey: ['admin', 'reports', 'open-count'],
+    queryFn: getReportsOpenCount,
+    refetchInterval: 60_000,
+  });
+  const openCount = openCountQ.data?.openCount ?? 0;
+
   return (
     <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
       {NAV.map((n) => {
         const active = n.exact ? path === n.href : path.startsWith(n.href);
         const Icon = n.icon;
+        const showBadge = n.href === '/admin/reports' && openCount > 0;
         return (
           <Link
             key={n.href}
@@ -212,7 +237,12 @@ function MobileDrawerNav({ path, onClose }: { path: string; onClose: () => void 
             }
           >
             <Icon className="h-4 w-4" />
-            {n.label}
+            <span className="flex-1">{n.label}</span>
+            {showBadge && (
+              <span className="ml-auto inline-flex items-center justify-center h-4 min-w-4 rounded-full bg-accent px-1 text-[10px] font-semibold text-white tabular-nums">
+                {openCount > 99 ? '99+' : openCount}
+              </span>
+            )}
           </Link>
         );
       })}
