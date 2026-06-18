@@ -264,7 +264,10 @@ function ReportRow({
         status: selectedStatus,
         adminNote: adminNote.trim() || undefined,
       }),
-    onSuccess: () => onUpdated(),
+    onSuccess: (updated) => {
+      setAdminNote(updated.adminNote ?? '');
+      onUpdated();
+    },
   });
 
   const contextHref =
@@ -282,7 +285,7 @@ function ReportRow({
   return (
     <>
       <tr
-        className="border-b border-border/60 last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60 cursor-pointer"
+        className="border-b border-border last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60 cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') setExpanded((v) => !v);
@@ -346,7 +349,7 @@ function ReportRow({
       </tr>
 
       {expanded && (
-        <tr className="border-b border-border/60 last:border-0 bg-bg-subtle/30">
+        <tr className="border-b border-border last:border-0 bg-bg-subtle/30">
           <td colSpan={7} className="px-4 py-4">
             <div className="flex flex-wrap items-start gap-4">
               <div className="flex-1 min-w-[240px] space-y-3">

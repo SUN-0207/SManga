@@ -55,10 +55,16 @@ export async function getReportsOpenCount(): Promise<{ openCount: number }> {
   return data;
 }
 
+export interface UpdatedReport {
+  id: string;
+  status: ReportStatus;
+  adminNote: string | null;
+}
+
 export async function updateReport(
   id: string,
   patch: { status?: ReportStatus; adminNote?: string },
-): Promise<AdminReport> {
-  const { data } = await api.patch<AdminReport>(`/admin/reports/${id}`, patch);
+): Promise<UpdatedReport> {
+  const { data } = await api.patch<UpdatedReport>(`/admin/reports/${id}`, patch);
   return data;
 }

@@ -72,7 +72,7 @@ export class ReportsService {
           reporterEmail: user.email,
           storySlug: story.slug,
           storyTitle: story.title,
-          chapterIndex: chapter.index,
+          chapterIndex: sql<number | null>`floor(${chapter.index})::int`,
         })
         .from(report)
         .leftJoin(user, eq(user.id, report.userId))
