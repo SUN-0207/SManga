@@ -13,6 +13,7 @@ export default defineConfig({
     './src/schema/engagement.ts', // Plan D: rating table
     './src/schema/comment.ts', // Plan E: comments + reactions + notifications
     './src/schema/job-failure.ts', // dead-letter queue
+    './src/schema/report.ts',
   ],
   out: './src/migrations',
   dbCredentials: {

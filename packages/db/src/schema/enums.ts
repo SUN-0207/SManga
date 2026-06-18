@@ -21,3 +21,17 @@ export const storyDiscoveryStatusEnum = pgEnum('story_discovery_status', [
 ]);
 
 export const commentTargetTypeEnum = pgEnum('comment_target_type', ['story', 'chapter']);
+
+export const reportCategoryEnum = pgEnum('report_category', [
+  'content',
+  'comment',
+  'technical',
+  'other',
+]);
+
+export const reportStatusEnum = pgEnum('report_status', [
+  'open',
+  'in_progress',
+  'resolved',
+  'dismissed',
+]);
