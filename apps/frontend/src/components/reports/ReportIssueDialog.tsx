@@ -34,6 +34,7 @@ export function ReportIssueDialog({
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync category when defaultCategory prop changes (e.g. dialog reused across entry points)
   useEffect(() => {
@@ -73,11 +74,19 @@ export function ReportIssueDialog({
     };
   }, [open]);
 
+  // Clear auto-close timer on unmount to avoid setState-after-unmount
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    },
+    [],
+  );
+
   const mutation = useMutation({
     mutationFn: (body: CreateReportBody) => submitReport(body),
     onSuccess: () => {
       setSent(true);
-      setTimeout(() => onOpenChange(false), 1500);
+      closeTimerRef.current = setTimeout(() => onOpenChange(false), 1500);
     },
   });
 
@@ -146,7 +155,7 @@ export function ReportIssueDialog({
               value={category}
               onChange={(e) => setCategory(e.target.value as ReportCategory)}
               disabled={mutation.isPending || sent}
-              className="w-full h-10 rounded-md border border-border bg-bg px-3 text-body text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full h-10 rounded-md border border-border bg-bg px-3 text-body text-fg outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {(Object.entries(CATEGORY_LABELS) as [ReportCategory, string][]).map(
                 ([value, label]) => (
@@ -169,7 +178,7 @@ export function ReportIssueDialog({
                   trimmed.length > MAX_CHARS ? 'text-destructive' : 'text-fg-subtle'
                 }`}
               >
-                {message.length}/{MAX_CHARS}
+                {trimmed.length}/{MAX_CHARS}
               </span>
             </div>
             <textarea
@@ -180,7 +189,7 @@ export function ReportIssueDialog({
               disabled={mutation.isPending || sent}
               placeholder="Mô tả ngắn gọn vấn đề bạn gặp phải..."
               rows={4}
-              className="w-full resize-none rounded-md border border-border bg-bg px-3 py-2 text-body text-fg placeholder:text-fg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full resize-none rounded-md border border-border bg-bg px-3 py-2 text-body text-fg placeholder:text-fg-subtle outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60 disabled:cursor-not-allowed"
             />
             <p className="text-label text-fg-subtle">Tối thiểu {MIN_CHARS} ký tự.</p>
           </div>

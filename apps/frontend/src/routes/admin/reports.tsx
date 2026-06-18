@@ -8,7 +8,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export const Route = createFileRoute('/admin/reports')({
   component: AdminReportsPage,
@@ -30,9 +30,11 @@ const STATUS_LABELS: Record<ReportStatus, string> = {
 };
 
 const STATUS_COLORS: Record<ReportStatus, string> = {
-  open: 'bg-amber-100 text-amber-800 border border-amber-200',
-  in_progress: 'bg-blue-100 text-blue-800 border border-blue-200',
-  resolved: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+  open: 'bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
+  in_progress:
+    'bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
+  resolved:
+    'bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
   dismissed: 'bg-bg-subtle text-fg-muted border border-border',
 };
 
@@ -44,9 +46,12 @@ const CATEGORY_LABELS: Record<ReportCategory, string> = {
 };
 
 const CATEGORY_COLORS: Record<ReportCategory, string> = {
-  content: 'bg-purple-100 text-purple-800 border border-purple-200',
-  comment: 'bg-sky-100 text-sky-800 border border-sky-200',
-  technical: 'bg-orange-100 text-orange-800 border border-orange-200',
+  content:
+    'bg-purple-100 text-purple-800 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800',
+  comment:
+    'bg-sky-100 text-sky-800 border border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800',
+  technical:
+    'bg-orange-100 text-orange-800 border border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800',
   other: 'bg-bg-subtle text-fg-muted border border-border',
 };
 
@@ -92,6 +97,12 @@ function AdminReportsPage() {
 
   const data = reportsQ.data;
   const totalPages = data ? Math.ceil(data.total / LIMIT) : 1;
+
+  useEffect(() => {
+    if (data && data.total > 0 && totalPages >= 1 && page > totalPages) {
+      void navigate({ search: { status, category, page: totalPages } });
+    }
+  }, [data, totalPages, page, status, category, navigate]);
 
   function setFilter(
     updates: Partial<{ status: ReportStatus | 'all'; category: ReportCategory | 'all' }>,
@@ -201,7 +212,6 @@ function AdminReportsPage() {
                   report={report}
                   onUpdated={() => {
                     void qc.invalidateQueries({ queryKey: ['admin', 'reports'] });
-                    void qc.invalidateQueries({ queryKey: ['admin', 'reports', 'open-count'] });
                   }}
                 />
               ))}
@@ -258,14 +268,18 @@ function ReportRow({
   const [adminNote, setAdminNote] = useState(report.adminNote ?? '');
   const [expanded, setExpanded] = useState(false);
 
+  useEffect(() => {
+    setSelectedStatus(report.status);
+    setAdminNote(report.adminNote ?? '');
+  }, [report.status, report.adminNote]);
+
   const updateM = useMutation({
     mutationFn: () =>
       updateReport(report.id, {
         status: selectedStatus,
-        adminNote: adminNote.trim() || undefined,
+        adminNote: adminNote.trim(),
       }),
-    onSuccess: (updated) => {
-      setAdminNote(updated.adminNote ?? '');
+    onSuccess: () => {
       onUpdated();
     },
   });
@@ -284,13 +298,7 @@ function ReportRow({
 
   return (
     <>
-      <tr
-        className="border-b border-border last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60 cursor-pointer"
-        onClick={() => setExpanded((v) => !v)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') setExpanded((v) => !v);
-        }}
-      >
+      <tr className="border-b border-border last:border-0 transition-colors duration-fast hover:bg-bg-subtle/60">
         <td className="px-4 py-3 text-[11px] text-fg-muted tabular-nums whitespace-nowrap">
           {new Date(report.createdAt).toLocaleString('vi-VN')}
         </td>
@@ -320,7 +328,6 @@ function ReportRow({
           {contextHref ? (
             <Link
               to={contextHref as '/'}
-              onClick={(e) => e.stopPropagation()}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
@@ -423,7 +430,9 @@ function ReportRow({
                     Lưu
                   </button>
                   {updateM.isSuccess && (
-                    <span className="text-body-sm text-emerald-600">Đã lưu</span>
+                    <span className="text-body-sm text-emerald-600 dark:text-emerald-400">
+                      Đã lưu
+                    </span>
                   )}
                 </div>
               </div>

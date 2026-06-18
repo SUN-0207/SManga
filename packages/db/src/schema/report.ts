@@ -26,7 +26,7 @@ export const report = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
-    // Serves the admin list (status filter + newest-first) and the open-count badge.
+    // Serves status-filtered queries and the open-count badge; category-only and unfiltered list queries fall back to a sequential scan (acceptable at current scale <1000 rows).
     statusCreatedIdx: index('report_status_created_idx').on(t.status, t.createdAt.desc()),
     userIdx: index('report_user_idx').on(t.userId),
   }),
