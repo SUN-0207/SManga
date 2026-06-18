@@ -1,14 +1,16 @@
 import { logout as logoutApi } from '@/api/auth';
 import type { User as UserType } from '@/api/auth';
+import { ReportIssueDialog } from '@/components/reports/ReportIssueDialog';
 import { useAuthStore } from '@/stores/auth-store';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { Link } from '@tanstack/react-router';
-import { Library, LogOut, Settings as SettingsIcon, Shield, User } from 'lucide-react';
+import { Flag, Library, LogOut, Settings as SettingsIcon, Shield, User } from 'lucide-react';
 // apps/frontend/src/components/reader/AvatarMenu.tsx
 import { useEffect, useRef, useState } from 'react';
 
 export function AvatarMenu({ user }: { user: UserType }) {
   const [open, setOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const setSettingsOpen = useReaderPrefs((s) => s.setSettingsOpen);
 
@@ -97,6 +99,17 @@ export function AvatarMenu({ user }: { user: UserType }) {
           >
             <SettingsIcon className="h-4 w-4" aria-hidden /> Cài đặt
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setReportOpen(true);
+              setOpen(false);
+            }}
+            role="menuitem"
+            className="w-full flex items-center gap-2 h-9 px-3 rounded-md text-body hover:bg-bg-subtle transition-colors duration-fast cursor-pointer"
+          >
+            <Flag className="h-4 w-4" aria-hidden /> Báo lỗi
+          </button>
           <div className="my-1 border-t border-border/60" />
           <button
             type="button"
@@ -108,6 +121,7 @@ export function AvatarMenu({ user }: { user: UserType }) {
           </button>
         </div>
       )}
+      <ReportIssueDialog open={reportOpen} onOpenChange={setReportOpen} />
     </div>
   );
 }

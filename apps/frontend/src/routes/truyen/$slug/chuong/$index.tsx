@@ -2,16 +2,18 @@ import { getChapterContent } from '@/api/chapters';
 import { CommentSection } from '@/components/comments/CommentSection';
 import { ReadingProgressBar } from '@/components/reader/ReadingProgressBar';
 import { ReadingProgressTracker } from '@/components/reader/ReadingProgressTracker';
+import { ReportIssueDialog } from '@/components/reports/ReportIssueDialog';
 import { SEO } from '@/components/seo/SEO';
 import { buildArticleSchema, buildBreadcrumbSchema } from '@/components/seo/builders';
 import { useReadingSessionTracker } from '@/hooks/use-reading-session-tracker';
 import { useTrackChapterView } from '@/hooks/use-track-view';
 import { cleanChapterTitle } from '@/lib/chapter-title';
 import { countWords } from '@/lib/reader-progress';
+import { useAuthStore } from '@/stores/auth-store';
 import { useReaderPrefs } from '@/stores/reader-prefs-store';
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, List, Settings as SettingsIcon } from 'lucide-react';
+import { ArrowLeft, Flag, List, Settings as SettingsIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 export const Route = createFileRoute('/truyen/$slug/chuong/$index')({
@@ -27,7 +29,9 @@ function ChapterReader() {
   const setSettingsOpen = useReaderPrefs((s) => s.setSettingsOpen);
   const fontSize = useReaderPrefs((s) => s.fontSize);
   const fontFamily = useReaderPrefs((s) => s.fontFamily);
+  const user = useAuthStore((s) => s.user);
   const [chromeVisible, setChromeVisible] = useState(true);
+  const [reportOpen, setReportOpen] = useState(false);
 
   // Scroll to top on chapter change
   useEffect(() => {
@@ -225,6 +229,16 @@ function ChapterReader() {
             >
               <List className="h-4 w-4" />
             </Link>
+            {user && (
+              <button
+                type="button"
+                onClick={() => setReportOpen(true)}
+                aria-label="Báo lỗi chương này"
+                className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-bg-subtle transition-colors duration-fast cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <Flag className="h-4 w-4" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
@@ -295,6 +309,16 @@ function ChapterReader() {
           </span>
         )}
       </div>
+
+      {/* Report dialog — chapter context entry point (logged-in only) */}
+      <ReportIssueDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        defaultCategory="content"
+        storyId={story.id}
+        chapterId={chapter.id}
+        contextLabel={`${story.title} · Chương ${chapter.index}`}
+      />
     </div>
   );
 }
