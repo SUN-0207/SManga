@@ -97,7 +97,16 @@ function ChapterReader() {
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (isLoading || !data) {
-    return <div className="container py-20 text-center text-fg-muted">Đang tải chương...</div>;
+    // Reserve full-viewport height during load so the global footer stays below the
+    // fold. Otherwise the short placeholder lets the footer paint in-viewport, then
+    // the tall chapter content shoves it down on resolve — a large layout shift
+    // (measured CLS 0.781 on this route). min-h-screen pushes the footer off-screen
+    // so its later move isn't counted.
+    return (
+      <div className="min-h-screen bg-bg container py-20 text-center text-fg-muted">
+        Đang tải chương...
+      </div>
+    );
   }
 
   const { chapter, story, prev, next } = data;
