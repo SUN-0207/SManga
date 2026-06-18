@@ -1,5 +1,5 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Database } from '@smanga/db';
 import { chapter, report, story, user } from '@smanga/db/schema';
 import { and, desc, eq, sql } from 'drizzle-orm';
@@ -57,41 +57,39 @@ export class ReportsService {
     if (dto.category) conds.push(eq(report.category, dto.category));
     const where = conds.length ? and(...conds) : undefined;
 
-    const countRows = await this.db
-      .select({ total: sql<number>`count(*)::int` })
-      .from(report)
-      .where(where);
+    const [countRows, items] = await Promise.all([
+      this.db.select({ total: sql<number>`count(*)::int` }).from(report).where(where),
+      this.db
+        .select({
+          id: report.id,
+          category: report.category,
+          message: report.message,
+          status: report.status,
+          adminNote: report.adminNote,
+          createdAt: report.createdAt,
+          resolvedAt: report.resolvedAt,
+          reporterName: user.name,
+          reporterEmail: user.email,
+          storySlug: story.slug,
+          storyTitle: story.title,
+          chapterIndex: chapter.index,
+        })
+        .from(report)
+        .leftJoin(user, eq(user.id, report.userId))
+        .leftJoin(story, eq(story.id, report.storyId))
+        .leftJoin(chapter, eq(chapter.id, report.chapterId))
+        .where(where)
+        .orderBy(desc(report.createdAt))
+        .limit(dto.limit)
+        .offset((dto.page - 1) * dto.limit),
+    ]);
     const total = countRows[0]?.total ?? 0;
-
-    const items = await this.db
-      .select({
-        id: report.id,
-        category: report.category,
-        message: report.message,
-        status: report.status,
-        adminNote: report.adminNote,
-        createdAt: report.createdAt,
-        resolvedAt: report.resolvedAt,
-        reporterName: user.name,
-        reporterEmail: user.email,
-        storySlug: story.slug,
-        storyTitle: story.title,
-        chapterIndex: chapter.index,
-      })
-      .from(report)
-      .leftJoin(user, eq(user.id, report.userId))
-      .leftJoin(story, eq(story.id, report.storyId))
-      .leftJoin(chapter, eq(chapter.id, report.chapterId))
-      .where(where)
-      .orderBy(desc(report.createdAt))
-      .limit(dto.limit)
-      .offset((dto.page - 1) * dto.limit);
 
     return { items, total, page: dto.page, limit: dto.limit };
   }
 
   async updateStatus(id: string, dto: UpdateReportDto, adminUserId: string) {
-    const patch: Record<string, unknown> = { updatedAt: new Date() };
+    const patch: Partial<typeof report.$inferInsert> = { updatedAt: new Date() };
     if (dto.adminNote !== undefined) patch.adminNote = dto.adminNote;
     if (dto.status !== undefined) {
       patch.status = dto.status;
@@ -104,6 +102,7 @@ export class ReportsService {
       }
     }
     const [updated] = await this.db.update(report).set(patch).where(eq(report.id, id)).returning();
+    if (!updated) throw new NotFoundException(`Report ${id} not found`);
     return updated;
   }
 }

@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { ReportsService } from './reports.service';
 
@@ -28,9 +29,10 @@ describe('ReportsService', () => {
     const svc = new ReportsService({ insert } as never);
     const res = await svc.create('u1', { category: 'content', message: 'hello there' } as never);
     expect(res).toEqual({ id: 'r1' });
-    expect(
-      (values.mock.calls as unknown as Array<Array<Record<string, unknown>>>)[0]?.[0]!,
-    ).toMatchObject({
+    const insertArgs = (values.mock.calls as unknown as Array<Array<Record<string, unknown>>>)
+      .at(0)
+      ?.at(0) as Record<string, unknown>;
+    expect(insertArgs).toMatchObject({
       userId: 'u1',
       category: 'content',
       message: 'hello there',
@@ -49,7 +51,9 @@ describe('ReportsService', () => {
     const { update, set } = updateReturning([{ id: 'r1', status: 'resolved' }]);
     const svc = new ReportsService({ update } as never);
     await svc.updateStatus('r1', { status: 'resolved' } as never, 'admin1');
-    const patch = (set.mock.calls as unknown as Array<Array<Record<string, unknown>>>)[0]?.[0]!;
+    const patch = (set.mock.calls as unknown as Array<Array<Record<string, unknown>>>)
+      .at(0)
+      ?.at(0) as Record<string, unknown>;
     expect(patch.status).toBe('resolved');
     expect(patch.resolvedByUserId).toBe('admin1');
     expect(patch.resolvedAt).toBeInstanceOf(Date);
@@ -59,8 +63,18 @@ describe('ReportsService', () => {
     const { update, set } = updateReturning([{ id: 'r1', status: 'in_progress' }]);
     const svc = new ReportsService({ update } as never);
     await svc.updateStatus('r1', { status: 'in_progress' } as never, 'admin1');
-    const patch = (set.mock.calls as unknown as Array<Array<Record<string, unknown>>>)[0]?.[0]!;
+    const patch = (set.mock.calls as unknown as Array<Array<Record<string, unknown>>>)
+      .at(0)
+      ?.at(0) as Record<string, unknown>;
     expect(patch.resolvedByUserId).toBeNull();
     expect(patch.resolvedAt).toBeNull();
+  });
+
+  it('updateStatus throws NotFoundException when the report does not exist', async () => {
+    const { update } = updateReturning([]);
+    const svc = new ReportsService({ update } as never);
+    await expect(
+      svc.updateStatus('missing', { status: 'resolved' } as never, 'admin1'),
+    ).rejects.toThrow(NotFoundException);
   });
 });
