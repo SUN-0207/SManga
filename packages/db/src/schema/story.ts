@@ -57,6 +57,8 @@ export const story = pgTable(
     lastChapterIdx: index('story_last_chapter_idx').on(t.lastChapterAt),
     // Serves the public list's ORDER BY updated_at DESC LIMIT N top-N.
     updatedAtIdx: index('story_updated_at_idx').on(t.updatedAt.desc()),
+    // Serves /rankings/views ORDER BY view_count DESC LIMIT N — top-N without a full sort.
+    viewCountIdx: index('story_view_count_idx').on(t.viewCount.desc()),
   }),
 );
 
@@ -97,7 +99,12 @@ export const storyGenre = pgTable(
       .notNull()
       .references(() => genre.id, { onDelete: 'cascade' }),
   },
-  (t) => ({ pk: primaryKey({ columns: [t.storyId, t.genreId] }) }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.storyId, t.genreId] }),
+    // Reverse-direction lookup (genre -> stories): genre-filtered list + recommendations.
+    // The PK only serves (story_id, genre_id); this covers WHERE genre_id = ?.
+    genreIdx: index('story_genre_genre_id_idx').on(t.genreId),
+  }),
 );
 
 export type Story = typeof story.$inferSelect;

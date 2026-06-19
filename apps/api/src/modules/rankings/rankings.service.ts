@@ -179,7 +179,10 @@ export class RankingsService {
           FROM rating
           GROUP BY story_id
         ) r ON r.story_id = s.id
-        ORDER BY s.view_count DESC, s.updated_at DESC, s.id ASC
+        -- NULLS LAST matches story_view_count_idx (Drizzle desc() emits NULLS LAST) so the
+        -- index serves the leading sort key — avoids a full story sort at scale. view_count
+        -- is NOT NULL, so NULLS positioning never changes the result.
+        ORDER BY s.view_count DESC NULLS LAST, s.updated_at DESC, s.id ASC
         LIMIT ${limit} OFFSET ${offset}
       `),
       this.db.execute<CountRow>(sql`SELECT COUNT(*)::int AS cnt FROM story`),

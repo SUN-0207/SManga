@@ -1,4 +1,13 @@
-import { integer, numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  index,
+  integer,
+  numeric,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { user } from './auth.ts';
 
 export const bookmark = pgTable(
@@ -24,5 +33,9 @@ export const readingProgress = pgTable(
     sessionSeconds: integer('session_seconds').notNull().default(0),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => ({ pk: primaryKey({ columns: [t.userId, t.storyId] }) }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.storyId] }),
+    // Serves /rankings/hot WHERE updated_at > now() - 7d (distinct active readers window).
+    updatedAtIdx: index('reading_progress_updated_at_idx').on(t.updatedAt.desc()),
+  }),
 );

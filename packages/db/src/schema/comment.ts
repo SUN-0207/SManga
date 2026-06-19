@@ -87,6 +87,9 @@ export const notification = pgTable(
     newChapterUnreadUniq: uniqueIndex('notification_new_chapter_unread_uniq')
       .on(t.userId, t.storyId)
       .where(sql`type = 'new_chapter' AND read_at IS NULL`),
+    // Serves the bell's default (all-notifications) list: WHERE user_id ORDER BY created_at DESC.
+    // The unread partial index doesn't cover the non-unread list.
+    userCreatedIdx: index('notification_user_created_idx').on(t.userId, t.createdAt.desc()),
   }),
 );
 
