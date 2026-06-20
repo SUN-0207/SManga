@@ -291,15 +291,17 @@ function AutoCrawlCard({
 }) {
   const [enabled, setEnabled] = useState(setting.autoCrawlEnabled);
   const [watermark, setWatermark] = useState(setting.autoCrawlWatermark);
+  const [crawlRps, setCrawlRps] = useState(setting.crawlRps);
   const [okFlash, setOkFlash] = useState(false);
 
   useEffect(() => {
     setEnabled(setting.autoCrawlEnabled);
     setWatermark(setting.autoCrawlWatermark);
-  }, [setting.autoCrawlEnabled, setting.autoCrawlWatermark]);
+    setCrawlRps(setting.crawlRps);
+  }, [setting.autoCrawlEnabled, setting.autoCrawlWatermark, setting.crawlRps]);
 
   const saveM = useMutation({
-    mutationFn: () => updateAutoCrawl({ enabled, watermark }),
+    mutationFn: () => updateAutoCrawl({ enabled, watermark, crawlRps }),
     onSuccess: () => {
       setOkFlash(true);
       setTimeout(() => setOkFlash(false), 2500);
@@ -307,7 +309,10 @@ function AutoCrawlCard({
     },
   });
 
-  const dirty = enabled !== setting.autoCrawlEnabled || watermark !== setting.autoCrawlWatermark;
+  const dirty =
+    enabled !== setting.autoCrawlEnabled ||
+    watermark !== setting.autoCrawlWatermark ||
+    crawlRps !== setting.crawlRps;
   const errMsg = saveM.error as { response?: { data?: { message?: string } } } | null;
   const errorText = errMsg?.response?.data?.message ?? null;
 
@@ -318,8 +323,8 @@ function AutoCrawlCard({
         <div className="min-w-0">
           <h2 className="font-sans font-semibold text-lg">Tự động crawl backlog</h2>
           <p className="text-sm text-fg-muted mt-1">
-            Tự động crawl dần các chương "Cần crawl" (mới nhất trước), 1 chương/giây, ưu tiên thấp
-            nhất nên không ảnh hưởng thao tác tay hay người đọc. Hết backlog thì tự dừng.
+            Tự động crawl dần các chương "Cần crawl" (mới nhất trước) ở tốc độ cấu hình bên dưới, ưu
+            tiên thấp nhất nên không ảnh hưởng thao tác tay hay người đọc. Hết backlog thì tự dừng.
           </p>
         </div>
       </div>
@@ -354,6 +359,25 @@ function AutoCrawlCard({
           />
           <span className="block text-xs text-fg-muted">
             Càng thấp càng nhẹ. Mặc định 500 (giới hạn 50–2000).
+          </span>
+        </label>
+
+        <label className="space-y-1.5 block max-w-xs">
+          <span className="text-[11px] font-medium text-fg/80 uppercase tracking-[0.18em]">
+            Tốc độ crawl (request/giây)
+          </span>
+          <input
+            type="number"
+            min={0.1}
+            max={20}
+            step={0.5}
+            value={crawlRps}
+            onChange={(e) => setCrawlRps(Number(e.target.value))}
+            className="w-full h-10 px-3 rounded-md border border-border bg-bg text-sm tabular-nums focus:outline-none focus:border-fg/40 focus:ring-2 focus:ring-accent/20 transition-all duration-200"
+          />
+          <span className="block text-xs text-fg-muted">
+            Cao hơn = nhanh hơn nhưng rủi ro bị nguồn chặn. Mặc định 4 (giới hạn 0.1–20). Tăng dần
+            và theo dõi tỷ lệ lỗi ở /admin/jobs.
           </span>
         </label>
 

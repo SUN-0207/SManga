@@ -38,11 +38,13 @@ export async function runAutoRefreshNow(): Promise<{ jobId: string }> {
 export interface AutoCrawlSetting {
   autoCrawlEnabled: boolean;
   autoCrawlWatermark: number;
+  crawlRps: number;
 }
 
 export interface UpdateAutoCrawlPatch {
   enabled?: boolean;
   watermark?: number;
+  crawlRps?: number;
 }
 
 export async function getAutoCrawl(): Promise<AutoCrawlSetting> {
