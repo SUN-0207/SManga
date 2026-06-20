@@ -14,6 +14,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@smanga/shared': path.resolve(__dirname, '../shared/src/index.ts'),
+      '@smanga/db/schema': path.resolve(__dirname, '../db/src/schema/index.ts'),
       '@smanga/db': path.resolve(__dirname, '../db/src/index.ts'),
     },
   },

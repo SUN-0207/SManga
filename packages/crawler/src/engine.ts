@@ -11,23 +11,18 @@ import {
 } from '@smanga/db/schema';
 
 const gzip = promisify(gzipCb);
-import { type CatalogPage, type StoryMetadata, storyMetadataSchema } from '@smanga/shared';
+import {
+  type CatalogPage,
+  RateLimitError,
+  type StoryMetadata,
+  storyMetadataSchema,
+} from '@smanga/shared';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { downloadCover } from './cover.ts';
 import { fetchHtml } from './fetcher.ts';
 import { logger } from './logger.ts';
-import { TokenBucket } from './rate-limit.ts';
+import { rateGovernor } from './rate-governor.ts';
 import { getAdapter, resolveAdapterForUrl } from './registry.ts';
-
-const buckets = new Map<string, { bucket: TokenBucket; rps: number }>();
-function bucketFor(sourceId: string, rps: number): TokenBucket {
-  const cached = buckets.get(sourceId);
-  if (cached && cached.rps === rps) return cached.bucket;
-  // rps changed (config/source edit) or first use → fresh bucket.
-  const bucket = new TokenBucket({ ratePerSecond: rps, burst: rps });
-  buckets.set(sourceId, { bucket, rps });
-  return bucket;
-}
 
 function slugify(input: string): string {
   return input
@@ -61,10 +56,9 @@ export async function importStoryMetadata(
   url: string,
 ): Promise<{ storyId: string; alreadyExisted: boolean }> {
   const adapter = resolveAdapterForUrl(url);
-  const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
   logger.info({ url, source: adapter.id }, 'importing story metadata');
 
-  await bucket.acquire();
+  await rateGovernor.acquire(adapter.id, adapter.rateLimit.rps);
   const html = await fetchHtml(url);
   const rawMetadata = await adapter.parseStoryFromUrl(url, html);
   const metadata: StoryMetadata = storyMetadataSchema.parse(rawMetadata);
@@ -89,7 +83,7 @@ export async function importStoryMetadata(
       .where(eq(story.id, existingId))
       .limit(1);
     if (row && row.coverMimeType === null && metadata.coverUrl) {
-      await bucket.acquire(); // meter the cover fetch through the per-source bucket
+      await rateGovernor.acquire(adapter.id, adapter.rateLimit.rps); // meter the cover fetch through the per-source bucket
       const cover = await downloadCover(metadata.coverUrl);
       if (cover) {
         await db
@@ -102,11 +96,11 @@ export async function importStoryMetadata(
     return { storyId: existingId, alreadyExisted: true };
   }
 
-  // The cover lives on the same source infra — meter it through the same bucket
+  // The cover lives on the same source infra — meter it through the governor
   // so one import (metadata fetch + cover fetch = 2 requests) can't burst past
   // the per-source rps. acquire() is FIFO-serialized, so this just costs one
   // more token, it never double-counts.
-  if (metadata.coverUrl) await bucket.acquire();
+  if (metadata.coverUrl) await rateGovernor.acquire(adapter.id, adapter.rateLimit.rps);
   const cover = metadata.coverUrl ? await downloadCover(metadata.coverUrl) : null;
 
   const baseSlug = slugify(metadata.title) || slugify(metadata.externalId) || 'story';
@@ -186,7 +180,6 @@ export async function discoverChapters(
   if (!link) throw new Error(`no primary source link for story: ${storyId}`);
 
   const adapter = getAdapter(link.sourceId);
-  const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
   logger.info({ storyId, url: link.externalUrl }, 'discovering chapters');
 
   await db
@@ -199,7 +192,7 @@ export async function discoverChapters(
     let page = 1;
     while (true) {
       const listUrl = adapter.buildListChaptersUrl(link.externalUrl, page);
-      await bucket.acquire();
+      await rateGovernor.acquire(adapter.id, adapter.rateLimit.rps);
       const listHtml = await fetchHtml(listUrl);
       const { chapters, hasNextPage } = await adapter.listChapters(listHtml);
       if (chapters.length === 0) break;
@@ -282,9 +275,7 @@ export async function browseCatalog(
   if (!adapter.catalogFeeds.some((f) => f.id === feedId)) {
     throw new Error(`unknown feed for source ${sourceId}: ${feedId}`);
   }
-  const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
-
-  await bucket.acquire();
+  await rateGovernor.acquire(adapter.id, adapter.rateLimit.rps);
   const url = adapter.buildCatalogUrl(feedId, page);
   const html = await fetchHtml(url);
   const parsed = await adapter.parseCatalogPage(html, feedId, page);
@@ -302,9 +293,7 @@ export async function searchCatalog(
   if (!adapter.buildSearchUrl || !adapter.parseSearchPage) {
     throw new Error(`source ${sourceId} does not support search`);
   }
-  const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
-
-  await bucket.acquire();
+  await rateGovernor.acquire(adapter.id, adapter.rateLimit.rps);
   const url = adapter.buildSearchUrl(query, page);
   const html = await fetchHtml(url);
   const parsed = await adapter.parseSearchPage(html, query, page);
@@ -377,8 +366,7 @@ export async function fetchChapterById(db: Database, chapterId: string): Promise
   // rps from the adapter (single source of truth, same as import/discover/
   // browse) — drops the extra source-table SELECT that only fed rateLimitRps.
   const adapter = getAdapter(row.sourceId);
-  const bucket = bucketFor(adapter.id, adapter.rateLimit.rps);
-  await bucket.acquire();
+  await rateGovernor.acquire(adapter.id, adapter.rateLimit.rps);
 
   try {
     const html = await fetchHtml(row.externalUrl);
@@ -396,6 +384,8 @@ export async function fetchChapterById(db: Database, chapterId: string): Promise
       })
       .where(eq(chapter.id, chapterId));
   } catch (err) {
+    if (err instanceof RateLimitError)
+      rateGovernor.recordRateLimit(adapter.id, adapter.rateLimit.rps);
     const msg = (err as Error).message ?? String(err);
     await db
       .update(chapter)
