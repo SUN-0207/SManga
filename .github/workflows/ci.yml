@@ -5,10 +5,15 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch: # manual rebuild (replaces build-images.yml's manual trigger)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   test:
@@ -17,7 +22,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_USER: smanga
           POSTGRES_PASSWORD: smanga_dev
@@ -44,28 +49,92 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-
       - uses: pnpm/action-setup@v6
-
       - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Lint (biome)
         run: pnpm lint
-
       - name: Typecheck all packages
         run: pnpm typecheck
-
       - name: Unit + integration tests
         run: pnpm test
-
       - name: Build API
         run: pnpm --filter @smanga/api build
-
       - name: Build frontend
         run: pnpm --filter @smanga/frontend build
+
+  # Detect whether anything that affects the images changed, so docs-only
+  # pushes to main still skip the (expensive) image build — preserving the
+  # behavior the old build-images.yml `paths:` filter gave us.
+  changes:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      images: ${{ steps.filter.outputs.images }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            images:
+              - 'apps/api/**'
+              - 'apps/frontend/**'
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+
+  image-api:
+    needs: [test, changes]
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.images == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Lowercase repository owner
+        id: repo
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.repo.outputs.owner }}/smanga-api:latest
+            ghcr.io/${{ steps.repo.outputs.owner }}/smanga-api:${{ github.sha }}
+          cache-from: type=gha,scope=smanga-api
+          cache-to: type=gha,mode=max,scope=smanga-api
+
+  image-frontend:
+    needs: [test, changes]
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.images == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Lowercase repository owner
+        id: repo
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/frontend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.repo.outputs.owner }}/smanga-frontend:latest
+            ghcr.io/${{ steps.repo.outputs.owner }}/smanga-frontend:${{ github.sha }}
+          cache-from: type=gha,scope=smanga-frontend
+          cache-to: type=gha,mode=max,scope=smanga-frontend
