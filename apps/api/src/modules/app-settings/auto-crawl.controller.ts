@@ -19,6 +19,6 @@ export class AutoCrawlController {
 
   @Patch()
   update(@Body() dto: UpdateAutoCrawlDto) {
-    return this.settings.setAutoCrawl(dto.enabled, dto.watermark);
+    return this.settings.setAutoCrawl(dto.enabled, dto.watermark, dto.crawlRps);
   }
 }

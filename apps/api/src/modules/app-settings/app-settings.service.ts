@@ -8,6 +8,7 @@ import {
 import { withRedisReadyRetry } from '@/modules/queue/redis-ready';
 import { InjectQueue } from '@nestjs/bull';
 import { BadRequestException, Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { rateGovernor } from '@smanga/crawler';
 import type { Database } from '@smanga/db';
 import { appSetting } from '@smanga/db/schema';
 import type { Queue } from 'bull';
@@ -35,6 +36,9 @@ export class AppSettingsService implements OnModuleInit {
   async onModuleInit() {
     const setting = await this.getOrSeed();
     await this.syncRepeatable(setting.autoRefreshEnabled, setting.autoRefreshCron);
+    // Seed the crawl-rate governor from persisted config so the very first
+    // crawl after a (re)boot already runs at the operator's chosen rps.
+    rateGovernor.setGlobalRps(setting.crawlRps);
   }
 
   async get() {
@@ -102,27 +106,46 @@ export class AppSettingsService implements OnModuleInit {
     return { autoRetryEnabled: updated.autoRetryEnabled };
   }
 
-  async getAutoCrawl(): Promise<{ autoCrawlEnabled: boolean; autoCrawlWatermark: number }> {
+  async getAutoCrawl(): Promise<{
+    autoCrawlEnabled: boolean;
+    autoCrawlWatermark: number;
+    crawlRps: number;
+  }> {
     const s = await this.getOrSeed();
-    return { autoCrawlEnabled: s.autoCrawlEnabled, autoCrawlWatermark: s.autoCrawlWatermark };
+    return {
+      autoCrawlEnabled: s.autoCrawlEnabled,
+      autoCrawlWatermark: s.autoCrawlWatermark,
+      crawlRps: s.crawlRps,
+    };
   }
 
   async setAutoCrawl(
     enabled: boolean,
     watermark: number,
-  ): Promise<{ autoCrawlEnabled: boolean; autoCrawlWatermark: number }> {
-    // Clamp defensively even though the DTO validates — the bound is the
-    // load-bearing safety knob; never let it be 0 or absurdly large.
-    const clamped = Math.min(2000, Math.max(50, Math.floor(watermark)));
+    crawlRps: number,
+  ): Promise<{ autoCrawlEnabled: boolean; autoCrawlWatermark: number; crawlRps: number }> {
+    // Clamp defensively even though the DTO validates — these are load-bearing
+    // safety knobs; never let them be 0 or absurdly large.
+    const clampedWatermark = Math.min(2000, Math.max(50, Math.floor(watermark)));
+    const clampedRps = Math.min(20, Math.max(0.1, crawlRps));
     const [updated] = await this.db
       .update(appSetting)
-      .set({ autoCrawlEnabled: enabled, autoCrawlWatermark: clamped, updatedAt: new Date() })
+      .set({
+        autoCrawlEnabled: enabled,
+        autoCrawlWatermark: clampedWatermark,
+        crawlRps: clampedRps,
+        updatedAt: new Date(),
+      })
       .where(eq(appSetting.id, 1))
       .returning();
     if (!updated) throw new BadRequestException('app_setting row missing — re-run migrations');
+    // Push the live rate to the in-process governor so the engine picks it up
+    // immediately (no redeploy, no polling).
+    rateGovernor.setGlobalRps(updated.crawlRps);
     return {
       autoCrawlEnabled: updated.autoCrawlEnabled,
       autoCrawlWatermark: updated.autoCrawlWatermark,
+      crawlRps: updated.crawlRps,
     };
   }
 
