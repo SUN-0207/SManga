@@ -1,0 +1,1 @@
+ALTER TABLE "app_setting" ADD COLUMN "crawl_rps" double precision DEFAULT 4 NOT NULL;

@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
 /**
  * Singleton settings table. Always exactly one row (enforced via CHECK).
@@ -22,6 +22,10 @@ export const appSetting = pgTable('app_setting', {
   /** Max fetch-chapter jobs the feeder keeps queued — the bound that makes it
    * non-disruptive. Clamped [50,2000] in the DTO/service. */
   autoCrawlWatermark: integer('auto_crawl_watermark').notNull().default(500),
+  /** Live crawl rate (requests/sec) to the source — tunable at /admin/settings
+   *  without a redeploy. Default 4 (probe-verified safe on truyenfull). Clamped
+   *  [0.1, 20] in the DTO/service. float8 so sub-1 rps stays expressible. */
+  crawlRps: doublePrecision('crawl_rps').notNull().default(4),
   /** Kill switch for the new-chapter notification sweep. Default ON — purely
    *  additive + safe; flip OFF to pause notifications during an incident. */
   newChapterNotifyEnabled: boolean('new_chapter_notify_enabled').notNull().default(true),

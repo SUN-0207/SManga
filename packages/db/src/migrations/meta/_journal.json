@@ -127,6 +127,13 @@
       "when": 1781828694452,
       "tag": "0017_high_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1781948232432,
+      "tag": "0018_lyrical_harpoon",
+      "breakpoints": true
     }
   ]
 }
