@@ -6,4 +6,5 @@ registerAdapter(truyenfullAdapter);
 export * from './registry.ts';
 export * from './fetcher.ts';
 export * from './engine.ts';
+export * from './rate-governor.ts';
 export { truyenfullAdapter };
