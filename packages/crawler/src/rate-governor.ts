@@ -57,8 +57,13 @@ export class RateGovernor {
     const now = Date.now();
     if (st.openUntil > now) {
       await new Promise<void>((resolve) => setTimeout(resolve, st.openUntil - now));
-      st.openUntil = 0; // half-open: let the next request probe the source
-      st.hits = []; // fresh window after the cooldown
+      // rps may have changed during the sleep, replacing the state object — re-fetch
+      // so the half-open reset lands on the live map entry, not an orphan.
+      const fresh = this.stateFor(sourceId, fallbackRps);
+      fresh.openUntil = 0; // half-open: let the next request probe the source
+      fresh.hits = []; // fresh window after the cooldown
+      await fresh.bucket.acquire();
+      return;
     }
     await st.bucket.acquire();
   }
