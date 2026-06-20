@@ -1,6 +1,19 @@
 import { FetchError, RateLimitError } from '@smanga/shared';
-import { request } from 'undici';
+import { Agent, request } from 'undici';
 import { logger } from './logger.ts';
+
+// Per-origin keep-alive pool: reuse TCP/TLS across requests so higher crawl
+// concurrency doesn't pay a handshake per chapter. `connections` bounds the
+// per-origin socket count — keep it >= CRAWLER_FETCH_CONCURRENCY.
+const crawlerDispatcher = new Agent({
+  connections: 16,
+  keepAliveTimeout: 30_000,
+  keepAliveMaxTimeout: 60_000,
+});
+
+export function getCrawlerDispatcher(): Agent {
+  return crawlerDispatcher;
+}
 
 export interface FetchOptions {
   userAgent?: string;
@@ -22,6 +35,7 @@ export async function fetchHtml(url: string, opts: FetchOptions = {}): Promise<s
   let res: Awaited<ReturnType<typeof request>>;
   try {
     res = await request(url, {
+      dispatcher: crawlerDispatcher,
       method: 'GET',
       headers: { 'user-agent': ua, accept: 'text/html,application/xhtml+xml' },
       headersTimeout: timeoutMs,
@@ -56,6 +70,7 @@ export async function fetchBytes(
   let res: Awaited<ReturnType<typeof request>>;
   try {
     res = await request(url, {
+      dispatcher: crawlerDispatcher,
       method: 'GET',
       headers: { 'user-agent': ua },
       headersTimeout: timeoutMs,
