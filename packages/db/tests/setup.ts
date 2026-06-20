@@ -15,7 +15,7 @@ let sql: ReturnType<typeof postgres>;
 export let db: ReturnType<typeof drizzle>;
 
 beforeAll(async () => {
-  container = await new PostgreSqlContainer('postgres:16-alpine').start();
+  container = await new PostgreSqlContainer('postgres:17-alpine').start();
   sql = postgres(container.getConnectionUri(), { max: 1 });
   db = drizzle(sql);
   await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
