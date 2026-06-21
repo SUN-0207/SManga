@@ -1,3 +1,4 @@
+import { CultivationService } from '@/modules/cultivation/cultivation.service';
 import { DRIZZLE } from '@/modules/db/db.provider';
 import { Inject, Injectable } from '@nestjs/common';
 import type { Database } from '@smanga/db';
@@ -7,7 +8,10 @@ import { SessionSecondsDto } from './dto/session-seconds.dto';
 
 @Injectable()
 export class ReadingProgressService {
-  constructor(@Inject(DRIZZLE) private readonly db: Database) {}
+  constructor(
+    @Inject(DRIZZLE) private readonly db: Database,
+    private readonly cultivation: CultivationService,
+  ) {}
 
   async upsert(userId: string, storyId: string, chapterIndex: number) {
     await this.db
@@ -43,6 +47,16 @@ export class ReadingProgressService {
           updatedAt: new Date(),
         },
       });
+    try {
+      await this.cultivation.creditReadingDwell(
+        userId,
+        dto.storyId,
+        Math.floor(dto.chapterIndex),
+        dto.seconds,
+      );
+    } catch {
+      // reward must never break progress tracking; the kill-switch + ledger are the source of truth
+    }
     return { ok: true };
   }
 
