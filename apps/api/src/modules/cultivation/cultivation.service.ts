@@ -160,6 +160,11 @@ export class CultivationService {
           ${newLinh}
         )`);
 
+      for (const b of lv.breakthroughs) {
+        await txExec(sql`INSERT INTO notification (user_id, type, chapter_index)
+          VALUES (${userId}, 'breakthrough', ${b.realm})`);
+      }
+
       return { breakthroughs: lv.breakthroughs };
     }) as Promise<{ breakthroughs: { realm: number; realmName: string }[] }>;
   }

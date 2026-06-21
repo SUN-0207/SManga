@@ -19,10 +19,11 @@ export interface NotificationNewChapter {
 
 export interface Notification {
   id: string;
-  type: 'comment_reply' | 'comment_mention' | 'new_chapter';
+  type: 'comment_reply' | 'comment_mention' | 'new_chapter' | 'breakthrough';
   actor: { id: string; name: string; image: string | null } | null;
   sourceComment: NotificationSourceComment | null;
   newChapter: NotificationNewChapter | null;
+  breakthrough: { realmName: string } | null;
   readAt: string | null;
   createdAt: string;
 }

@@ -1,6 +1,7 @@
 import { DRIZZLE } from '@/modules/db/db.provider';
 import { Inject, Injectable } from '@nestjs/common';
 import type { Database } from '@smanga/db';
+import { REALMS } from '@smanga/shared';
 import { sql } from 'drizzle-orm';
 
 const rowsOf = <T>(r: unknown): T[] =>
@@ -8,7 +9,7 @@ const rowsOf = <T>(r: unknown): T[] =>
 
 export interface NotificationItem {
   id: string;
-  type: 'comment_reply' | 'comment_mention' | 'new_chapter';
+  type: 'comment_reply' | 'comment_mention' | 'new_chapter' | 'breakthrough';
   actor: { id: string; name: string; image: string | null } | null;
   sourceComment: {
     id: string;
@@ -25,6 +26,7 @@ export interface NotificationItem {
     newCount: number;
     targetChapterIndex: string;
   } | null;
+  breakthrough: { realmName: string } | null;
   readAt: string | null;
   createdAt: string;
 }
@@ -66,6 +68,7 @@ export class NotificationsService {
       nc_title: string | null;
       nc_new_count: number | null;
       nc_target_index: string | null;
+      bt_realm: number | null;
     }>(
       await this.db.execute(sql`
         SELECT
@@ -101,6 +104,7 @@ export class NotificationsService {
                1
              )::text
            END AS nc_target_index
+          ,CASE WHEN n.type = 'breakthrough' THEN n.chapter_index::int END AS bt_realm
         FROM notification n
         LEFT JOIN "user" au ON au.id = n.actor_user_id
         LEFT JOIN "comment" sc ON sc.id = n.source_comment_id
@@ -136,6 +140,10 @@ export class NotificationsService {
               newCount: Number(r.nc_new_count ?? 1),
               targetChapterIndex: r.nc_target_index ?? '1',
             }
+          : null,
+      breakthrough:
+        r.type === 'breakthrough' && r.bt_realm != null
+          ? { realmName: REALMS[r.bt_realm] ?? 'Luyện Khí' }
           : null,
       readAt: r.read_at,
       createdAt: r.created_at,
