@@ -149,6 +149,11 @@ export class AppSettingsService implements OnModuleInit {
     };
   }
 
+  async getGamificationEnabled(): Promise<boolean> {
+    const s = await this.getOrSeed();
+    return s.gamificationEnabled;
+  }
+
   async getNewChapterNotify(): Promise<{ newChapterNotifyEnabled: boolean }> {
     const s = await this.getOrSeed();
     return { newChapterNotifyEnabled: s.newChapterNotifyEnabled };
