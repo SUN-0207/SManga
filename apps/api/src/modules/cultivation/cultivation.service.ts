@@ -143,11 +143,10 @@ export class CultivationService {
         SET xp = ${newXp}, linh_thach = ${newLinh}, updated_at = now()
         WHERE user_id = ${userId}`);
 
-      const metaJson = JSON.stringify({ storyId, chapterIndexInt }).replace(/'/g, "''");
+      const metaJson = JSON.stringify({ storyId, chapterIndexInt });
       await txExec(sql`
         INSERT INTO reward_ledger (user_id, source, currency, amount, balance_after, meta)
-        VALUES (${userId}, 'read', 'tu_vi', ${XP_PER_CHAPTER}, ${newXp},
-                ${sql.raw(`'${metaJson}'::jsonb`)})`);
+        VALUES (${userId}, 'read', 'tu_vi', ${XP_PER_CHAPTER}, ${newXp}, ${metaJson}::jsonb)`);
 
       await txExec(sql`
         INSERT INTO reward_ledger (user_id, source, currency, amount, balance_after)
