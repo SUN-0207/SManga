@@ -30,10 +30,11 @@ export function xpPerTang(realm: number): number {
   return Math.round(14000 * 1.7 ** realm);
 }
 
-// Cost to advance from ordinal k → k+1 (k = 0..80) = the per-tầng rate of the
-// realm being ENTERED. Transition to a new realm costs 0; each tầng costs per-realm rate.
+// Cost to advance ordinal k → k+1 (k = 0..80) = the per-tầng rate of the realm
+// being ENTERED, floor(k/9). The đột-phá step into a new realm's tầng 1 costs
+// that new realm's rate — realm transitions are NOT free. Total to max =
+// 9 × Σ xpPerTang(r) = 21,165,858.
 function stepCost(k: number): number {
-  if (k > 0 && k % TANG_PER_REALM === 0) return 0; // Realm transition (no cost)
   return xpPerTang(Math.floor(k / TANG_PER_REALM));
 }
 

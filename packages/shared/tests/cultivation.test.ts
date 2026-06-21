@@ -40,11 +40,19 @@ describe('levelFromXp', () => {
     expect(l.xpIntoTang).toBe(5000);
     expect(l.xpForNextTang).toBe(14000);
   });
-  it('Luyện Khí tầng 9 → Trúc Cơ tầng 1 boundary uses the new realm rate', () => {
-    const luyenKhiTotal = 9 * 14000; // 126000 reaches Trúc Cơ tầng 1
-    const l = levelFromXp(luyenKhiTotal);
+  it('Luyện Khí tầng 9 is reached at 9×14000 = 126000', () => {
+    const l = levelFromXp(9 * 14000); // 126000
+    expect(l.realmName).toBe('Luyện Khí');
+    expect(l.tang).toBe(9);
+    expect(l.ordinal).toBe(9);
+    expect(l.xpForNextTang).toBe(23800); // đột phá into Trúc Cơ costs the new realm's rate
+  });
+  it('đột phá into Trúc Cơ tầng 1 at 126000 + 23800 = 149800', () => {
+    const l = levelFromXp(126000 + 23800); // 149800
     expect(l.realmName).toBe('Trúc Cơ');
     expect(l.tang).toBe(1);
+    expect(l.ordinal).toBe(10);
+    expect(l.xpIntoTang).toBe(0);
     expect(l.xpForNextTang).toBe(23800);
   });
   it('caps at Độ Kiếp tầng 9', () => {
