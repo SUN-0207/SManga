@@ -14,6 +14,7 @@ export default defineConfig({
     './src/schema/comment.ts', // Plan E: comments + reactions + notifications
     './src/schema/job-failure.ts', // dead-letter queue
     './src/schema/report.ts',
+    './src/schema/cultivation.ts',
   ],
   out: './src/migrations',
   dbCredentials: {

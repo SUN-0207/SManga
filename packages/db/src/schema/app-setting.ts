@@ -29,6 +29,8 @@ export const appSetting = pgTable('app_setting', {
   /** Kill switch for the new-chapter notification sweep. Default ON — purely
    *  additive + safe; flip OFF to pause notifications during an incident. */
   newChapterNotifyEnabled: boolean('new_chapter_notify_enabled').notNull().default(true),
+  /** Master kill-switch for the cultivation/economy system. Default OFF until launch. */
+  gamificationEnabled: boolean('gamification_enabled').notNull().default(false),
   lastRunAt: timestamp('last_run_at', { withTimezone: true }),
   lastRunCount: integer('last_run_count'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
