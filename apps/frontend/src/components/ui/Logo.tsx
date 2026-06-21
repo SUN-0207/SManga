@@ -1,49 +1,79 @@
 import { cn } from '@/lib/cn';
 
 interface LogoProps {
-  /** Render the mark only (no wordmark). Useful for square slots like favicons,
+  /** Render the square "S" mark only (no wordmark). For favicon-style slots,
    * avatar fallbacks, or mobile-collapsed headers. */
   iconOnly?: boolean;
-  /** Override the mark size. The default 34px works for most header heights;
-   * use ~20px in compact mobile headers and ~48px for hero / standalone use. */
+  /** Rendered height in px (the logo art keeps its aspect ratio). Default 28
+   * suits the header; ~22 for compact headers, ~40+ for hero / standalone. */
   size?: number;
-  /** Force a foreground tone. By default the wordmark uses `currentColor`
-   * (whatever text color it sits inside) — pass 'light' on dark backgrounds
-   * or 'dark' on light backgrounds when you want an explicit override. */
+  /** Theme adaptation. 'auto' (default) swaps the light/dark art with the
+   * active theme via the `[data-theme="dark"]` selector. Force 'light' on a
+   * known-dark background (white art) or 'dark' on a known-light one. */
   tone?: 'auto' | 'light' | 'dark';
   className?: string;
 }
 
-/**
- * SManga brand mark — a paired book-spine icon (white page + pink page) next
- * to the "SManga" wordmark. The mark scales independently of the wordmark so
- * `iconOnly` slots (favicons, mobile-collapsed nav) reuse the same SVG.
- *
- * The icon is inline SVG so it picks up `currentColor` for the page outlines,
- * keeping the brand readable on any background without per-theme tweaks. The
- * pink page stays #EC4899 always — the accent is what makes the mark a mark.
- */
-export function Logo({ iconOnly = false, size = 34, tone = 'auto', className }: LogoProps) {
-  const wordColor = tone === 'light' ? 'text-white' : tone === 'dark' ? 'text-zinc-900' : 'text-fg';
+// Two pre-rendered variants per slot: `light` art (black wordmark) reads on
+// LIGHT backgrounds, `dark` art (white wordmark) reads on DARK ones. Generated
+// from the source logos with the baked background flood-filled out.
+const SRC = {
+  wordmark: { light: '/logo-wordmark-light.png', dark: '/logo-wordmark-dark.png' },
+  mark: { light: '/logo-mark-light.png', dark: '/logo-mark-dark.png' },
+} as const;
 
+// Intrinsic aspect of the trimmed art — used to reserve width so swapping in
+// the raster logo doesn't shift layout (CLS) before the image loads.
+const ASPECT = { wordmark: 2.24, mark: 1 } as const;
+
+/**
+ * SManga brand wordmark — the comic "S" speech-bubble + "SManga" lettering,
+ * rendered as a theme-aware raster image. The source art is black-on-light /
+ * white-on-dark, so a single asset can't serve both themes; `auto` ships both
+ * and CSS shows the right one. `iconOnly` swaps the wordmark for the square S.
+ */
+export function Logo({ iconOnly = false, size = 28, tone = 'auto', className }: LogoProps) {
+  const kind = iconOnly ? 'mark' : 'wordmark';
+  const set = SRC[kind];
+  const width = Math.round(size * ASPECT[kind]);
+  // `alt` stays an explicit attribute on each <img> (not spread) so the a11y
+  // linter can see it statically.
+  const imgProps = {
+    width,
+    height: size,
+    draggable: false,
+    style: { height: size, width },
+  } as const;
+
+  // Forced tone: caller sits on a known background regardless of the theme.
+  // (Spread first, then `alt` — so the a11y linter sees alt provably present.)
+  if (tone === 'light') {
+    return (
+      <img
+        {...imgProps}
+        alt="SManga"
+        src={set.dark}
+        className={cn('block select-none', className)}
+      />
+    );
+  }
+  if (tone === 'dark') {
+    return (
+      <img
+        {...imgProps}
+        alt="SManga"
+        src={set.light}
+        className={cn('block select-none', className)}
+      />
+    );
+  }
+
+  // Auto: render both, let the theme selector reveal one. The `display:none`
+  // one is dropped from the a11y tree, so "SManga" is announced exactly once.
   return (
-    <span
-      className={cn('inline-flex items-center gap-2.5 leading-none', className)}
-      aria-label="SManga"
-    >
-      <BookMark size={size} />
-      {!iconOnly && (
-        <span
-          className={cn(
-            'font-sans font-extrabold tracking-tight',
-            // Scale the wordmark proportionally to the mark.
-            size >= 40 ? 'text-[1.625rem]' : size >= 28 ? 'text-heading-lg' : 'text-body',
-            wordColor,
-          )}
-        >
-          SManga
-        </span>
-      )}
+    <span className={cn('inline-flex items-center leading-none', className)}>
+      <img {...imgProps} alt="SManga" src={set.light} className="block select-none dark:hidden" />
+      <img {...imgProps} alt="SManga" src={set.dark} className="hidden select-none dark:block" />
     </span>
   );
 }

@@ -128,7 +128,7 @@ export function buildOrganizationSchema(): Record<string, unknown> {
     '@type': 'Organization',
     name: 'SManga',
     url: BASE,
-    logo: `${BASE}/favicon.svg`,
+    logo: `${BASE}/apple-touch-icon.png`,
     // Empty until Phase 3 social accounts exist. Emitting now anyway
     // so Google sees the entity shape; population later is additive.
     sameAs: [],

@@ -143,7 +143,7 @@ describe('buildOrganizationSchema', () => {
     expect(schema['@type']).toBe('Organization');
     expect(schema.name).toBe('SManga');
     expect(schema.url).toBe('https://smanga.shop');
-    expect(schema.logo).toBe('https://smanga.shop/favicon.svg');
+    expect(schema.logo).toBe('https://smanga.shop/apple-touch-icon.png');
   });
 
   it('emits sameAs as an array (empty until social accounts exist)', () => {
