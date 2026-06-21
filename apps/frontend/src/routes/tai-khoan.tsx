@@ -1,4 +1,5 @@
 import { type User, changePassword, me, updateMe } from '@/api/auth';
+import { CultivationCard } from '@/components/reader/CultivationCard';
 import { ReadingStatsCard } from '@/components/reader/ReadingStatsCard';
 import { SEO } from '@/components/seo/SEO';
 import { resizeToDataUrl } from '@/lib/image-resize';
@@ -32,6 +33,7 @@ function AccountPage() {
         </p>
       </header>
 
+      <CultivationCard />
       <ReadingStatsCard />
 
       <div className="space-y-6">
