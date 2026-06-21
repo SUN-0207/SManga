@@ -7,6 +7,8 @@ import {
   READ_DWELL_MIN_SECONDS,
   WELCOME_TIEN_NGOC,
   XP_PER_CHAPTER,
+  checkinReward,
+  levelFromXp,
   levelUpRewards,
 } from '@smanga/shared';
 import { sql } from 'drizzle-orm';
@@ -162,13 +164,58 @@ export class CultivationService {
     }) as Promise<{ breakthroughs: { realm: number; realmName: string }[] }>;
   }
 
-  async getState(userId: string): Promise<CultivationState | null> {
-    const rows = rowsOf<CultivationRow>(
-      await this.db.execute(
-        sql`SELECT xp, linh_thach, tien_ngoc, checkin_streak, last_checkin_date
-            FROM user_cultivation WHERE user_id = ${userId} LIMIT 1`,
-      ),
-    );
-    return rows[0] ? mapRow(rows[0]) : null;
+  async getState(userId: string) {
+    const c = await this.getOrCreate(userId);
+    const lv = levelFromXp(c.xp);
+    return {
+      ...lv,
+      xp: c.xp,
+      linhThach: c.linhThach,
+      tienNgoc: c.tienNgoc,
+      checkinStreak: c.checkinStreak,
+    };
+  }
+
+  async checkin(
+    userId: string,
+  ): Promise<{ credited: boolean; streakDay: number; amount: number; newStreak: number }> {
+    if (!(await this.settings.getGamificationEnabled()))
+      return { credited: false, streakDay: 0, amount: 0, newStreak: 0 };
+    await this.getOrCreate(userId);
+    return this.db.transaction(async (tx) => {
+      const row = rowsOf<{
+        last_checkin_date: string | null;
+        checkin_streak: number;
+        linh_thach: number;
+        today: string;
+        yesterday: string;
+      }>(
+        await (tx as TxClient).execute(sql`
+        SELECT last_checkin_date, checkin_streak, linh_thach,
+          to_char((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date, 'YYYY-MM-DD') AS today,
+          to_char((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date - 1, 'YYYY-MM-DD') AS yesterday
+        FROM user_cultivation WHERE user_id = ${userId} FOR UPDATE`),
+      )[0]!;
+      if (row.last_checkin_date === row.today) {
+        return {
+          credited: false,
+          streakDay: ((row.checkin_streak - 1) % 7) + 1,
+          amount: 0,
+          newStreak: row.checkin_streak,
+        };
+      }
+      const { newStreak, streakDay, amount } = checkinReward(
+        row.checkin_streak,
+        row.last_checkin_date === row.yesterday,
+      );
+      const newLinh = Number(row.linh_thach) + amount;
+      await (tx as TxClient).execute(
+        sql`UPDATE user_cultivation SET linh_thach = ${newLinh}, checkin_streak = ${newStreak}, last_checkin_date = ${row.today}, updated_at = now() WHERE user_id = ${userId}`,
+      );
+      await (tx as TxClient).execute(
+        sql`INSERT INTO reward_ledger (user_id, source, currency, amount, balance_after) VALUES (${userId}, 'checkin', 'linh_thach', ${amount}, ${newLinh})`,
+      );
+      return { credited: true, streakDay, amount, newStreak };
+    }) as Promise<{ credited: boolean; streakDay: number; amount: number; newStreak: number }>;
   }
 }

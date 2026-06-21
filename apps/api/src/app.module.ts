@@ -9,6 +9,7 @@ import { ChaptersModule } from './modules/chapters/chapters.module';
 import { CommentsModule } from './modules/comments/comments.module';
 import { CoversModule } from './modules/covers/covers.module';
 import { CrawlerJobsModule } from './modules/crawler-jobs/crawler-jobs.module';
+import { CultivationModule } from './modules/cultivation/cultivation.module';
 import { DbModule } from './modules/db/db.module';
 import { EngagementModule } from './modules/engagement/engagement.module';
 import { GenresModule } from './modules/genres/genres.module';
@@ -64,6 +65,7 @@ import { UsersModule } from './modules/users/users.module';
     RecommendationsModule,
     ReportsModule,
     SeoModule,
+    CultivationModule,
   ],
 })
 export class AppModule {}
