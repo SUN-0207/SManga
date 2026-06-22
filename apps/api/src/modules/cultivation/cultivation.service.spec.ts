@@ -26,3 +26,14 @@ describe('CultivationService.creditReadingDwell', () => {
     expect(db.transaction).not.toHaveBeenCalled();
   });
 });
+
+describe('CultivationService.getState', () => {
+  it('returns null and does not touch db when gamification disabled', async () => {
+    const { svc, settings, db } = svcWith({ enabled: false });
+    const result = await svc.getState('u1');
+    expect(result).toBeNull();
+    expect(settings.getGamificationEnabled).toHaveBeenCalled();
+    expect(db.execute).not.toHaveBeenCalled();
+    expect(db.transaction).not.toHaveBeenCalled();
+  });
+});

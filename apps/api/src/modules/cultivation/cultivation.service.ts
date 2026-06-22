@@ -169,7 +169,16 @@ export class CultivationService {
     }) as Promise<{ breakthroughs: { realm: number; realmName: string }[] }>;
   }
 
-  async getState(userId: string) {
+  async getState(userId: string): Promise<
+    | ({
+        xp: number;
+        linhThach: number;
+        tienNgoc: number;
+        checkinStreak: number;
+      } & ReturnType<typeof levelFromXp>)
+    | null
+  > {
+    if (!(await this.settings.getGamificationEnabled())) return null;
     const c = await this.getOrCreate(userId);
     const lv = levelFromXp(c.xp);
     return {

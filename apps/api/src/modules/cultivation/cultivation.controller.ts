@@ -1,8 +1,9 @@
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt.guard';
-import { Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { Response } from 'express';
 import { CultivationService } from './cultivation.service';
 
 @ApiTags('cultivation')
@@ -12,8 +13,16 @@ export class CultivationController {
   constructor(private readonly svc: CultivationService) {}
 
   @Get('cultivation')
-  getCultivation(@CurrentUser() u: { id: string }) {
-    return this.svc.getState(u.id);
+  async getCultivation(
+    @CurrentUser() u: { id: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const state = await this.svc.getState(u.id);
+    if (!state) {
+      res.status(HttpStatus.NO_CONTENT);
+      return;
+    }
+    return state;
   }
 
   @Post('checkin')
