@@ -6,6 +6,7 @@ import { AppSettingsService } from './app-settings.service';
 import { AutoCrawlFeederProcessor } from './auto-crawl-feeder.processor';
 import { AutoCrawlController } from './auto-crawl.controller';
 import { AutoRetryController } from './auto-retry.controller';
+import { GamificationController } from './gamification.controller';
 import { NewChapterNotifyController } from './new-chapter-notify.controller';
 import { RefreshAllStoriesProcessor } from './refresh-all-stories.processor';
 
@@ -16,6 +17,7 @@ import { RefreshAllStoriesProcessor } from './refresh-all-stories.processor';
     AutoRetryController,
     AutoCrawlController,
     NewChapterNotifyController,
+    GamificationController,
   ],
   providers: [AppSettingsService, RefreshAllStoriesProcessor, AutoCrawlFeederProcessor],
   exports: [AppSettingsService],

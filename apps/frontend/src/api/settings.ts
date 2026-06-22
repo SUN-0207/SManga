@@ -72,3 +72,17 @@ export async function updateNewChapterNotify(enabled: boolean): Promise<NewChapt
   });
   return res.data;
 }
+
+export interface GamificationSetting {
+  gamificationEnabled: boolean;
+}
+
+export async function getGamification(): Promise<GamificationSetting> {
+  const res = await api.get<GamificationSetting>('/admin/settings/gamification');
+  return res.data;
+}
+
+export async function updateGamification(enabled: boolean): Promise<GamificationSetting> {
+  const res = await api.patch<GamificationSetting>('/admin/settings/gamification', { enabled });
+  return res.data;
+}

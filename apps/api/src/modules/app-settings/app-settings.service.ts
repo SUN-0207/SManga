@@ -154,6 +154,21 @@ export class AppSettingsService implements OnModuleInit {
     return s.gamificationEnabled;
   }
 
+  async getGamification(): Promise<{ gamificationEnabled: boolean }> {
+    const s = await this.getOrSeed();
+    return { gamificationEnabled: s.gamificationEnabled };
+  }
+
+  async setGamification(enabled: boolean): Promise<{ gamificationEnabled: boolean }> {
+    const [updated] = await this.db
+      .update(appSetting)
+      .set({ gamificationEnabled: enabled, updatedAt: new Date() })
+      .where(eq(appSetting.id, 1))
+      .returning();
+    if (!updated) throw new BadRequestException('app_setting row missing — re-run migrations');
+    return { gamificationEnabled: updated.gamificationEnabled };
+  }
+
   async getNewChapterNotify(): Promise<{ newChapterNotifyEnabled: boolean }> {
     const s = await this.getOrSeed();
     return { newChapterNotifyEnabled: s.newChapterNotifyEnabled };
