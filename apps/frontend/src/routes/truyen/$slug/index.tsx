@@ -17,6 +17,8 @@ import { useTrackStoryView } from '@/hooks/use-track-view';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 export const Route = createFileRoute('/truyen/$slug/')({
   component: StoryDetail,
@@ -158,7 +160,7 @@ function StoryDetail() {
                 ))}
               </div>
             )}
-            <p className="mt-6 text-body text-fg-muted line-clamp-4">{s.description}</p>
+            <StoryDescription text={s.description} />
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/truyen/$slug/chuong/$index"
@@ -210,6 +212,71 @@ function StoryDetail() {
         />
       )}
       <RecommendationSection kind="similar" storyId={s.id} />
+    </div>
+  );
+}
+
+/**
+ * Story synopsis with a "Xem thêm / Thu gọn" toggle.
+ *
+ * Collapsed = clamped to 4 lines (matches the previous look; newlines collapse
+ * to spaces). Expanded = full text with paragraph breaks preserved
+ * (`whitespace-pre-line`, honouring the `\n\n` the crawler stores). The toggle
+ * only appears when the text actually overflows 4 lines — measured against the
+ * clamped height, re-checked on width changes via ResizeObserver.
+ */
+function StoryDescription({ text }: { text: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `text` is intentional — re-measure overflow when the synopsis changes (story→story navigation reuses this instance), even though it isn't read in the body.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      // Only meaningful while clamped; when expanded the clamp is off so we
+      // keep the last measured value (the "Thu gọn" button stays visible).
+      if (!expanded) setOverflowing(el.scrollHeight > el.clientHeight + 1);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [text, expanded]);
+
+  if (!text) return null;
+
+  return (
+    <div className="mt-6">
+      <p
+        ref={ref}
+        className={
+          expanded
+            ? 'text-body text-fg-muted whitespace-pre-line'
+            : 'text-body text-fg-muted line-clamp-4'
+        }
+      >
+        {text}
+      </p>
+      {(overflowing || expanded) && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="mt-1.5 inline-flex items-center gap-1 rounded text-body-sm font-medium text-accent transition-opacity duration-fast hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+        >
+          {expanded ? (
+            <>
+              Thu gọn <ChevronUp className="h-4 w-4" aria-hidden />
+            </>
+          ) : (
+            <>
+              Xem thêm <ChevronDown className="h-4 w-4" aria-hidden />
+            </>
+          )}
+        </button>
+      )}
     </div>
   );
 }
