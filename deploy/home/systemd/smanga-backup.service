@@ -1,6 +1,6 @@
 # Install to /etc/systemd/system/smanga-backup.service
 [Unit]
-Description=SManga nightly backup (pg_dump → HDD + R2)
+Description=SManga nightly backup (pg_dump → HDD; offsite Drive tier disabled 2026-06-28)
 After=docker.service network-online.target
 Requires=docker.service
 
