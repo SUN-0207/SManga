@@ -22,7 +22,7 @@
     "tsx": "4.22.4"
   },
   "devDependencies": {
-    "@testcontainers/postgresql": "12.0.1",
+    "@testcontainers/postgresql": "12.0.4",
     "drizzle-kit": "0.31.10",
     "typescript": "5.9.3",
     "vitest": "^3.2.6"
